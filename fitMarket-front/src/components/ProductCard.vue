@@ -6,17 +6,18 @@
         :alt="product.name"
         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
       />
-      <button
-        @click="$emit('toggle-favorite', product.id)"
-        class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-md flex items-center justify-center transition-colors"
-      >
-        <Heart
-          :class="[
-            'w-5 h-5',
-            product.isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'
-          ]"
-        />
-      </button>
+<!--      찜 기능 제거 -->
+<!--      <button-->
+<!--        @click="$emit('toggle-favorite', product.id)"-->
+<!--        class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-md flex items-center justify-center transition-colors"-->
+<!--      >-->
+<!--        <Heart-->
+<!--          :class="[-->
+<!--            'w-5 h-5',-->
+<!--            product.isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'-->
+<!--          ]"-->
+<!--        />-->
+<!--      </button>-->
       <span class="absolute top-3 left-3 px-3 py-1 bg-green-500 text-white text-sm font-medium rounded-full">
         {{ product.category }}
       </span>
