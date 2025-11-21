@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.fitmarket_be.member.repository.MemberMapper">
+
+    <select id="findAll" resultType="Member">
+        SELECT id, name, email
+        FROM member
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM member
+    </select>
+
+</mapper>
