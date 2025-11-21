@@ -19,21 +19,13 @@
         </nav>
 
         <div class="flex items-center gap-3">
-          <button class="relative p-2 hover:bg-green-50 rounded-lg transition-colors">
-            <Heart class="w-5 h-5" />
-            <span class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
-              3
-            </span>
-          </button>
-          <a href="/cart" class="relative p-2 hover:bg-green-50 rounded-lg transition-colors">
-            <ShoppingCart class="w-5 h-5" />
-            <span v-if="cartCount > 0" class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
-              {{ cartCount }}
-            </span>
-          </a>
-          <button class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg font-medium transition-all">
-            로그인
-          </button>
+          <AppHeaderLoggedInActions
+            v-if="isAuthenticated"
+            :cart-count="cartCount"
+            :user-name="userName"
+            @logout="handleLogout"
+          />
+          <AppHeaderLoggedOutActions v-else @login="handleLogin" />
         </div>
       </div>
     </div>
@@ -41,8 +33,20 @@
 </template>
 
 <script setup>
-import { Leaf, Heart, ShoppingCart } from 'lucide-vue-next'
+import { Leaf } from 'lucide-vue-next'
 import { useCart } from '@/composables/useCart'
+import { useAuth } from '@/composables/useAuth'
+import AppHeaderLoggedInActions from '@/components/header/AppHeaderLoggedInActions.vue'
+import AppHeaderLoggedOutActions from '@/components/header/AppHeaderLoggedOutActions.vue'
 
 const { cartCount } = useCart()
+const { isAuthenticated, userName, login, logout } = useAuth()
+
+const handleLogin = () => {
+  login()
+}
+
+const handleLogout = () => {
+  logout()
+}
 </script>
