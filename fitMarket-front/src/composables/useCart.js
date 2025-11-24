@@ -48,12 +48,13 @@ export function useCart() {
     return cartItems.value.reduce((sum, item) => sum + item.quantity, 0)
   })
 
-  const addToCart = (product) => {
+  const addToCart = (product, quantity = 1) => {
+    if (!product || quantity < 1) return
     const existing = cartItems.value.find(item => item.id === product.id)
     if (existing) {
-      existing.quantity++
+      existing.quantity += quantity
     } else {
-      cartItems.value.push({ ...product, quantity: 1 })
+      cartItems.value.push({ ...product, quantity })
     }
   }
 

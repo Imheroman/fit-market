@@ -38,7 +38,7 @@
             <span class="text-gray-600">({{ product.reviews }}개 리뷰)</span>
           </div>
 
-          <div class="text-4xl font-bold text-green-600 mb-8">{{ product.price }}</div>
+          <div class="text-4xl font-bold text-green-600 mb-8">{{ formattedPrice }}</div>
 
           <!-- Nutrition Info -->
           <div class="bg-gradient-to-br from-green-50 to-white border border-green-100 rounded-2xl p-6 mb-8">
@@ -81,13 +81,19 @@
                 <Plus class="w-5 h-5" />
               </button>
             </div>
-            <button class="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-all">
+            <button
+              class="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-all"
+              @click="handleAddToCart"
+            >
               <ShoppingCart class="w-5 h-5" />
               장바구니에 담기
             </button>
           </div>
 
-          <button class="w-full bg-green-900 hover:bg-green-800 text-white font-semibold py-4 px-6 rounded-lg transition-colors">
+          <button
+            class="w-full bg-green-900 hover:bg-green-800 text-white font-semibold py-4 px-6 rounded-lg transition-colors"
+            @click="handleBuyNow"
+          >
             바로 구매하기
           </button>
         </div>
@@ -114,10 +120,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { Heart, Star, Flame, ShoppingCart, ChevronRight, Minus, Plus } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
+import { useCart } from '@/composables/useCart'
+
+const router = useRouter()
+const { addToCart } = useCart()
 
 const quantity = ref(1)
 
@@ -125,7 +136,7 @@ const product = {
   id: 1,
   name: '그린 샐러드 도시락',
   category: '도시락',
-  price: '8,500원',
+  price: 8500,
   image: '/fresh-green-salad-bowl.png',
   rating: 4.8,
   reviews: 124,
@@ -134,5 +145,28 @@ const product = {
   carbs: 35,
   fat: 12,
   isFavorite: true,
+}
+
+const formattedPrice = computed(() => `${product.price.toLocaleString()}원`)
+
+const normalizedProduct = computed(() => ({
+  id: product.id,
+  name: product.name,
+  category: product.category,
+  price: product.price,
+  image: product.image,
+  calories: product.calories,
+  protein: product.protein,
+  carbs: product.carbs,
+  fat: product.fat,
+}))
+
+const handleAddToCart = () => {
+  addToCart(normalizedProduct.value, quantity.value)
+}
+
+const handleBuyNow = () => {
+  handleAddToCart()
+  router.push({ name: 'order-checkout' })
 }
 </script>
