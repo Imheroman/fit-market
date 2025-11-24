@@ -4,6 +4,8 @@ import ProductDetailPage from "@/views/ProductDetailPage.vue"
 import CartPage from "@/views/CartPage.vue"
 import MyPage from "@/views/MyPage.vue"
 import UserEditPage from "@/views/UserEditPage.vue"
+import OrderCompletePage from "@/views/OrderCompletePage.vue"
+import OrderCheckoutPage from "@/views/OrderCheckoutPage.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,6 +24,16 @@ const router = createRouter({
       path: "/cart",
       name: "cart",
       component: CartPage,
+    },
+    {
+      path: "/order/checkout",
+      name: "order-checkout",
+      component: OrderCheckoutPage,
+    },
+    {
+      path: "/order/complete",
+      name: "order-complete",
+      component: OrderCompletePage,
     },
     {
       path: "/mypage",
