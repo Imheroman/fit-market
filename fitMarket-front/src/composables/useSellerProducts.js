@@ -1,6 +1,5 @@
 import { ref, reactive, computed } from 'vue'
 
-// 카테고리 옵션
 export const PRODUCT_CATEGORIES = [
   { value: 'lunchbox', label: '도시락' },
   { value: 'mealkit', label: '밀키트' },
@@ -10,7 +9,6 @@ export const PRODUCT_CATEGORIES = [
   { value: 'snack', label: '건강 간식' },
 ]
 
-// 판매자의 등록 상품 목록 (Mock)
 const sellerProducts = ref([
   {
     id: 101,
@@ -79,9 +77,7 @@ export function useSellerProducts() {
   const successMessage = ref('')
   const errorMessage = ref('')
 
-  // 현재 판매자의 상품 목록 (Mock - 실제로는 sellerId로 필터링)
   const myProducts = computed(() => {
-    // TODO: 실제로는 로그인한 판매자의 ID로 필터링
     return sellerProducts.value
   })
 
@@ -179,13 +175,12 @@ export function useSellerProducts() {
     successMessage.value = ''
 
     try {
-      // TODO: 실제 API 호출
       await new Promise((resolve) => setTimeout(resolve, 500))
 
       const newProduct = {
         id: sellerProducts.value.length + 101,
-        sellerId: 2, // Mock
-        sellerName: '건강한 밥상', // Mock
+        sellerId: 2,
+        sellerName: '건강한 밥상',
         name: form.name,
         category: form.category,
         price: Number(form.price),
@@ -215,9 +210,7 @@ export function useSellerProducts() {
 
   const updateProduct = async (productId, updates) => {
     try {
-      // TODO: 실제 API 호출
       await new Promise((resolve) => setTimeout(resolve, 300))
-
       const product = sellerProducts.value.find((p) => p.id === productId)
       if (product) {
         Object.assign(product, updates)
@@ -232,15 +225,12 @@ export function useSellerProducts() {
   const toggleProductStatus = async (productId) => {
     const product = sellerProducts.value.find((p) => p.id === productId)
     if (!product) return false
-
     return updateProduct(productId, { isActive: !product.isActive })
   }
 
   const deleteProduct = async (productId) => {
     try {
-      // TODO: 실제 API 호출
       await new Promise((resolve) => setTimeout(resolve, 300))
-
       const index = sellerProducts.value.findIndex((p) => p.id === productId)
       if (index !== -1) {
         sellerProducts.value.splice(index, 1)
