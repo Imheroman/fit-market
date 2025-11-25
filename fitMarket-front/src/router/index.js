@@ -6,6 +6,9 @@ import MyPage from "@/views/MyPage.vue"
 import UserEditPage from "@/views/UserEditPage.vue"
 import OrderCompletePage from "@/views/OrderCompletePage.vue"
 import OrderCheckoutPage from "@/views/OrderCheckoutPage.vue"
+import SellerApplicationPage from "@/views/SellerApplicationPage.vue"
+import SellerProductRegisterPage from "@/views/SellerProductRegisterPage.vue"
+import AdminSellerApplicationsPage from "@/views/AdminSellerApplicationsPage.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,6 +47,21 @@ const router = createRouter({
       path: "/mypage/edit",
       name: "my-page-edit",
       component: UserEditPage,
+    },
+    {
+      path: "/seller/apply",
+      name: "seller-apply",
+      component: SellerApplicationPage,
+    },
+    {
+      path: "/seller/products",
+      name: "seller-products",
+      component: SellerProductRegisterPage,
+    },
+    {
+      path: "/admin/seller-applications",
+      name: "admin-seller-applications",
+      component: AdminSellerApplicationsPage,
     },
   ],
 })
