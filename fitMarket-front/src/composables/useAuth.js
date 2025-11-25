@@ -16,6 +16,8 @@ const user = ref(mockUser)
 export function useAuth() {
   const isAuthenticated = computed(() => Boolean(user.value))
   const userName = computed(() => user.value?.name ?? '게스트')
+  const isSeller = computed(() => user.value?.roles?.includes('SELLER') ?? false)
+  const isAdmin = computed(() => user.value?.roles?.includes('ADMIN') ?? false)
 
   const login = () => {
     // TODO: 로그인 처리
@@ -44,6 +46,8 @@ export function useAuth() {
     user,
     isAuthenticated,
     userName,
+    isSeller,
+    isAdmin,
     login,
     logout,
     deleteAccount,

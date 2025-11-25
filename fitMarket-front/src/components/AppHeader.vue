@@ -15,7 +15,27 @@
           <a href="/" class="text-sm font-medium hover:text-green-600 transition-colors">전체상품</a>
           <a href="#" class="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors">베스트</a>
           <a href="#" class="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors">신상품</a>
-          <a href="#" class="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors">판매자 등록</a>
+          <a
+            v-if="!isSeller && isAuthenticated"
+            href="/seller/apply"
+            class="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors"
+          >
+            판매자 신청
+          </a>
+          <a
+            v-if="isSeller"
+            href="/seller/products"
+            class="text-sm font-medium text-green-600 hover:text-green-700 transition-colors font-semibold"
+          >
+            상품 관리
+          </a>
+          <a
+            v-if="isAdmin"
+            href="/admin/seller-applications"
+            class="text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors font-semibold"
+          >
+            판매자 관리
+          </a>
         </nav>
 
         <div class="flex items-center gap-3">
@@ -40,7 +60,7 @@ import AppHeaderLoggedInActions from '@/components/header/AppHeaderLoggedInActio
 import AppHeaderLoggedOutActions from '@/components/header/AppHeaderLoggedOutActions.vue'
 
 const { cartCount } = useCart()
-const { isAuthenticated, userName, login, logout } = useAuth()
+const { isAuthenticated, userName, isSeller, isAdmin, login, logout } = useAuth()
 
 const handleLogin = () => {
   login()
