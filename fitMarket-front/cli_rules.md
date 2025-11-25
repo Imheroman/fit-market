@@ -157,8 +157,13 @@ src/
 
 ## 예시 Prompt (AI 사용)
 
-```markdown
+```markdown                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
 - "장바구니 페이지용 Vue 컴포넌트 생성, Pinia store 연동, Composition API 활용, <script setup>으로 작성"
 - "useUser composable 생성 및 회원정보 API 비동기 처리, 에러/로딩 전역 상태 관리 포함"
 - "ProductList.vue의 상품 타일 UI 컴포넌트화 및 반복 처리용 key 부여"
 ```
+
+## 마무리
+
+- 매번 작업을 완료하면, root에 있는 work_summary 폴더에 인덱스를 자동으로 증가시켜서(아무 파일도 존재하지 않는다면, 001.md 파일부터 생성하고, 인덱스를 증가시켜 나간다.) 
+- 파일을 생성한 후 작업 요약과 생성된 파일 목록을 기록합니다.

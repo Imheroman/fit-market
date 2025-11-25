@@ -86,7 +86,10 @@
               </div>
             </div>
 
-            <button class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-4 px-6 rounded-lg transition-all">
+            <button
+              class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-4 px-6 rounded-lg transition-all"
+              @click="handleOrder"
+            >
               주문하기
             </button>
           </div>
@@ -100,9 +103,15 @@
 
 <script setup>
 import { Minus, Plus, Trash2, Flame } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import { useCart } from '@/composables/useCart'
 
+const router = useRouter()
 const { cartItems, totalPrice, totalNutrition, updateQuantity, removeItem } = useCart()
+
+const handleOrder = () => {
+  router.push({ name: 'order-checkout' })
+}
 </script>
