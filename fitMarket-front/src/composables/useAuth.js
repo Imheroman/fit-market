@@ -4,7 +4,7 @@ const mockUser = {
   id: 1,
   email: 'kim.youngwoong@example.com',
   name: '김영웅',
-  roles: ['USER'],
+  role: 'ADMIN', // 'USER' | 'SELLER' | 'ADMIN'
   phone: '010-1234-5678',
   address: '서울시 강남구 테헤란로 123',
   joinedAt: '2024-01-15',
@@ -16,6 +16,10 @@ const user = ref(mockUser)
 export function useAuth() {
   const isAuthenticated = computed(() => Boolean(user.value))
   const userName = computed(() => user.value?.name ?? '게스트')
+
+  // 권한 계층: ADMIN > SELLER > USER
+  const isAdmin = computed(() => user.value?.role === 'ADMIN')
+  const isSeller = computed(() => user.value?.role === 'SELLER' || user.value?.role === 'ADMIN')
 
   const login = () => {
     // TODO: 로그인 처리
@@ -44,6 +48,8 @@ export function useAuth() {
     user,
     isAuthenticated,
     userName,
+    isSeller,
+    isAdmin,
     login,
     logout,
     deleteAccount,
