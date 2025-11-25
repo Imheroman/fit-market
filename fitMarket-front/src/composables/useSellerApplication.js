@@ -9,11 +9,11 @@ const applications = ref([
     email: 'lee.sangin@example.com',
     businessName: '건강한 밥상',
     businessNumber: '123-45-67890',
-    businessType: '개인사업자',
+    businessType: 'individual',
     contactPhone: '010-2345-6789',
     businessAddress: '서울시 마포구 성미산로 123',
     introduction: '신선한 재료로 건강한 도시락을 만듭니다.',
-    status: 'pending', // pending | approved | rejected
+    status: 'pending',
     appliedAt: '2025-01-20T10:30:00+09:00',
     reviewedAt: null,
     reviewNote: '',
@@ -25,7 +25,7 @@ const applications = ref([
     email: 'park.health@example.com',
     businessName: '파워밀 키친',
     businessNumber: '234-56-78901',
-    businessType: '법인사업자',
+    businessType: 'corporation',
     contactPhone: '010-3456-7890',
     businessAddress: '경기도 성남시 분당구 판교역로 234',
     introduction: '고단백 저칼로리 식단 전문 업체입니다.',
@@ -33,22 +33,6 @@ const applications = ref([
     appliedAt: '2025-01-15T14:20:00+09:00',
     reviewedAt: '2025-01-16T09:15:00+09:00',
     reviewNote: '검토 완료, 승인되었습니다.',
-  },
-  {
-    id: 3,
-    userId: 4,
-    userName: '최영양',
-    email: 'choi.nutrition@example.com',
-    businessName: '비건라이프',
-    businessNumber: '345-67-89012',
-    businessType: '개인사업자',
-    contactPhone: '010-4567-8901',
-    businessAddress: '부산시 해운대구 센텀로 345',
-    introduction: '비건 식단을 제공합니다.',
-    status: 'rejected',
-    appliedAt: '2025-01-18T16:40:00+09:00',
-    reviewedAt: '2025-01-19T11:30:00+09:00',
-    reviewNote: '사업자 등록번호 확인이 필요합니다.',
   },
 ])
 
@@ -134,13 +118,12 @@ export function useSellerApplication() {
     successMessage.value = ''
 
     try {
-      // TODO: 실제 API 호출
       await new Promise((resolve) => setTimeout(resolve, 500))
 
       const newApplication = {
         id: applications.value.length + 1,
-        userId: 1, // 현재 로그인한 사용자 ID
-        userName: '김영웅', // 현재 로그인한 사용자 이름
+        userId: 1,
+        userName: '김영웅',
         email: 'kim.youngwoong@example.com',
         ...form,
         status: 'pending',
@@ -180,7 +163,6 @@ export function useSellerApplication() {
   }
 }
 
-// 관리자용 - 판매자 신청 관리
 export function useSellerApplicationsAdmin() {
   const pendingApplications = computed(() => {
     return applications.value.filter((app) => app.status === 'pending')
@@ -196,9 +178,7 @@ export function useSellerApplicationsAdmin() {
 
   const approveApplication = async (applicationId, note = '') => {
     try {
-      // TODO: 실제 API 호출
       await new Promise((resolve) => setTimeout(resolve, 300))
-
       const app = applications.value.find((a) => a.id === applicationId)
       if (app) {
         app.status = 'approved'
@@ -214,9 +194,7 @@ export function useSellerApplicationsAdmin() {
 
   const rejectApplication = async (applicationId, note = '') => {
     try {
-      // TODO: 실제 API 호출
       await new Promise((resolve) => setTimeout(resolve, 300))
-
       const app = applications.value.find((a) => a.id === applicationId)
       if (app) {
         app.status = 'rejected'
