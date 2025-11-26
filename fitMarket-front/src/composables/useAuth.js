@@ -11,7 +11,22 @@ const mockUser = {
   token: 'mock-jwt-token',
 }
 
-const user = ref(mockUser)
+const ensureRoleArray = (roles, role) => {
+  if (Array.isArray(roles) && roles.length > 0) return roles
+  if (role) return [role]
+  return ['USER']
+}
+
+const buildUserSession = (payload) => {
+  const base = payload ?? mockUser
+  return {
+    ...mockUser,
+    ...base,
+    roles: ensureRoleArray(base.role, base.role),
+  }
+}
+
+const user = ref(null)
 
 export function useAuth() {
   const isAuthenticated = computed(() => Boolean(user.value))
@@ -21,26 +36,26 @@ export function useAuth() {
   const isAdmin = computed(() => user.value?.role === 'ADMIN')
   const isSeller = computed(() => user.value?.role === 'SELLER' || user.value?.role === 'ADMIN')
 
-  const login = () => {
-    // TODO: 로그인 처리
-    user.value = mockUser
+  const login = (sessionPayload) => {
+    user.value = buildUserSession(sessionPayload)
+    return user.value
   }
 
   const logout = () => {
-    // TODO: 로그아웃 처리
     user.value = null
   }
 
   const deleteAccount = () => {
-    // TODO: 회원 탈퇴
     user.value = null
   }
 
   const hydrateProfile = (profile) => {
     if (!profile) return
+    const currentSnapshot = user.value ? buildUserSession(user.value) : buildUserSession()
     user.value = {
-      ...user.value,
+      ...currentSnapshot,
       ...profile,
+      roles: ensureRoleArray(profile.roles ?? currentSnapshot.roles, profile.role ?? currentSnapshot.role),
     }
   }
 
@@ -57,4 +72,4 @@ export function useAuth() {
   }
 }
 
-export { mockUser }
+export {mockUser}

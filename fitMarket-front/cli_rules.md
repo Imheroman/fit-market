@@ -46,6 +46,7 @@ src/
   * 반드시 **Composition API**와 `<script setup lang="js">` 문법을 사용한다.
   * **Options API**(`data`, `methods`, `computed` 객체 방식)는 절대 사용하지 않는다.
   * `ref`, `reactive`, `computed`, `watch`는 `vue`에서 직접 import 하여 사용한다.
+  * `reactive` 대신, `ref`를 사용한다.
 
 **3. Logic Separation (Composable Pattern)**
 
@@ -87,6 +88,7 @@ src/
 - **Pinia 를 기본 상태관리:** Vuex 대신 Pinia 추천(구조: modules/feature 중심으로 세분화).
 - **Single File Component(SFC):** 각 컴포넌트는 `.vue` 단일 파일로 관리하며, 템플릿·로직·스타일을 합친다.
 - **명확한 Props, Events 사용:** 컴포넌트간 데이터 전달은 props와 emits로만 구현한다.
+- 모든 코드의 마지막에는 ';' 세미콜론을 붙인다.
 
 ```vue
 <script setup>
@@ -167,3 +169,4 @@ src/
 
 - 매번 작업을 완료하면, root에 있는 work_summary 폴더에 인덱스를 자동으로 증가시켜서(아무 파일도 존재하지 않는다면, 001.md 파일부터 생성하고, 인덱스를 증가시켜 나간다.) 
 - 파일을 생성한 후 작업 요약과 생성된 파일 목록을 기록합니다.
+- 생성된 파일 목록을 바로 이동할 수 있게, markdown 문법으로 링크를 생성합니다.
