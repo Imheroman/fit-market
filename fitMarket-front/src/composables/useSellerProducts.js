@@ -51,12 +51,9 @@ const createDefaultForm = () => ({
   category: '',
   price: '',
   description: '',
-  calories: '',
-  protein: '',
-  carbs: '',
-  fat: '',
   stock: '',
-  image: '',
+  weight: '',
+  imageFile: null,
 })
 
 export function useSellerProducts() {
@@ -66,12 +63,9 @@ export function useSellerProducts() {
     category: '',
     price: '',
     description: '',
-    calories: '',
-    protein: '',
-    carbs: '',
-    fat: '',
     stock: '',
-    image: '',
+    weight: '',
+    imageFile: '',
   })
   const isSubmitting = ref(false)
   const successMessage = ref('')
@@ -126,38 +120,20 @@ export function useSellerProducts() {
       isValid = false
     }
 
-    const calories = Number(form.calories)
-    if (!form.calories || isNaN(calories) || calories < 0) {
-      errors.calories = '올바른 칼로리를 입력해주세요.'
-      isValid = false
-    }
-
-    const protein = Number(form.protein)
-    if (!form.protein || isNaN(protein) || protein < 0) {
-      errors.protein = '올바른 단백질을 입력해주세요.'
-      isValid = false
-    }
-
-    const carbs = Number(form.carbs)
-    if (!form.carbs || isNaN(carbs) || carbs < 0) {
-      errors.carbs = '올바른 탄수화물을 입력해주세요.'
-      isValid = false
-    }
-
-    const fat = Number(form.fat)
-    if (!form.fat || isNaN(fat) || fat < 0) {
-      errors.fat = '올바른 지방을 입력해주세요.'
-      isValid = false
-    }
-
     const stock = Number(form.stock)
     if (!form.stock || isNaN(stock) || stock < 0) {
       errors.stock = '올바른 재고를 입력해주세요.'
       isValid = false
     }
 
-    if (!form.image.trim()) {
-      errors.image = '상품 이미지 URL을 입력해주세요.'
+    const weight = Number(form.weight)
+    if (!form.weight || isNaN(weight) || weight < 1) {
+      errors.weight = '중량은 1g 이상이어야 합니다.'
+      isValid = false
+    }
+
+    if (!form.imageFile) {
+      errors.imageFile = '상품 이미지를 업로드해주세요.'
       isValid = false
     }
 
@@ -175,7 +151,22 @@ export function useSellerProducts() {
     successMessage.value = ''
 
     try {
+      // 실제로는 FormData로 이미지와 함께 서버에 전송
+      // 백엔드에서 상품명/설명 기반으로 AI가 자동으로 식품 DB 매칭 후 영양정보 계산
+      // const formData = new FormData()
+      // formData.append('name', form.name)
+      // formData.append('category', form.category)
+      // formData.append('price', form.price)
+      // formData.append('description', form.description)
+      // formData.append('stock', form.stock)
+      // formData.append('weight', form.weight)  // AI가 이 중량으로 영양정보 계산
+      // formData.append('image', form.imageFile)
+      // const response = await axios.post('/api/products', formData)
+
       await new Promise((resolve) => setTimeout(resolve, 500))
+
+      // Mock: 이미지 URL 생성 (실제로는 서버에서 반환)
+      const imageUrl = form.imageFile ? URL.createObjectURL(form.imageFile) : '/default-product.png'
 
       const newProduct = {
         id: sellerProducts.value.length + 101,
@@ -185,11 +176,8 @@ export function useSellerProducts() {
         category: form.category,
         price: Number(form.price),
         description: form.description,
-        image: form.image,
-        calories: Number(form.calories),
-        protein: Number(form.protein),
-        carbs: Number(form.carbs),
-        fat: Number(form.fat),
+        image: imageUrl,
+        weight: Number(form.weight),
         stock: Number(form.stock),
         isActive: true,
         createdAt: new Date().toISOString(),

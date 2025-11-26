@@ -1,23 +1,14 @@
 <template>
-  <div class="group overflow-hidden border border-green-100 hover:shadow-xl hover:border-green-300 transition-all duration-300 rounded-xl bg-white">
+  <div
+    class="group overflow-hidden border border-green-100 hover:shadow-xl hover:border-green-300 transition-all duration-300 rounded-xl bg-white cursor-pointer"
+    @click="navigateToDetail"
+  >
     <div class="relative overflow-hidden aspect-square bg-green-50">
       <img
         :src="product.image"
         :alt="product.name"
         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
       />
-<!--      찜 기능 제거 -->
-<!--      <button-->
-<!--        @click="$emit('toggle-favorite', product.id)"-->
-<!--        class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-md flex items-center justify-center transition-colors"-->
-<!--      >-->
-<!--        <Heart-->
-<!--          :class="[-->
-<!--            'w-5 h-5',-->
-<!--            product.isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'-->
-<!--          ]"-->
-<!--        />-->
-<!--      </button>-->
       <span class="absolute top-3 left-3 px-3 py-1 bg-green-500 text-white text-sm font-medium rounded-full">
         {{ product.category }}
       </span>
@@ -56,7 +47,7 @@
       <div class="flex items-center justify-between">
         <span class="text-xl font-bold text-green-600">{{ product.price }}</span>
         <button
-          @click="$emit('add-to-cart', product.id)"
+          @click.stop="handleAddToCart"
           class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
         >
           장바구니
@@ -68,14 +59,25 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 import { Heart, Star, ShoppingCart } from 'lucide-vue-next'
 
-defineProps({
+const router = useRouter()
+
+const props = defineProps({
   product: {
     type: Object,
     required: true
   }
 })
 
-defineEmits(['toggle-favorite', 'add-to-cart'])
+const emit = defineEmits(['toggle-favorite', 'add-to-cart'])
+
+const navigateToDetail = () => {
+  router.push({ name: 'product-detail', params: { id: props.product.id } })
+}
+
+const handleAddToCart = () => {
+  emit('add-to-cart', props.product.id)
+}
 </script>
