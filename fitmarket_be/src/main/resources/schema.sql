@@ -1,9 +1,7 @@
 -- ============================================
--- FitMarket Database 초기화 스크립트
--- 실행 방법: mysql -u root -p < schema.sql
+-- FitMarket Database 초기화 스크립트 (Strict Mode)
 -- ============================================
 
--- 기존 데이터베이스 삭제 및 재생성
 DROP DATABASE IF EXISTS fitmarket;
 CREATE DATABASE fitmarket
 DEFAULT CHARACTER SET utf8mb4
@@ -12,8 +10,9 @@ COLLATE utf8mb4_unicode_ci;
 USE fitmarket;
 
 -- ============================================
--- 기존 테이블 삭제 (외래키 순서 고려)
+-- 기존 테이블 삭제
 -- ============================================
+DROP TABLE IF EXISTS `seller_applications`; -- [NEW]
 DROP TABLE IF EXISTS `order_products`;
 DROP TABLE IF EXISTS `orders`;
 DROP TABLE IF EXISTS `shopping_cart_products`;
@@ -29,14 +28,17 @@ DROP TABLE IF EXISTS `order_approval_status`;
 -- 테이블 생성
 -- ============================================
 
--- 1. 회원 테이블
+-- 1. 회원 테이블 (사업자 정보 컬럼 삭제됨)
 CREATE TABLE `users` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(100) NOT NULL,
     `email` VARCHAR(100) NOT NULL,
     `password` VARCHAR(255) NOT NULL,
     `phone` VARCHAR(30) NOT NULL,
-    `role` VARCHAR(100) NOT NULL,
+    `role` VARCHAR(100) NOT NULL DEFAULT 'USER', -- 권한 체크용 (로그인 시 JOIN 방지)
+
+    -- [삭제됨] business_name, business_number는 이제 여기 없습니다.
+
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `deleted_date` TIMESTAMP NULL,
@@ -44,7 +46,27 @@ CREATE TABLE `users` (
     UNIQUE KEY `uk_users_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 2. 주소 테이블
+-- 2. 판매자 신청 및 정보 테이블 (정보의 유일한 원천)
+CREATE TABLE `seller_applications` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `user_id` BIGINT NOT NULL,
+    `business_name` VARCHAR(100) NOT NULL,
+    `business_number` VARCHAR(50) NOT NULL,
+
+    `status` VARCHAR(20) NOT NULL DEFAULT 'pending', -- pending, approved, rejected
+    `review_note` VARCHAR(255) NULL,     -- 거절/승인 사유
+    `reviewed_by` BIGINT NULL,           -- 처리한 관리자
+
+    `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_seller_app_user` (`user_id`),           -- 유저당 1개의 신청 정보만 유지 (1:1 Extension)
+    UNIQUE KEY `uk_seller_app_biz_num` (`business_number`), -- 사업자 번호 중복 방지
+    CONSTRAINT `fk_seller_app_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_seller_app_admin` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 3. 주소 테이블
 CREATE TABLE `address` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `postal_code` VARCHAR(15) NULL,
@@ -55,7 +77,7 @@ CREATE TABLE `address` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 3. 사용자-주소 연결 테이블
+-- 4. 사용자-주소 연결 테이블
 CREATE TABLE `user_address` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `user_id` BIGINT NOT NULL,
@@ -67,7 +89,7 @@ CREATE TABLE `user_address` (
     CONSTRAINT `fk_user_address_address` FOREIGN KEY (`address_id`) REFERENCES `address` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 4. 표준 식품 DB
+-- 5. 표준 식품 DB
 CREATE TABLE `food` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `code` VARCHAR(255) NOT NULL,
@@ -90,7 +112,7 @@ CREATE TABLE `food` (
     UNIQUE KEY `uk_food_code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 5. 상품 카테고리
+-- 6. 상품 카테고리
 CREATE TABLE `product_categories` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `parent_id` BIGINT NULL,
@@ -101,7 +123,7 @@ CREATE TABLE `product_categories` (
     CONSTRAINT `fk_product_categories_parent` FOREIGN KEY (`parent_id`) REFERENCES `product_categories` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 6. 상품 테이블
+-- 7. 상품 테이블
 CREATE TABLE `products` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `user_id` BIGINT NOT NULL,
@@ -121,7 +143,7 @@ CREATE TABLE `products` (
     CONSTRAINT `fk_products_food` FOREIGN KEY (`food_id`) REFERENCES `food` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 7. 장바구니
+-- 8. 장바구니
 CREATE TABLE `shopping_cart_products` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `quantity` INT NOT NULL,
@@ -134,7 +156,7 @@ CREATE TABLE `shopping_cart_products` (
     CONSTRAINT `fk_cart_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 8. 주문 승인 상태
+-- 9. 주문 승인 상태
 CREATE TABLE `order_approval_status` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(100) NOT NULL DEFAULT 'pending',
@@ -143,7 +165,7 @@ CREATE TABLE `order_approval_status` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 9. 주문
+-- 10. 주문
 CREATE TABLE `orders` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `order_approval_status_id` BIGINT NOT NULL,
@@ -162,7 +184,7 @@ CREATE TABLE `orders` (
     CONSTRAINT `fk_orders_status` FOREIGN KEY (`order_approval_status_id`) REFERENCES `order_approval_status` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 10. 주문 상품
+-- 11. 주문 상품
 CREATE TABLE `order_products` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `order_id` BIGINT NOT NULL,
@@ -179,14 +201,7 @@ CREATE TABLE `order_products` (
 -- ============================================
 -- 초기 데이터 삽입
 -- ============================================
-
--- 주문 상태 기본 데이터
 INSERT INTO `order_approval_status` (`name`) VALUES
-('pending'),
-('confirmed'),
-('shipping'),
-('delivered'),
-('cancelled');
+('pending'), ('confirmed'), ('shipping'), ('delivered'), ('cancelled');
 
--- 완료 메시지
-SELECT 'FitMarket 데이터베이스 초기화 완료!' AS message;
+SELECT 'FitMarket 데이터베이스 초기화 완료 (Strict Mode)!' AS message;
