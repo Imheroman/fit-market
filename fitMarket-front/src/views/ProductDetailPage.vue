@@ -17,9 +17,6 @@
         <div class="space-y-4">
           <div class="relative aspect-square bg-green-50 rounded-2xl overflow-hidden">
             <img :src="product.image" :alt="product.name" class="w-full h-full object-cover" />
-            <button class="absolute top-4 right-4 w-12 h-12 bg-white/90 backdrop-blur-sm hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors">
-              <Heart :class="['w-6 h-6', product.isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600']" />
-            </button>
           </div>
         </div>
 
@@ -41,31 +38,66 @@
           <div class="text-4xl font-bold text-green-600 mb-8">{{ formattedPrice }}</div>
 
           <!-- Nutrition Info -->
-          <div class="bg-gradient-to-br from-green-50 to-white border border-green-100 rounded-2xl p-6 mb-8">
-            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Flame class="w-5 h-5 text-orange-500" />
-              영양 성분 (1회 제공량 기준)
-            </h3>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="bg-white rounded-lg p-4 border border-green-100">
-                <div class="text-sm text-gray-600 mb-1">칼로리</div>
-                <div class="text-2xl font-bold">{{ product.calories }}</div>
-                <div class="text-xs text-gray-500">kcal</div>
+          <div class="bg-gradient-to-br from-green-50 to-white border border-green-100 rounded-xl p-5 mb-6">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-base font-semibold flex items-center gap-2">
+                <Flame class="w-4 h-4 text-orange-500" />
+                총 영양정보
+              </h3>
+              <span class="text-xs text-gray-500">1회 제공량 기준</span>
+            </div>
+
+            <!-- 주요 영양소 -->
+            <div class="grid grid-cols-4 gap-2 mb-3">
+              <div class="bg-white rounded-lg p-2.5 border border-green-100 text-center">
+                <div class="text-xs text-gray-600 mb-0.5">칼로리</div>
+                <div class="text-lg font-bold">{{ nutrition.calories }}</div>
+                <div class="text-xs text-gray-400">kcal</div>
               </div>
-              <div class="bg-white rounded-lg p-4 border border-green-100">
-                <div class="text-sm text-gray-600 mb-1">단백질</div>
-                <div class="text-2xl font-bold text-green-600">{{ product.protein }}g</div>
-                <div class="text-xs text-gray-500">일일권장량 {{ Math.round((product.protein / 60) * 100) }}%</div>
+              <div class="bg-white rounded-lg p-2.5 border border-green-100 text-center">
+                <div class="text-xs text-gray-600 mb-0.5">단백질</div>
+                <div class="text-lg font-bold text-green-600">{{ nutrition.protein }}</div>
+                <div class="text-xs text-gray-400">g</div>
               </div>
-              <div class="bg-white rounded-lg p-4 border border-green-100">
-                <div class="text-sm text-gray-600 mb-1">탄수화물</div>
-                <div class="text-2xl font-bold">{{ product.carbs }}g</div>
-                <div class="text-xs text-gray-500">일일권장량 {{ Math.round((product.carbs / 324) * 100) }}%</div>
+              <div class="bg-white rounded-lg p-2.5 border border-green-100 text-center">
+                <div class="text-xs text-gray-600 mb-0.5">탄수화물</div>
+                <div class="text-lg font-bold">{{ nutrition.carbs }}</div>
+                <div class="text-xs text-gray-400">g</div>
               </div>
-              <div class="bg-white rounded-lg p-4 border border-green-100">
-                <div class="text-sm text-gray-600 mb-1">지방</div>
-                <div class="text-2xl font-bold">{{ product.fat }}g</div>
-                <div class="text-xs text-gray-500">일일권장량 {{ Math.round((product.fat / 54) * 100) }}%</div>
+              <div class="bg-white rounded-lg p-2.5 border border-green-100 text-center">
+                <div class="text-xs text-gray-600 mb-0.5">지방</div>
+                <div class="text-lg font-bold">{{ nutrition.fat }}</div>
+                <div class="text-xs text-gray-400">g</div>
+              </div>
+            </div>
+
+            <!-- 세부 영양소 (간단한 리스트) -->
+            <div class="border-t border-green-100 pt-3">
+              <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                <div v-if="nutrition.sodium" class="flex justify-between text-gray-700">
+                  <span>나트륨</span>
+                  <span class="font-semibold">{{ nutrition.sodium }}mg</span>
+                </div>
+                <div v-if="nutrition.sugars" class="flex justify-between text-gray-700">
+                  <span>당류</span>
+                  <span class="font-semibold">{{ nutrition.sugars }}g</span>
+                </div>
+                <div v-if="nutrition.fiber" class="flex justify-between text-gray-700">
+                  <span>식이섬유</span>
+                  <span class="font-semibold">{{ nutrition.fiber }}g</span>
+                </div>
+                <div v-if="nutrition.saturatedFat" class="flex justify-between text-gray-700">
+                  <span>포화지방</span>
+                  <span class="font-semibold">{{ nutrition.saturatedFat }}g</span>
+                </div>
+                <div v-if="nutrition.transFat" class="flex justify-between text-gray-700">
+                  <span>트랜스지방</span>
+                  <span class="font-semibold">{{ nutrition.transFat }}g</span>
+                </div>
+                <div v-if="nutrition.calcium" class="flex justify-between text-gray-700">
+                  <span>칼슘</span>
+                  <span class="font-semibold">{{ nutrition.calcium }}mg</span>
+                </div>
               </div>
             </div>
           </div>
@@ -121,44 +153,57 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { Heart, Star, Flame, ShoppingCart, ChevronRight, Minus, Plus } from 'lucide-vue-next'
+import { useRouter, useRoute } from 'vue-router'
+import { Star, Flame, ShoppingCart, ChevronRight, Minus, Plus } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import { useCart } from '@/composables/useCart'
 
 const router = useRouter()
+const route = useRoute()
 const { addToCart } = useCart()
 
 const quantity = ref(1)
 
-const product = {
-  id: 1,
+// Mock 데이터 (실제로는 route.params.id로 API 호출해서 백엔드에서 계산된 총 영양정보를 받음)
+const product = ref({
+  id: Number(route.params.id) || 1,
   name: '그린 샐러드 도시락',
   category: '도시락',
   price: 8500,
   image: '/fresh-green-salad-bowl.png',
   rating: 4.8,
   reviews: 124,
-  calories: 320,
-  protein: 18,
-  carbs: 35,
-  fat: 12,
-  isFavorite: true,
-}
+  // 백엔드에서 계산된 총 영양정보 (상품 전체 기준)
+  nutrition: {
+    calories: 320,
+    protein: 18,
+    carbs: 35,
+    fat: 12,
+    sodium: 450,
+    sugars: 8,
+    fiber: 6,
+    saturatedFat: 2.5,
+    transFat: 0,
+    calcium: 120,
+  }
+})
 
-const formattedPrice = computed(() => `${product.price.toLocaleString()}원`)
+const formattedPrice = computed(() => `${product.value.price.toLocaleString()}원`)
+
+// 백엔드에서 받은 총 영양정보를 그대로 사용
+const nutrition = computed(() => product.value.nutrition)
 
 const normalizedProduct = computed(() => ({
-  id: product.id,
-  name: product.name,
-  category: product.category,
-  price: product.price,
-  image: product.image,
-  calories: product.calories,
-  protein: product.protein,
-  carbs: product.carbs,
-  fat: product.fat,
+  id: product.value.id,
+  name: product.value.name,
+  category: product.value.category,
+  price: product.value.price,
+  image: product.value.image,
+  calories: nutrition.value.calories,
+  protein: nutrition.value.protein,
+  carbs: nutrition.value.carbs,
+  fat: nutrition.value.fat,
 }))
 
 const handleAddToCart = () => {
