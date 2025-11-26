@@ -22,7 +22,7 @@ const buildUserSession = (payload) => {
   return {
     ...mockUser,
     ...base,
-    roles: ensureRoleArray(base.roles, base.role),
+    roles: ensureRoleArray(base.role, base.role),
   }
 }
 
@@ -36,21 +36,16 @@ export function useAuth() {
   const isAdmin = computed(() => user.value?.role === 'ADMIN')
   const isSeller = computed(() => user.value?.role === 'SELLER' || user.value?.role === 'ADMIN')
 
-  const login = () => {
-    // TODO: 로그인 처리
-    user.value = mockUser
   const login = (sessionPayload) => {
     user.value = buildUserSession(sessionPayload)
     return user.value
   }
 
   const logout = () => {
-    // TODO: 로그아웃 처리
     user.value = null
   }
 
   const deleteAccount = () => {
-    // TODO: 회원 탈퇴
     user.value = null
   }
 
@@ -77,4 +72,4 @@ export function useAuth() {
   }
 }
 
-export { mockUser }
+export {mockUser}
