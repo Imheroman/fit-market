@@ -132,86 +132,71 @@
                     <p v-if="errors.stock" class="mt-1 text-sm text-red-600">{{ errors.stock }}</p>
                   </div>
 
-                  <!-- 이미지 URL -->
+                  <!-- 상품 이미지 업로드 -->
                   <div class="md:col-span-2">
                     <label for="image" class="block text-sm font-medium text-gray-700 mb-2">
-                      상품 이미지 URL <span class="text-red-500">*</span>
+                      상품 이미지 <span class="text-red-500">*</span>
                     </label>
-                    <input
-                      id="image"
-                      v-model="form.image"
-                      type="text"
-                      placeholder="/product-image.png"
-                      class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                      :class="errors.image ? 'border-red-300' : 'border-gray-300'"
-                    />
-                    <p v-if="errors.image" class="mt-1 text-sm text-red-600">{{ errors.image }}</p>
+                    <div class="flex items-center gap-4">
+                      <label class="flex-1 flex items-center justify-center px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors"
+                        :class="errors.imageFile ? 'border-red-300 bg-red-50' : form.imageFile ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-green-400 hover:bg-green-50'"
+                      >
+                        <input
+                          id="image"
+                          type="file"
+                          accept="image/*"
+                          class="hidden"
+                          @change="handleImageChange"
+                        />
+                        <div class="text-center">
+                          <Upload class="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                          <p class="text-sm text-gray-600">
+                            {{ form.imageFile ? form.imageFile.name : '이미지를 선택하거나 드래그하세요' }}
+                          </p>
+                          <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF (최대 5MB)</p>
+                        </div>
+                      </label>
+                      <div v-if="imagePreview" class="w-24 h-24 border border-gray-200 rounded-lg overflow-hidden">
+                        <img :src="imagePreview" alt="미리보기" class="w-full h-full object-cover" />
+                      </div>
+                    </div>
+                    <p v-if="errors.imageFile" class="mt-1 text-sm text-red-600">{{ errors.imageFile }}</p>
                   </div>
                 </div>
 
-                <!-- 영양 정보 -->
-                <div class="pt-4">
-                  <h3 class="text-lg font-semibold text-gray-900 mb-4">영양 정보</h3>
-                  <div class="grid md:grid-cols-4 gap-4">
-                    <div>
-                      <label for="calories" class="block text-sm font-medium text-gray-700 mb-2">
-                        칼로리 (kcal) <span class="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="calories"
-                        v-model="form.calories"
-                        type="number"
-                        placeholder="320"
-                        class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        :class="errors.calories ? 'border-red-300' : 'border-gray-300'"
-                      />
-                      <p v-if="errors.calories" class="mt-1 text-sm text-red-600">{{ errors.calories }}</p>
+                <!-- 중량 입력 -->
+                <div class="pt-4 border-t border-gray-200">
+                  <div class="flex items-start gap-3 mb-4">
+                    <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                      </svg>
                     </div>
+                    <div class="flex-1">
+                      <h3 class="text-lg font-semibold text-gray-900 mb-1">AI 기반 영양정보 자동 계산</h3>
+                      <p class="text-sm text-gray-600">
+                        상품명과 설명을 기반으로 AI가 식품 DB를 자동으로 매칭해서 영양정보를 계산해요.
+                      </p>
+                    </div>
+                  </div>
 
-                    <div>
-                      <label for="protein" class="block text-sm font-medium text-gray-700 mb-2">
-                        단백질 (g) <span class="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="protein"
-                        v-model="form.protein"
-                        type="number"
-                        placeholder="18"
-                        class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        :class="errors.protein ? 'border-red-300' : 'border-gray-300'"
-                      />
-                      <p v-if="errors.protein" class="mt-1 text-sm text-red-600">{{ errors.protein }}</p>
-                    </div>
-
-                    <div>
-                      <label for="carbs" class="block text-sm font-medium text-gray-700 mb-2">
-                        탄수화물 (g) <span class="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="carbs"
-                        v-model="form.carbs"
-                        type="number"
-                        placeholder="35"
-                        class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        :class="errors.carbs ? 'border-red-300' : 'border-gray-300'"
-                      />
-                      <p v-if="errors.carbs" class="mt-1 text-sm text-red-600">{{ errors.carbs }}</p>
-                    </div>
-
-                    <div>
-                      <label for="fat" class="block text-sm font-medium text-gray-700 mb-2">
-                        지방 (g) <span class="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="fat"
-                        v-model="form.fat"
-                        type="number"
-                        placeholder="12"
-                        class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        :class="errors.fat ? 'border-red-300' : 'border-gray-300'"
-                      />
-                      <p v-if="errors.fat" class="mt-1 text-sm text-red-600">{{ errors.fat }}</p>
-                    </div>
+                  <div class="max-w-md">
+                    <label for="weight" class="block text-sm font-medium text-gray-700 mb-2">
+                      1회 제공량 중량 (g) <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="weight"
+                      v-model="form.weight"
+                      type="number"
+                      placeholder="350"
+                      min="1"
+                      class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      :class="errors.weight ? 'border-red-300' : 'border-gray-300'"
+                    />
+                    <p v-if="errors.weight" class="mt-1 text-sm text-red-600">{{ errors.weight }}</p>
+                    <p class="text-xs text-gray-500 mt-1">
+                      예: 샐러드 도시락 350g, 닭가슴살 150g
+                    </p>
                   </div>
                 </div>
 
@@ -344,14 +329,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { CheckCircle2, AlertCircle, Loader2, Package } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
+import { CheckCircle2, AlertCircle, Loader2, Package, Upload } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import { useSellerProducts, PRODUCT_CATEGORIES } from '@/composables/useSellerProducts'
 
 const activeTab = ref('register')
 const categories = PRODUCT_CATEGORIES
+const imagePreview = ref(null)
 
 const {
   form,
@@ -367,9 +353,31 @@ const {
   resetForm,
 } = useSellerProducts()
 
+const handleImageChange = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  // 파일 크기 체크 (5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    errors.imageFile = '이미지 크기는 5MB 이하여야 합니다.'
+    return
+  }
+
+  form.imageFile = file
+  errors.imageFile = ''
+
+  // 이미지 미리보기
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    imagePreview.value = e.target.result
+  }
+  reader.readAsDataURL(file)
+}
+
 const handleSubmit = async () => {
   const success = await registerProduct()
   if (success) {
+    imagePreview.value = null
     setTimeout(() => {
       activeTab.value = 'list'
     }, 1500)
@@ -379,6 +387,7 @@ const handleSubmit = async () => {
 const handleReset = () => {
   if (confirm('입력한 내용을 모두 초기화하시겠습니까?')) {
     resetForm()
+    imagePreview.value = null
   }
 }
 
