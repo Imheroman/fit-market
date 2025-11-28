@@ -15,11 +15,10 @@ logging:
     com.ssafy.fitmarket_be: trace
 
 mybatis:
-  type-aliases-package: com.ssafy.fitmarket_be.dto
+  type-aliases-package: com.ssafy.fitmarket_be
   mapper-locations: classpath:/mappers/**/*.xml
 
-
-token:
+jwt:
   access-expiration-time: 43200000
   refresh-expiration-time: 43200000
-  secret: ssafyprojectexercise1226gogo
+  secret: ssafyprojectexercise1226gogo2112512621

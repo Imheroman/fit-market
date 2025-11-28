@@ -36,8 +36,8 @@ export function useLoginForm() {
       isValid = false
     }
 
-    if (!form.password.trim() || form.password.length < 8) {
-      errors.password = '비밀번호는 8자 이상 입력해주세요.'
+    if (!form.password.trim()) {
+      errors.password = '비밀번호를 입력해주세요.'
       isValid = false
     }
 
