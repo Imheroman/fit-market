@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.fitmarket_be.user.repository.UserRepository">
+
+  <select id="findByEmail" resultType="Users">
+    SELECT * FROM users
+    where email = #{email}
+  </select>
+
+  <insert id="save" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO users ( name, email, password, phone )
+    VALUES ( #{name}, #{email}, #{password}, #{phone} )
+  </insert>
+</mapper>

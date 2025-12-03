@@ -1,0 +1,24 @@
+server:
+  servlet:
+    context-path: /api
+  port: 8080
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/fitmarket?serverTimezone=UTC
+    username: ssafy
+    password: ssafy
+
+logging:
+  level:
+    com.ssafy.fitmarket_be: trace
+
+mybatis:
+  type-aliases-package: com.ssafy.fitmarket_be
+  mapper-locations: classpath:/mappers/**/*.xml
+
+jwt:
+  access-expiration-time: 43200000
+  refresh-expiration-time: 43200000
+  secret: ssafyprojectexercise1226gogo2112512621
