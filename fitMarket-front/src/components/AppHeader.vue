@@ -54,16 +54,18 @@
 
 <script setup>
 import { Leaf } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
 import { useCart } from '@/composables/useCart'
 import { useAuth } from '@/composables/useAuth'
 import AppHeaderLoggedInActions from '@/components/header/AppHeaderLoggedInActions.vue'
 import AppHeaderLoggedOutActions from '@/components/header/AppHeaderLoggedOutActions.vue'
 
+const router = useRouter()
 const { cartCount } = useCart()
 const { isAuthenticated, userName, isSeller, isAdmin, login, logout } = useAuth()
 
 const handleLogin = () => {
-  login()
+  router.push({ name: 'login' })
 }
 
 const handleLogout = () => {
