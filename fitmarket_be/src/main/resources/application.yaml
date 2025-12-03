@@ -1,0 +1,17 @@
+server:
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: fitmarket
+  profiles:
+    active: dev
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss} [%level] %c{36} %m%n"
+
+#mybatis:
+#  type-aliases-package: com.ssafy.fitmarket_be.dto
+#  mapper-locations: classpath:/mappers/**/*.xml

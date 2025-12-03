@@ -94,8 +94,12 @@ export function useRegisterForm() {
     try {
       const { email, password, name, phone } = form
       const createdUser = await registerUser({ email, password, name, phone })
+      const safeEmail = createdUser?.email ?? email.trim()
       successMessage.value = '회원가입이 완료되었어요.'
-      return createdUser
+      return {
+        ...createdUser,
+        email: safeEmail,
+      }
     } catch (error) {
       console.error(error)
       serverError.value = error.message ?? '회원가입에 실패했어요. 잠시 후 다시 시도해주세요.'
