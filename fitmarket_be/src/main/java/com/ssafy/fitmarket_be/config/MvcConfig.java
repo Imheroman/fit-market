@@ -3,7 +3,6 @@ package com.ssafy.fitmarket_be.config;
 import static org.springframework.web.servlet.function.RouterFunctions.route;
 import static org.springframework.web.servlet.function.ServerResponse.ok;
 
-import com.ssafy.fitmarket_be.interceptor.LoggingInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,26 +11,11 @@ import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
 
 /**
- * interceptor 등록을 위한 configurer
+ * 전반적인 설정을 담당하는 config
  */
 @Configuration
 @RequiredArgsConstructor
 public class MvcConfig implements WebMvcConfigurer {
-  private final LoggingInterceptor loggingInterceptor;
-
-  // 그냥, index page 확인용
-  @Bean
-  public RouterFunction<ServerResponse> helloRouter() {
-    return route()
-        .GET("/", request -> ok().body("테스트 성공: 인덱스 페이지입니다!"))
-        .build();
-  }
-
-  @Override
-  public void addInterceptors(InterceptorRegistry registry) {
-    registry.addInterceptor(loggingInterceptor);
-  }
-
   /**
    * cors 허용
    *

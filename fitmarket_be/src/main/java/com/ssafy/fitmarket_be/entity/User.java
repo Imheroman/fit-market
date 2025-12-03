@@ -28,4 +28,13 @@ public class User {
   private LocalDateTime createdDate;
   private LocalDateTime modifiedDate;
   private LocalDateTime deletedDate;
+
+  public static User create(String name, String email, String encodedPassword, String phone) {
+    return User.builder()
+        .name(name)
+        .email(email)
+        .password(encodedPassword)
+        .phone(phone)
+        .build();
+  }
 }

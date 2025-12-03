@@ -7,4 +7,6 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface UserRepository {
   Optional<User> findByEmail(String email);
+
+  int save(User user);
 }

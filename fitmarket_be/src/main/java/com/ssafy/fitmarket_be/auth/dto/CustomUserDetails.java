@@ -11,12 +11,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
   private final Long id;
+  private final String name;
   private final String email;
   private final String password;
   private final Collection<? extends GrantedAuthority> authorities;
 
   public CustomUserDetails(User user) {
     this.id = user.getId();
+    this.name = user.getName();
     this.email = user.getEmail();
     this.password = user.getPassword();
     this.authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
@@ -25,6 +27,10 @@ public class CustomUserDetails implements UserDetails {
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     return this.authorities;
+  }
+
+  public String getName() {
+    return this.name;
   }
 
   @Override
