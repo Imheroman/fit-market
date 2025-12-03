@@ -2,7 +2,6 @@ package com.ssafy.fitmarket_be.auth.config;
 
 import com.ssafy.fitmarket_be.auth.filter.CustomAuthenticationFilter;
 import com.ssafy.fitmarket_be.auth.filter.CustomLogoutFilter;
-import com.ssafy.fitmarket_be.auth.filter.LoginFilter;
 import com.ssafy.fitmarket_be.auth.jwt.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -48,13 +47,12 @@ public class SecurityConfig {
         .formLogin(AbstractHttpConfigurer::disable)  // form login disable ( 커스텀 필터 쓰므로 불필요)
         .httpBasic(AbstractHttpConfigurer::disable)  // http basic authentication disable
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil), UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(new CustomAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(new CustomLogoutFilter(), LogoutFilter.class);
 
     http
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/login", "/logout", "/public/**", "/users/signup")
+            .requestMatchers("/auth/login", "/logout", "/public/**", "/users/signup")
             .permitAll()
             .anyRequest().authenticated()
         );

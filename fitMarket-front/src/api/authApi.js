@@ -1,5 +1,3 @@
-const mockDelay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms))
-
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const API_BASE_URL = 'http://localhost:8080/api'
 const jsonHeaders = {
@@ -22,28 +20,6 @@ const formatPhoneNumber = (value) => {
   return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`
 }
 
-const normalizeEmail = (email) => email.trim().toLowerCase()
-
-const sanitizeUser = (user) => {
-  const { password, ...rest } = user
-  return rest
-}
-
-const seedUsers = [
-  {
-    id: 1,
-    email: 'kim.youngwoong@example.com',
-    password: 'password123',
-    name: '김영웅',
-    phone: '010-1234-5678',
-    role: 'USER',
-    createdAt: '2024-01-15T09:00:00+09:00',
-    updatedAt: '2024-03-20T09:00:00+09:00',
-  },
-]
-
-const users = [...seedUsers]
-
 export async function loginUser(payload) {
   if (!payload) {
     throw new Error('로그인 정보를 전달받지 못했어요.')
@@ -60,13 +36,13 @@ export async function loginUser(payload) {
   }
 
   const body = JSON.stringify({
-    username: email.trim(),
+    email: email.trim(),
     password,
   })
 
   let response;
   try {
-    response = await fetch(`${API_BASE_URL}/login`, {
+    response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: jsonHeaders,
       body,
@@ -93,15 +69,15 @@ export async function loginUser(payload) {
 }
 
 export async function registerUser(payload) {
-  await mockDelay()
-
   if (!payload) {
     throw new Error('회원가입 정보를 확인할 수 없어요.')
   }
 
   const { email, password, name, phone } = payload
+  const trimmedEmail = email?.trim() ?? ''
+  const trimmedName = name?.trim() ?? ''
 
-  if (!email?.trim() || !emailPattern.test(email)) {
+  if (!trimmedEmail || !emailPattern.test(trimmedEmail)) {
     throw new Error('올바른 이메일을 입력해주세요.')
   }
 
@@ -109,7 +85,7 @@ export async function registerUser(payload) {
     throw new Error('비밀번호를 입력해주세요.')
   }
 
-  if (!name?.trim()) {
+  if (!trimmedName) {
     throw new Error('이름을 입력해주세요.')
   }
 
@@ -118,24 +94,42 @@ export async function registerUser(payload) {
     throw new Error('휴대폰 번호를 정확하게 입력해주세요.')
   }
 
-  const duplicated = users.some((user) => normalizeEmail(user.email) === normalizeEmail(email))
-  if (duplicated) {
-    throw new Error('이미 가입된 이메일이에요.')
-  }
-
-  const newUser = {
-    id: Date.now(),
-    email: email.trim(),
+  const body = JSON.stringify({
+    email: trimmedEmail,
     password,
-    name: name.trim(),
-    phone: formatPhoneNumber(phone),
-    role: 'USER',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    name: trimmedName,
+    phone: normalizedPhone,
+  })
+
+  let response
+  try {
+    response = await fetch(`${API_BASE_URL}/users/signup`, {
+      method: 'POST',
+      headers: jsonHeaders,
+      body,
+      credentials: 'include',
+    })
+  } catch (error) {
+    console.error('Network error while registering', error)
+    throw new Error('회원가입 서버에 연결되지 않았어요. 잠시 후 다시 시도해주세요.')
   }
 
-  users.push(newUser)
-  return sanitizeUser(newUser)
+  const responsePayload = await parseResponseBody(response)
+
+  if (!response.ok) {
+    const errorMessage =
+      responsePayload?.message ?? responsePayload?.error ?? '회원가입에 실패했어요. 입력한 정보를 다시 확인해주세요.'
+    throw new Error(errorMessage)
+  }
+
+  const createdUser =
+    responsePayload?.data ?? responsePayload?.result ?? responsePayload ?? {
+      email: trimmedEmail,
+      name: trimmedName,
+      phone: formatPhoneNumber(phone),
+    }
+
+  return createdUser
 }
 
 export { formatPhoneNumber }

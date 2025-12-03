@@ -24,10 +24,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
       FilterChain filterChain) throws ServletException, IOException {
-    System.out.println("========================================");
-    System.out.println("Method: " + request.getMethod()); // GET, POST, OPTIONS 등
-    System.out.println("URI   : " + request.getRequestURI()); // /api/login
-    System.out.println("========================================");
 
     if (isPermitRequest(request.getRequestURI())) {
       System.out.println("if -> pass");
@@ -53,6 +49,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
   }
 
   private static boolean isPermitRequest(String path) {
-    return path.startsWith("/api/login") || path.startsWith("/api/logout");
+    return path.startsWith("/api/auth/login") || path.startsWith("/api/logout") ||
+        path.startsWith("/api/users/signup");
   }
 }
