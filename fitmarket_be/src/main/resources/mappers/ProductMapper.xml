@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.fitmarket_be.product.repository.ProductMapper">
+
+    <!-- 상품 목록 조회 (페이징, 최신순 정렬) -->
+    <select id="selectProducts" resultType="com.ssafy.fitmarket_be.product.dto.ProductListResponse$ProductItem">
+        SELECT
+            p.id,
+            p.name,
+            p.description,
+            p.price,
+            p.stock,
+            p.image_url AS imageUrl,
+            p.product_category_id AS categoryId,
+            pc.name AS categoryName,
+            f.calories,
+            f.protein,
+            f.carbs,
+            f.fat,
+            p.created_date AS createdDate
+        FROM products p
+        LEFT JOIN product_categories pc ON p.product_category_id = pc.id
+        LEFT JOIN food f ON p.food_id = f.id
+        WHERE p.deleted_date IS NULL
+        ORDER BY p.created_date DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <!-- 전체 상품 개수 조회 (삭제되지 않은 상품만) -->
+    <select id="countProducts" resultType="Long">
+        SELECT COUNT(*)
+        FROM products
+        WHERE deleted_date IS NULL
+    </select>
+
+</mapper>
