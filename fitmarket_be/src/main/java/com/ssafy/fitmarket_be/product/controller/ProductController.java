@@ -1,6 +1,7 @@
 package com.ssafy.fitmarket_be.product.controller;
 
-import com.ssafy.fitmarket_be.product.dto.ProductListResponse;
+import com.ssafy.fitmarket_be.global.dto.PageResponse;
+import com.ssafy.fitmarket_be.product.dto.ProductResponse;
 import com.ssafy.fitmarket_be.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +18,11 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping
-    public ResponseEntity<ProductListResponse> getProducts(
-        @RequestParam(defaultValue = "0") Integer page,
+    public ResponseEntity<PageResponse<ProductResponse>> getProducts(
+        @RequestParam(defaultValue = "1") Integer page,
         @RequestParam(defaultValue = "20") Integer size
     ) {
-        ProductListResponse response = productService.getProducts(page, size);
+        PageResponse<ProductResponse> response = productService.getProducts(page, size);
         return ResponseEntity.ok(response);
     }
 }

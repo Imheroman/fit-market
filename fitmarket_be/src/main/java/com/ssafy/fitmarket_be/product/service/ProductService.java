@@ -1,8 +1,8 @@
 package com.ssafy.fitmarket_be.product.service;
 
-import com.ssafy.fitmarket_be.product.dto.ProductListResponse;
-import com.ssafy.fitmarket_be.product.dto.ProductListResponse.Pagination;
-import com.ssafy.fitmarket_be.product.dto.ProductListResponse.ProductItem;
+import com.ssafy.fitmarket_be.global.dto.PageResponse;
+import com.ssafy.fitmarket_be.product.domain.Product;
+import com.ssafy.fitmarket_be.product.dto.ProductResponse;
 import com.ssafy.fitmarket_be.product.repository.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,31 +15,30 @@ public class ProductService {
 
     private final ProductMapper productMapper;
 
-    public ProductListResponse getProducts(Integer page, Integer size) {
-        // OFFSET 계산: page는 0부터 시작
-        int offset = page * size;
+    public PageResponse<ProductResponse> getProducts(Integer page, Integer size) {
+        int safePage = (page == null || page < 1) ? 1 : page;
+        int safeSize = (size == null || size < 1) ? 20 : size;
 
-        // 상품 목록 조회
-        List<ProductItem> items = productMapper.selectProducts(size, offset);
+        int offset = (safePage - 1) * safeSize;
 
+        List<Product> products = productMapper.selectProducts(safeSize, offset);
+        List<ProductResponse> content = products.stream()
+            .map(ProductResponse::from)
+            .toList();
 
-        // 전체 상품 개수 조회
-        Long totalElements = productMapper.countProducts();
+        long totalElements = productMapper.countProducts();
+        int totalPages = (int) Math.ceil((double) totalElements / safeSize);
+        boolean hasNext = safePage < totalPages;
+        boolean hasPrevious = safePage > 1;
 
-        // 페이지네이션 메타 정보 계산
-        int totalPages = (int) Math.ceil((double) totalElements / size);
-        boolean hasNext = (page + 1) < totalPages;
-        boolean hasPrevious = page > 0;
-
-        Pagination pagination = new Pagination(
-            page,
-            totalPages,
+        return new PageResponse<>(
+            content,
+            safePage,
+            safeSize,
             totalElements,
-            size,
+            totalPages,
             hasNext,
             hasPrevious
         );
-
-        return new ProductListResponse(items, pagination);
     }
 }
