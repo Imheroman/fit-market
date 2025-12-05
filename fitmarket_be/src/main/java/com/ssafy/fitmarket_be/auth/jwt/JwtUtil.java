@@ -2,6 +2,7 @@ package com.ssafy.fitmarket_be.auth.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -24,7 +25,7 @@ public class JwtUtil {
   private final SecretKey key;
 
   public JwtUtil(@Value("${jwt.secret}") String secret) {
-    this.key = Keys.hmacShaKeyFor(secret.getBytes());
+    this.key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
   }
 
   public String create(String username, Collection<? extends GrantedAuthority> authorities) {
@@ -32,9 +33,9 @@ public class JwtUtil {
         .map(GrantedAuthority::getAuthority)
         .collect(Collectors.joining(","));
 
-    return Jwts.builder()
-        .header().add("typ", "JWT") // 헤더: 타입 지정 (필수적이진 않음)
+    return Jwts.builder().header().add("typ", "JWT") // 헤더: 타입 지정 (필수적이진 않음)
         .and()
+        .subject(username)
         .claim(USER_NAME, username) // email
         .claim(ROLE, role)         // role
         .issuedAt(new Date(System.currentTimeMillis())) // 발행 시간
@@ -50,7 +51,7 @@ public class JwtUtil {
    * @return
    */
   public String getUsername(String token) {
-    return parseClaims(token).get(USER_NAME, String.class);
+    return parseClaims(token).getSubject();
   }
 
   /**
