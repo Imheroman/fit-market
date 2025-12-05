@@ -15,11 +15,35 @@
     VALUES ( #{name}, #{email}, #{password}, #{phone} )
   </insert>
 
-  <delete id="delete">
+  <update id="update">
     UPDATE users
-    SET deleted_date = NOW()
-    WHERE email = #{email}
-  </delete>
+    <set>
+      <choose>
+        <when test="column == 'name'">
+          name = #{value}
+        </when>
+        <when test="column == 'phone'">
+          phone = #{value}
+        </when>
+        <when test="column == 'password'">
+          password = #{value}
+        </when>
+        <otherwise>
+        </otherwise>
+      </choose>
+    </set>
+    <where>
+      email = #{email}
+    </where>
+  </update>
+
+  <update id="delete">
+    UPDATE users
+    <set>deleted_date = NOW()</set>
+    <where>
+      email = #{email}
+    </where>
+  </update>
 
   <resultMap id="userMap" type="Users">
     <id property="id" column="id"/>
