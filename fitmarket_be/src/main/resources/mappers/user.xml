@@ -5,7 +5,7 @@
 
 <mapper namespace="com.ssafy.fitmarket_be.user.repository.UserRepository">
 
-  <select id="findByEmail" resultType="Users">
+  <select id="findByEmail" resultMap="userMap">
     SELECT * FROM users
     where email = #{email}
   </select>
@@ -14,4 +14,24 @@
     INSERT INTO users ( name, email, password, phone )
     VALUES ( #{name}, #{email}, #{password}, #{phone} )
   </insert>
+
+  <delete id="delete">
+    UPDATE users
+    SET deleted_date = NOW()
+    WHERE email = #{email}
+  </delete>
+
+  <resultMap id="userMap" type="Users">
+    <id property="id" column="id"/>
+
+    <result property="name" column="name"/>
+    <result property="email" column="email"/>
+    <result property="password" column="password"/>
+    <result property="phone" column="phone"/>
+    <result property="role" column="role"/>
+
+    <result property="createdDate" column="created_date"/>
+    <result property="modifiedDate" column="modified_date"/>
+    <result property="deletedDate" column="deleted_date"/>
+  </resultMap>
 </mapper>
