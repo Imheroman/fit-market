@@ -50,4 +50,54 @@
         WHERE deleted_date IS NULL
     </select>
 
+    <!-- 상품 ID로 조회 -->
+    <select id="selectProductById" resultMap="ProductResultMap">
+        SELECT
+            p.id,
+            p.name,
+            p.product_category_id AS category_id,
+            pc.name AS category_name,
+            p.price,
+            p.image_url,
+            0.0 AS rating,
+            0 AS review_count,
+            COALESCE(CAST(f.calories AS SIGNED), 0) AS calories,
+            COALESCE(CAST(f.protein AS SIGNED), 0) AS protein,
+            COALESCE(CAST(f.carbs AS SIGNED), 0) AS carbs,
+            COALESCE(CAST(f.fat AS SIGNED), 0) AS fat
+        FROM products p
+        LEFT JOIN product_categories pc ON p.product_category_id = pc.id
+        LEFT JOIN food f ON p.food_id = f.id
+        WHERE p.id = #{id}
+          AND p.deleted_date IS NULL
+    </select>
+
+    <!-- 상품 등록 -->
+    <insert id="insertProduct">
+        INSERT INTO products (
+            user_id,
+            product_category_id,
+            name,
+            description,
+            price,
+            stock,
+            image_url,
+            food_id
+        ) VALUES (
+            #{userId},
+            #{categoryId},
+            #{name},
+            #{description},
+            #{price},
+            #{stock},
+            #{imageUrl},
+            #{foodId}
+        )
+    </insert>
+
+    <!-- 마지막 삽입 ID 조회 -->
+    <select id="selectLastInsertId" resultType="Long">
+        SELECT LAST_INSERT_ID()
+    </select>
+
 </mapper>
