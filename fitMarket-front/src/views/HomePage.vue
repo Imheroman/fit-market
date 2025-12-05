@@ -88,7 +88,9 @@
         </select>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-if="isLoading" class="text-center text-gray-500 py-12">상품을 불러오는 중이에요...</div>
+      <div v-else-if="errorMessage" class="text-center text-red-600 py-12">{{ errorMessage }}</div>
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <ProductCard
           v-for="product in products"
           :key="product.id"
@@ -148,7 +150,7 @@ import ProductCard from '@/components/ProductCard.vue'
 import { useProducts } from '@/composables/useProducts'
 import { useCart } from '@/composables/useCart'
 
-const { products, toggleFavorite } = useProducts()
+const { products, isLoading, errorMessage, toggleFavorite } = useProducts()
 const { addToCart } = useCart()
 
 const searchQuery = ref('')
@@ -163,18 +165,22 @@ const categories = [
 
 const handleAddToCart = (productId) => {
   const product = products.value.find(p => p.id === productId)
-  if (product) {
-    addToCart({
-      id: product.id,
-      name: product.name,
-      category: product.category,
-      price: parseInt(product.price.replace(/[^0-9]/g, '')),
-      image: product.image,
-      calories: product.calories,
-      protein: product.protein,
-      carbs: product.carbs,
-      fat: product.fat,
-    })
-  }
+  if (!product) return
+
+  const priceNumber = typeof product.price === 'number'
+    ? product.price
+    : parseInt(String(product.price).replace(/[^0-9]/g, ''), 10)
+
+  addToCart({
+    id: product.id,
+    name: product.name,
+    category: product.category,
+    price: priceNumber,
+    image: product.image,
+    calories: product.calories,
+    protein: product.protein,
+    carbs: product.carbs,
+    fat: product.fat,
+  })
 }
 </script>
