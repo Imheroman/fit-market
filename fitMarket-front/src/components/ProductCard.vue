@@ -45,7 +45,7 @@
       </div>
 
       <div class="flex items-center justify-between">
-        <span class="text-xl font-bold text-green-600">{{ product.price }}</span>
+        <span class="text-xl font-bold text-green-600">{{ displayPrice }}</span>
         <button
           @click.stop="handleAddToCart"
           class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
@@ -59,8 +59,9 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Heart, Star, ShoppingCart } from 'lucide-vue-next'
+import { Star, ShoppingCart } from 'lucide-vue-next'
 
 const router = useRouter()
 
@@ -72,6 +73,13 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['toggle-favorite', 'add-to-cart'])
+
+const displayPrice = computed(() => {
+  if (typeof props.product.price === 'number') {
+    return `${props.product.price.toLocaleString()}원`
+  }
+  return props.product.price
+})
 
 const navigateToDetail = () => {
   router.push({ name: 'product-detail', params: { id: props.product.id } })

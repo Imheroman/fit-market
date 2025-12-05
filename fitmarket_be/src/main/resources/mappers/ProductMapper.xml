@@ -3,22 +3,38 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ssafy.fitmarket_be.product.repository.ProductMapper">
 
+    <resultMap id="ProductResultMap" type="com.ssafy.fitmarket_be.product.domain.Product">
+        <constructor>
+            <idArg column="id" javaType="long"/>
+            <arg column="name" javaType="string"/>
+            <arg column="category_id" javaType="long"/>
+            <arg column="category_name" javaType="string"/>
+            <arg column="price" javaType="long"/>
+            <arg column="image_url" javaType="string"/>
+            <arg column="rating" javaType="double"/>
+            <arg column="review_count" javaType="int"/>
+            <arg column="calories" javaType="int"/>
+            <arg column="protein" javaType="int"/>
+            <arg column="carbs" javaType="int"/>
+            <arg column="fat" javaType="int"/>
+        </constructor>
+    </resultMap>
+
     <!-- 상품 목록 조회 (페이징, 최신순 정렬) -->
-    <select id="selectProducts" resultType="com.ssafy.fitmarket_be.product.dto.ProductListResponse$ProductItem">
+    <select id="selectProducts" resultMap="ProductResultMap">
         SELECT
             p.id,
             p.name,
-            p.description,
             p.price,
-            p.stock,
-            p.image_url AS imageUrl,
-            p.product_category_id AS categoryId,
-            pc.name AS categoryName,
-            f.calories,
-            f.protein,
-            f.carbs,
-            f.fat,
-            p.created_date AS createdDate
+            p.image_url,
+            p.product_category_id AS category_id,
+            pc.name AS category_name,
+            0.0 AS rating,
+            0 AS review_count,
+            COALESCE(CAST(f.calories AS SIGNED), 0) AS calories,
+            COALESCE(CAST(f.protein AS SIGNED), 0) AS protein,
+            COALESCE(CAST(f.carbs AS SIGNED), 0) AS carbs,
+            COALESCE(CAST(f.fat AS SIGNED), 0) AS fat
         FROM products p
         LEFT JOIN product_categories pc ON p.product_category_id = pc.id
         LEFT JOIN food f ON p.food_id = f.id
@@ -32,6 +48,56 @@
         SELECT COUNT(*)
         FROM products
         WHERE deleted_date IS NULL
+    </select>
+
+    <!-- 상품 ID로 조회 -->
+    <select id="selectProductById" resultMap="ProductResultMap">
+        SELECT
+            p.id,
+            p.name,
+            p.product_category_id AS category_id,
+            pc.name AS category_name,
+            p.price,
+            p.image_url,
+            0.0 AS rating,
+            0 AS review_count,
+            COALESCE(CAST(f.calories AS SIGNED), 0) AS calories,
+            COALESCE(CAST(f.protein AS SIGNED), 0) AS protein,
+            COALESCE(CAST(f.carbs AS SIGNED), 0) AS carbs,
+            COALESCE(CAST(f.fat AS SIGNED), 0) AS fat
+        FROM products p
+        LEFT JOIN product_categories pc ON p.product_category_id = pc.id
+        LEFT JOIN food f ON p.food_id = f.id
+        WHERE p.id = #{id}
+          AND p.deleted_date IS NULL
+    </select>
+
+    <!-- 상품 등록 -->
+    <insert id="insertProduct">
+        INSERT INTO products (
+            user_id,
+            product_category_id,
+            name,
+            description,
+            price,
+            stock,
+            image_url,
+            food_id
+        ) VALUES (
+            #{userId},
+            #{categoryId},
+            #{name},
+            #{description},
+            #{price},
+            #{stock},
+            #{imageUrl},
+            #{foodId}
+        )
+    </insert>
+
+    <!-- 마지막 삽입 ID 조회 -->
+    <select id="selectLastInsertId" resultType="Long">
+        SELECT LAST_INSERT_ID()
     </select>
 
 </mapper>
