@@ -21,4 +21,4 @@ mybatis:
 jwt:
   access-expiration-time: 43200000
   refresh-expiration-time: 43200000
-  secret: ssafyprojectexercise1226gogo2112512621
+  secret: YXNkc2FmZGFzZmFzZGZhZHNmYWRzZmFzZGFzZmFzZGYxMjM=

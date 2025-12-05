@@ -39,13 +39,14 @@ public class AuthController {
     UsernamePasswordAuthenticationToken authToken =
         new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword());
 
-    Authentication authentication = authenticationManager.authenticate(authToken);
+    Authentication authentication = this.authenticationManager.authenticate(authToken);
     CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
 
-    String token = jwtUtil.create(user.getUsername(), user.getAuthorities());
+    String token = this.jwtUtil.create(user.getUsername(), user.getAuthorities());
     Cookie cookie = CookieUtils.create("token", token);
     response.addCookie(cookie);
 
+    log.trace("login success email: {}, token: {}", request.getEmail(), token);
 //    int cartCount = cartService.countByUserId(user.getId());
     int cartCount = 0;
     return ResponseEntity.ok(new LoginResponse(user.getName(), cartCount));                                                // Changed

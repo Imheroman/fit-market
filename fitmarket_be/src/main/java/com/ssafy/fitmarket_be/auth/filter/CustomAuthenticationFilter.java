@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
@@ -26,12 +25,10 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
       FilterChain filterChain) throws ServletException, IOException {
 
     if (isPermitRequest(request.getRequestURI())) {
-      System.out.println("if -> pass");
       filterChain.doFilter(request, response);
       return;
     }
 
-    System.out.println("else");
     String token = CookieUtils.find(request, "token");
 
     if (!(token == null || this.jwtUtil.isExpired(token))) {
@@ -39,10 +36,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
       String role = this.jwtUtil.getRole(token);
 
       User user = new User(username, "", Collections.singleton(new SimpleGrantedAuthority(role)));
-      Authentication auth = new UsernamePasswordAuthenticationToken(user, null,
-          user.getAuthorities());
-
-      SecurityContextHolder.getContext().setAuthentication(auth);
+      SecurityContextHolder.getContext().setAuthentication(
+          new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
     }
 
     filterChain.doFilter(request, response);
