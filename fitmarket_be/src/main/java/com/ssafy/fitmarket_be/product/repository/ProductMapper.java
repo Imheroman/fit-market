@@ -47,7 +47,7 @@ public interface ProductMapper {
     Long selectLastInsertId();
 
     /**
-     * 판매자의 상품 목록 조회 (email).
+     * 판매자의 상품 목록 조회 (userId).
      */
-    List<Product> selectProductsByEmail(@Param("email") String email);
+    List<Product> selectProductsByUserId(@Param("userId") Long userId);
 }

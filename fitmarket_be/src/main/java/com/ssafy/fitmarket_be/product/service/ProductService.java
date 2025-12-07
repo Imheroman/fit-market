@@ -77,10 +77,10 @@ public class ProductService {
     }
 
     /**
-     * 판매자의 상품 목록 조회 (email).
+     * 판매자의 상품 목록 조회 (userId).
      */
-    public List<ProductResponse> getSellerProductsByEmail(String email) {
-        List<Product> products = productMapper.selectProductsByEmail(email);
+    public List<ProductResponse> getSellerProducts(Long userId) {
+        List<Product> products = productMapper.selectProductsByUserId(userId);
         return products.stream()
             .map(ProductResponse::from)
             .toList();
