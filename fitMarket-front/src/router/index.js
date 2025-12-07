@@ -4,6 +4,9 @@ import ProductDetailPage from "@/views/ProductDetailPage.vue"
 import CartPage from "@/views/CartPage.vue"
 import MyPage from "@/views/MyPage.vue"
 import UserEditPage from "@/views/UserEditPage.vue"
+import ChangeNamePage from "@/views/account/ChangeNamePage.vue"
+import ChangePhonePage from "@/views/account/ChangePhonePage.vue"
+import ChangePasswordPage from "@/views/account/ChangePasswordPage.vue"
 import OrderCompletePage from "@/views/OrderCompletePage.vue"
 import OrderCheckoutPage from "@/views/OrderCheckoutPage.vue"
 import SellerApplicationPage from "@/views/SellerApplicationPage.vue"
@@ -59,6 +62,21 @@ const router = createRouter({
       path: "/mypage/edit",
       name: "my-page-edit",
       component: UserEditPage,
+    },
+    {
+      path: "/mypage/edit/name",
+      name: "my-page-edit-name",
+      component: ChangeNamePage,
+    },
+    {
+      path: "/mypage/edit/phone",
+      name: "my-page-edit-phone",
+      component: ChangePhonePage,
+    },
+    {
+      path: "/mypage/edit/password",
+      name: "my-page-edit-password",
+      component: ChangePasswordPage,
     },
     {
       path: "/seller/apply",
