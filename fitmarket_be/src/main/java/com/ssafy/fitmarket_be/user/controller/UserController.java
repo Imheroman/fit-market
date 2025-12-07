@@ -1,5 +1,6 @@
 package com.ssafy.fitmarket_be.user.controller;
 
+import com.ssafy.fitmarket_be.auth.dto.CustomUserDetails;
 import com.ssafy.fitmarket_be.user.dto.UserDetailResponseDto;
 import com.ssafy.fitmarket_be.user.dto.UserSignupRequestDto;
 import com.ssafy.fitmarket_be.user.dto.UserUpdateRequestDto;
@@ -26,14 +27,14 @@ public class UserController {
 
   private final UserService userService;
 
-  @GetMapping
-  public ResponseEntity<UserDetailResponseDto> find(
-      @AuthenticationPrincipal UserDetails userDetails) {
-    UserDetailResponseDto user = this.userService.findByEmail(userDetails.getUsername());
+@GetMapping
+public ResponseEntity<UserDetailResponseDto> find(
+    @AuthenticationPrincipal(expression = "id") Long id) {
+  UserDetailResponseDto user = this.userService.findById(id);
 
-    return ResponseEntity.status(HttpStatus.OK)
-        .body(user);
-  }
+  return ResponseEntity.status(HttpStatus.OK)
+      .body(user);
+}
 
   @PostMapping("/signup")
   public ResponseEntity<Void> signup(@RequestBody UserSignupRequestDto requestDto) {
@@ -44,29 +45,29 @@ public class UserController {
   }
 
   @PatchMapping("/name")
-  public ResponseEntity<Void> updateName(@AuthenticationPrincipal UserDetails userDetails,
+  public ResponseEntity<Void> updateName(@AuthenticationPrincipal(expression = "id") Long id,
       @RequestBody UserUpdateRequestDto request) {
-    this.userService.updateName(userDetails.getUsername(), request.getValue());
+    this.userService.updateName(id, request.getValue());
     return ResponseEntity.status(HttpStatus.OK).build();
   }
 
   @PatchMapping("/phone")
-  public ResponseEntity<Void> updatePhone(@AuthenticationPrincipal UserDetails userDetails,
+  public ResponseEntity<Void> updatePhone(@AuthenticationPrincipal(expression = "id") Long id,
       @RequestBody UserUpdateRequestDto request) {
-    this.userService.updatePhone(userDetails.getUsername(), request.getValue());
+    this.userService.updatePhone(id, request.getValue());
     return ResponseEntity.status(HttpStatus.OK).build();
   }
 
   @PatchMapping("/password")
-  public ResponseEntity<Void> updatePassword(@AuthenticationPrincipal UserDetails userDetails,
+  public ResponseEntity<Void> updatePassword(@AuthenticationPrincipal(expression = "id") Long id,
       @RequestBody UserUpdateRequestDto request) {
-    this.userService.updatePassword(userDetails.getUsername(), request.getValue());
+    this.userService.updatePassword(id, request.getValue());
     return ResponseEntity.status(HttpStatus.OK).build();
   }
 
   @DeleteMapping
-  public ResponseEntity<Void> delete(@AuthenticationPrincipal UserDetails userDetails) {
-    this.userService.delete(userDetails.getUsername());
+  public ResponseEntity<Void> delete(@AuthenticationPrincipal(expression = "id") Long id) {
+    this.userService.delete(id);
     return ResponseEntity.status(HttpStatus.OK).build();
   }
 }
