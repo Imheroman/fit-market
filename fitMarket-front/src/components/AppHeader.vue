@@ -2,40 +2,40 @@
   <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-green-100">
     <div class="container mx-auto px-4">
       <div class="flex items-center justify-between h-16">
-        <a href="/" class="flex items-center gap-2">
+        <RouterLink to="/" class="flex items-center gap-2">
           <div class="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl">
             <Leaf class="w-6 h-6 text-white" />
           </div>
           <span class="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
             초록초록
           </span>
-        </a>
+        </RouterLink>
 
         <nav class="hidden md:flex items-center gap-8">
-          <a href="/" class="text-sm font-medium hover:text-green-600 transition-colors">전체상품</a>
-          <a href="#" class="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors">베스트</a>
-          <a href="#" class="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors">신상품</a>
-          <a
+          <RouterLink to="/" class="text-sm font-medium hover:text-green-600 transition-colors">전체상품</RouterLink>
+          <RouterLink to="/products/best" class="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors">베스트</RouterLink>
+          <RouterLink to="/products/new" class="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors">신상품</RouterLink>
+          <RouterLink
             v-if="!isSeller && isAuthenticated"
-            href="/seller/apply"
+            to="/seller/apply"
             class="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors"
           >
             판매자 신청
-          </a>
-          <a
+          </RouterLink>
+          <RouterLink
             v-if="isSeller"
-            href="/seller/products"
+            to="/seller/products"
             class="text-sm font-medium text-green-600 hover:text-green-700 transition-colors font-semibold"
           >
             상품 관리
-          </a>
-          <a
+          </RouterLink>
+          <RouterLink
             v-if="isAdmin"
-            href="/admin/seller-applications"
+            to="/admin/seller-applications"
             class="text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors font-semibold"
           >
             판매자 관리
-          </a>
+          </RouterLink>
         </nav>
 
         <div class="flex items-center gap-3">
