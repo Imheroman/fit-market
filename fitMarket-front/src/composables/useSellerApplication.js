@@ -1,4 +1,5 @@
 import { ref, computed, reactive } from 'vue'
+import { formatPhoneNumber, sanitizePhoneDigits } from '@/utils/phone'
 
 // Mock 판매자 신청 데이터
 const applications = ref([
@@ -58,6 +59,9 @@ export function useSellerApplication() {
   const isSubmitting = ref(false)
   const successMessage = ref('')
   const errorMessage = ref('')
+  const handleContactPhoneInput = (value) => {
+    form.contactPhone = formatPhoneNumber(value)
+  }
 
   const resetErrors = () => {
     Object.keys(errors).forEach((key) => {
@@ -85,9 +89,12 @@ export function useSellerApplication() {
       isValid = false
     }
 
-    const phonePattern = /^010-\d{4}-\d{4}$/
-    if (!form.contactPhone.trim() || !phonePattern.test(form.contactPhone)) {
-      errors.contactPhone = '올바른 연락처를 입력해주세요. (예: 010-1234-5678)'
+    const phoneDigits = sanitizePhoneDigits(form.contactPhone)
+    if (!phoneDigits) {
+      errors.contactPhone = '연락처를 입력해주세요.'
+      isValid = false
+    } else if (phoneDigits.length < 10) {
+      errors.contactPhone = '연락처는 숫자 10~11자리로 입력해주세요. (예: 010-1234-5678)'
       isValid = false
     }
 
@@ -158,6 +165,7 @@ export function useSellerApplication() {
     isSubmitting,
     successMessage,
     errorMessage,
+    handleContactPhoneInput,
     submitApplication,
     resetForm,
   }

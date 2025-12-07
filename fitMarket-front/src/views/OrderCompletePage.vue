@@ -49,16 +49,16 @@
                 :class="canEditAddress ? 'text-green-600 bg-green-50' : 'text-gray-500 bg-gray-100'"
               >
                 <MapPin class="w-4 h-4" />
-                {{ selectedAddress?.label }} {{ canEditAddress ? '수정 가능' : isCancelled ? '배송 중단' : '수정 잠금' }}
+                {{ formattedSelectedAddress?.label }} {{ canEditAddress ? '수정 가능' : isCancelled ? '배송 중단' : '수정 잠금' }}
               </span>
             </div>
 
             <div class="border border-green-100 rounded-2xl p-5 bg-gradient-to-br from-green-50/60 to-white">
               <div class="flex flex-col gap-2">
                 <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">받는 분</p>
-                <p class="text-lg font-bold">{{ selectedAddress?.recipient }} · {{ selectedAddress?.phone }}</p>
-                <p class="text-gray-700">{{ selectedAddress?.addressLine }} {{ selectedAddress?.detailAddress }}</p>
-                <p class="text-sm text-gray-500">요청사항: {{ selectedAddress?.instructions }}</p>
+                <p class="text-lg font-bold">{{ formattedSelectedAddress?.recipient }} · {{ formattedSelectedAddress?.phone }}</p>
+                <p class="text-gray-700">{{ formattedSelectedAddress?.addressLine }} {{ formattedSelectedAddress?.detailAddress }}</p>
+                <p class="text-sm text-gray-500">요청사항: {{ formattedSelectedAddress?.instructions }}</p>
               </div>
             </div>
 
@@ -201,6 +201,7 @@ import AppFooter from '@/components/AppFooter.vue'
 import { useCart } from '@/composables/useCart'
 import { useAddresses } from '@/composables/useAddresses'
 import { useOrderStatus } from '@/composables/useOrderStatus'
+import { formatPhoneNumber } from '@/utils/phone'
 
 const router = useRouter()
 const { cartItems, totalPrice } = useCart()
@@ -210,6 +211,14 @@ const { orderNumber, shippingFee, isCancelled, cancellationFee, canFreeCancel, c
 const totalPayment = computed(() => totalPrice.value + shippingFee)
 
 const canEditAddress = computed(() => canFreeCancel.value && !isCancelled.value)
+
+const formattedSelectedAddress = computed(() => {
+  if (!selectedAddress.value) return null
+  return {
+    ...selectedAddress.value,
+    phone: formatPhoneNumber(selectedAddress.value.phone),
+  }
+})
 
 const handleEditAddress = () => {
   if (!canEditAddress.value) return
