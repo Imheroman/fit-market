@@ -56,3 +56,14 @@ export async function updateProduct(productId, productData) {
 
   return response.json()
 }
+
+export async function deleteProduct(productId) {
+  const response = await fetch(`${BASE_URL}/${productId}`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`상품 삭제 실패: ${error}`)
+  }
+}

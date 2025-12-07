@@ -1,5 +1,10 @@
 import { ref, reactive, computed } from 'vue'
-import { createProduct, fetchSellerProducts, updateProduct as updateProductApi } from '@/api/productsApi'
+import {
+  createProduct,
+  fetchSellerProducts,
+  updateProduct as updateProductApi,
+  deleteProduct as deleteProductApi,
+} from '@/api/productsApi'
 
 export const PRODUCT_CATEGORIES = [
   { value: 'lunchbox', label: '도시락', categoryId: 1 },
@@ -193,15 +198,23 @@ export function useSellerProducts() {
 
   const deleteProduct = async (productId) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 300))
+      isSubmitting.value = true
+      errorMessage.value = ''
+      successMessage.value = ''
+
+      await deleteProductApi(productId)
       const index = sellerProducts.value.findIndex((p) => p.id === productId)
       if (index !== -1) {
         sellerProducts.value.splice(index, 1)
       }
+      successMessage.value = '상품이 삭제되었습니다.'
       return true
     } catch (error) {
       console.error(error)
+      errorMessage.value = error.message || '상품 삭제 중 오류가 발생했습니다.'
       return false
+    } finally {
+      isSubmitting.value = false
     }
   }
 
