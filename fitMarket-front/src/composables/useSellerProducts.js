@@ -1,12 +1,13 @@
 import { ref, reactive, computed } from 'vue'
+import { createProduct } from '@/api/productsApi'
 
 export const PRODUCT_CATEGORIES = [
-  { value: 'lunchbox', label: '도시락' },
-  { value: 'mealkit', label: '밀키트' },
-  { value: 'salad', label: '샐러드' },
-  { value: 'smoothie', label: '스무디' },
-  { value: 'protein', label: '단백질 보충식' },
-  { value: 'snack', label: '건강 간식' },
+  { value: 'lunchbox', label: '도시락', categoryId: 1 },
+  { value: 'mealkit', label: '밀키트', categoryId: 2 },
+  { value: 'salad', label: '샐러드', categoryId: 1 },
+  { value: 'smoothie', label: '스무디', categoryId: 2 },
+  { value: 'protein', label: '단백질 보충식', categoryId: 1 },
+  { value: 'snack', label: '건강 간식', categoryId: 2 },
 ]
 
 const sellerProducts = ref([
@@ -151,34 +152,45 @@ export function useSellerProducts() {
     successMessage.value = ''
 
     try {
-      // 실제로는 FormData로 이미지와 함께 서버에 전송
-      // 백엔드에서 상품명/설명 기반으로 AI가 자동으로 식품 DB 매칭 후 영양정보 계산
-      // const formData = new FormData()
-      // formData.append('name', form.name)
-      // formData.append('category', form.category)
-      // formData.append('price', form.price)
-      // formData.append('description', form.description)
-      // formData.append('stock', form.stock)
-      // formData.append('weight', form.weight)  // AI가 이 중량으로 영양정보 계산
-      // formData.append('image', form.imageFile)
-      // const response = await axios.post('/api/products', formData)
+      // 카테고리 문자열을 백엔드 ID로 변환
+      const selectedCategory = PRODUCT_CATEGORIES.find((cat) => cat.value === form.category)
+      if (!selectedCategory) {
+        throw new Error('올바른 카테고리를 선택해주세요.')
+      }
 
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      // TODO: 실제로는 이미지 파일을 먼저 업로드하고 URL을 받아야 함
+      // 현재는 임시로 이미지 파일명을 imageUrl로 사용
+      const imageUrl = form.imageFile ? form.imageFile.name : '/default-product.png'
 
-      // Mock: 이미지 URL 생성 (실제로는 서버에서 반환)
-      const imageUrl = form.imageFile ? URL.createObjectURL(form.imageFile) : '/default-product.png'
-
-      const newProduct = {
-        id: sellerProducts.value.length + 101,
-        sellerId: 2,
-        sellerName: '건강한 밥상',
+      // 백엔드 API 호출
+      const productData = {
         name: form.name,
-        category: form.category,
+        categoryId: selectedCategory.categoryId,
         price: Number(form.price),
         description: form.description,
-        image: imageUrl,
-        weight: Number(form.weight),
         stock: Number(form.stock),
+        imageUrl: imageUrl,
+        userId: 1, // TODO: 인증 구현 후 실제 사용자 ID로 변경
+      }
+
+      const response = await createProduct(productData)
+
+      // 로컬 상품 목록에 추가 (UI 업데이트용)
+      const newProduct = {
+        id: response.id,
+        sellerId: response.userId || 1,
+        sellerName: '건강한 밥상',
+        name: response.name,
+        category: form.category,
+        price: response.price,
+        description: form.description,
+        image: response.imageUrl,
+        weight: Number(form.weight),
+        stock: response.stock,
+        calories: response.calories,
+        protein: response.protein,
+        carbs: response.carbs,
+        fat: response.fat,
         isActive: true,
         createdAt: new Date().toISOString(),
       }
@@ -189,7 +201,7 @@ export function useSellerProducts() {
       return true
     } catch (error) {
       console.error(error)
-      errorMessage.value = '상품 등록 중 오류가 발생했습니다.'
+      errorMessage.value = error.message || '상품 등록 중 오류가 발생했습니다.'
       return false
     } finally {
       isSubmitting.value = false
