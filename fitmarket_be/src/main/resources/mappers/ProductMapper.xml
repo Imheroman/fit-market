@@ -100,4 +100,26 @@
         SELECT LAST_INSERT_ID()
     </select>
 
+    <!-- 판매자의 상품 목록 조회 (email) -->
+    <select id="selectProductsByEmail" resultMap="ProductResultMap">
+        SELECT
+            p.id,
+            p.name,
+            p.price,
+            p.image_url,
+            p.product_category_id AS category_id,
+            pc.name AS category_name,
+            0.0 AS rating,
+            0 AS review_count,
+            COALESCE(CAST(f.calories AS SIGNED), 0) AS calories,
+            COALESCE(CAST(f.protein AS SIGNED), 0) AS protein,
+            COALESCE(CAST(f.carbs AS SIGNED), 0) AS carbs,
+            COALESCE(CAST(f.fat AS SIGNED), 0) AS fat
+        FROM products p
+        LEFT JOIN product_categories pc ON p.product_category_id = pc.id
+        LEFT JOIN food f ON p.food_id = f.id
+          AND p.deleted_date IS NULL
+        ORDER BY p.created_date DESC
+    </select>
+
 </mapper>
