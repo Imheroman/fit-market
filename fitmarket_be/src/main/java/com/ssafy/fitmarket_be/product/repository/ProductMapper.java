@@ -28,6 +28,27 @@ public interface ProductMapper {
     Product selectProductById(@Param("id") Long id);
 
     /**
+     * review_count 증가.
+     */
+    void incrementReviewCount(@Param("productId") Long productId);
+
+    /**
+     * 베스트 상품 조회 (페이징).
+     */
+    List<Product> selectBestProducts(
+        @Param("size") Integer size,
+        @Param("offset") Integer offset
+    );
+
+    /**
+     * 신상품 조회 (페이징).
+     */
+    List<Product> selectNewProducts(
+        @Param("size") Integer size,
+        @Param("offset") Integer offset
+    );
+
+    /**
      * 상품 등록.
      */
     void insertProduct(
@@ -68,4 +89,14 @@ public interface ProductMapper {
      * 판매자의 상품 목록 조회 (userId).
      */
     List<Product> selectProductsByUserId(@Param("userId") Long userId);
+
+    /**
+     * 베스트 상품 조회 (평점/리뷰순, 제한 개수).
+     */
+    List<Product> selectBestProducts(@Param("limit") Integer limit);
+
+    /**
+     * 신상품 조회 (최신순, 제한 개수).
+     */
+    List<Product> selectNewProducts(@Param("limit") Integer limit);
 }

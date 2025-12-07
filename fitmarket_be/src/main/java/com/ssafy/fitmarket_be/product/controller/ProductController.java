@@ -57,6 +57,15 @@ public class ProductController {
     }
 
     /**
+     * 상품 상세 조회 (조회 시 review_count 증가).
+     */
+    @GetMapping("/{id:[0-9]+}")
+    public ResponseEntity<ProductDetailResponse> getProductDetail(@PathVariable Long id) {
+        ProductDetailResponse response = productService.getProductDetail(id);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * 상품 삭제.
      */
     @DeleteMapping("/{id}")
@@ -72,6 +81,30 @@ public class ProductController {
     public ResponseEntity<List<ProductListResponse>> getSellerProducts() {
         Long userId = 1L;
         List<ProductListResponse> response = productService.getSellerProducts(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 베스트 상품 조회.
+     */
+    @GetMapping("/best")
+    public ResponseEntity<PageResponse<ProductListResponse>> getBestProducts(
+        @RequestParam(defaultValue = "1") Integer page,
+        @RequestParam(defaultValue = "12") Integer size
+    ) {
+        PageResponse<ProductListResponse> response = productService.getBestProducts(page, size);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 신상품 조회.
+     */
+    @GetMapping("/new")
+    public ResponseEntity<PageResponse<ProductListResponse>> getNewProducts(
+        @RequestParam(defaultValue = "1") Integer page,
+        @RequestParam(defaultValue = "12") Integer size
+    ) {
+        PageResponse<ProductListResponse> response = productService.getNewProducts(page, size);
         return ResponseEntity.ok(response);
     }
 }
