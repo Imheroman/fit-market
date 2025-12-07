@@ -61,7 +61,7 @@
             <form @submit.prevent="handleSubmit" class="bg-white shadow-lg rounded-2xl p-6 md:p-8 border border-gray-200">
               <div class="space-y-6">
                 <h2 class="text-xl font-semibold text-gray-900 pb-3 border-b border-gray-200">
-                  상품 정보 입력
+                  {{ editingProductId ? '상품 정보 수정' : '상품 정보 입력' }}
                 </h2>
 
                 <div class="grid md:grid-cols-2 gap-6">
@@ -232,7 +232,7 @@
                     :disabled="isSubmitting"
                   >
                     <Loader2 v-if="isSubmitting" class="w-5 h-5 animate-spin" />
-                    <span>{{ isSubmitting ? '등록 중...' : '상품 등록하기' }}</span>
+                    <span>{{ isSubmitting ? (editingProductId ? '수정 중...' : '등록 중...') : (editingProductId ? '상품 수정하기' : '상품 등록하기') }}</span>
                   </button>
                 </div>
               </div>
@@ -302,6 +302,12 @@
                       </div>
                       <div class="mt-3 flex gap-2">
                         <button
+                          @click="handleEditProduct(product)"
+                          class="px-4 py-2 text-sm text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
+                        >
+                          수정
+                        </button>
+                        <button
                           @click="handleToggleStatus(product.id)"
                           class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                         >
@@ -345,9 +351,12 @@ const {
   isSubmitting,
   successMessage,
   errorMessage,
+  editingProductId,
   myProducts,
   activeProducts,
   registerProduct,
+  submitProduct,
+  setEditingProduct,
   toggleProductStatus,
   deleteProduct,
   resetForm,
@@ -389,13 +398,18 @@ const handleImageChange = (event) => {
 }
 
 const handleSubmit = async () => {
-  const success = await registerProduct()
+  const success = await submitProduct()
   if (success) {
     imagePreview.value = null
     setTimeout(() => {
       handleTabChange('list')
     }, 1500)
   }
+}
+
+const handleEditProduct = (product) => {
+  setEditingProduct(product)
+  activeTab.value = 'register'
 }
 
 const handleReset = () => {

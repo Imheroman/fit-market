@@ -39,3 +39,20 @@ export async function fetchSellerProducts() {
   }
   return response.json()
 }
+
+export async function updateProduct(productId, productData) {
+  const response = await fetch(`${BASE_URL}/${productId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(productData),
+  })
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`상품 수정 실패: ${error}`)
+  }
+
+  return response.json()
+}
