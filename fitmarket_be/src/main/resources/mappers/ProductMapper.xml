@@ -7,9 +7,11 @@
         <constructor>
             <idArg column="id" javaType="long"/>
             <arg column="name" javaType="string"/>
+            <arg column="description" javaType="string"/>
             <arg column="category_id" javaType="long"/>
             <arg column="category_name" javaType="string"/>
             <arg column="price" javaType="long"/>
+            <arg column="stock" javaType="int"/>
             <arg column="image_url" javaType="string"/>
             <arg column="rating" javaType="double"/>
             <arg column="review_count" javaType="int"/>
@@ -25,12 +27,14 @@
         SELECT
             p.id,
             p.name,
+            p.description,
             p.price,
+            p.stock,
             p.image_url,
             p.product_category_id AS category_id,
             pc.name AS category_name,
-            0.0 AS rating,
-            0 AS review_count,
+            p.rating,
+            p.review_count,
             COALESCE(CAST(f.calories AS SIGNED), 0) AS calories,
             COALESCE(CAST(f.protein AS SIGNED), 0) AS protein,
             COALESCE(CAST(f.carbs AS SIGNED), 0) AS carbs,
@@ -55,12 +59,14 @@
         SELECT
             p.id,
             p.name,
+            p.description,
             p.product_category_id AS category_id,
             pc.name AS category_name,
             p.price,
+            p.stock,
             p.image_url,
-            0.0 AS rating,
-            0 AS review_count,
+            p.rating,
+            p.review_count,
             COALESCE(CAST(f.calories AS SIGNED), 0) AS calories,
             COALESCE(CAST(f.protein AS SIGNED), 0) AS protein,
             COALESCE(CAST(f.carbs AS SIGNED), 0) AS carbs,
@@ -82,6 +88,8 @@
             price,
             stock,
             image_url,
+            rating,
+            review_count,
             food_id
         ) VALUES (
             #{userId},
@@ -91,13 +99,119 @@
             #{price},
             #{stock},
             #{imageUrl},
+            0.0,
+            0,
             #{foodId}
         )
     </insert>
 
+    <!-- review_count 증가 -->
+    <update id="incrementReviewCount">
+        UPDATE products
+        SET review_count = review_count + 1
+        WHERE id = #{productId}
+          AND deleted_date IS NULL
+    </update>
+
     <!-- 마지막 삽입 ID 조회 -->
     <select id="selectLastInsertId" resultType="Long">
         SELECT LAST_INSERT_ID()
+    </select>
+
+    <!-- 상품 수정 -->
+    <update id="updateProduct">
+        UPDATE products
+        SET name = #{name},
+            product_category_id = #{categoryId},
+            price = #{price},
+            description = #{description},
+            stock = #{stock},
+            image_url = #{imageUrl}
+        WHERE id = #{productId}
+          AND deleted_date IS NULL
+    </update>
+
+    <!-- 상품 삭제 (소프트 삭제) -->
+    <update id="deleteProduct">
+        UPDATE products
+        SET deleted_date = CURRENT_TIMESTAMP
+        WHERE id = #{productId}
+          AND deleted_date IS NULL
+    </update>
+
+    <!-- 판매자의 상품 목록 조회 (userId) -->
+    <select id="selectProductsByUserId" resultMap="ProductResultMap">
+        SELECT
+            p.id,
+            p.name,
+            p.description,
+            p.price,
+            p.stock,
+            p.image_url,
+            p.product_category_id AS category_id,
+            pc.name AS category_name,
+            p.rating,
+            p.review_count,
+            COALESCE(CAST(f.calories AS SIGNED), 0) AS calories,
+            COALESCE(CAST(f.protein AS SIGNED), 0) AS protein,
+            COALESCE(CAST(f.carbs AS SIGNED), 0) AS carbs,
+            COALESCE(CAST(f.fat AS SIGNED), 0) AS fat
+        FROM products p
+        LEFT JOIN product_categories pc ON p.product_category_id = pc.id
+        LEFT JOIN food f ON p.food_id = f.id
+        WHERE p.user_id = #{userId}
+          AND p.deleted_date IS NULL
+        ORDER BY p.created_date DESC
+    </select>
+
+    <!-- 베스트 상품 (평점 DESC, 리뷰수 DESC, 최신순) -->
+    <select id="selectBestProducts" resultMap="ProductResultMap">
+        SELECT
+            p.id,
+            p.name,
+            p.description,
+            p.price,
+            p.stock,
+            p.image_url,
+            p.product_category_id AS category_id,
+            pc.name AS category_name,
+            p.rating,
+            p.review_count,
+            COALESCE(CAST(f.calories AS SIGNED), 0) AS calories,
+            COALESCE(CAST(f.protein AS SIGNED), 0) AS protein,
+            COALESCE(CAST(f.carbs AS SIGNED), 0) AS carbs,
+            COALESCE(CAST(f.fat AS SIGNED), 0) AS fat
+        FROM products p
+        LEFT JOIN product_categories pc ON p.product_category_id = pc.id
+        LEFT JOIN food f ON p.food_id = f.id
+        WHERE p.deleted_date IS NULL
+        ORDER BY p.rating DESC, p.review_count DESC, p.id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <!-- 신상품 (최신순) -->
+    <select id="selectNewProducts" resultMap="ProductResultMap">
+        SELECT
+            p.id,
+            p.name,
+            p.description,
+            p.price,
+            p.stock,
+            p.image_url,
+            p.product_category_id AS category_id,
+            pc.name AS category_name,
+            p.rating,
+            p.review_count,
+            COALESCE(CAST(f.calories AS SIGNED), 0) AS calories,
+            COALESCE(CAST(f.protein AS SIGNED), 0) AS protein,
+            COALESCE(CAST(f.carbs AS SIGNED), 0) AS carbs,
+            COALESCE(CAST(f.fat AS SIGNED), 0) AS fat
+        FROM products p
+        LEFT JOIN product_categories pc ON p.product_category_id = pc.id
+        LEFT JOIN food f ON p.food_id = f.id
+        WHERE p.deleted_date IS NULL
+        ORDER BY p.id DESC
+        LIMIT #{size} OFFSET #{offset}
     </select>
 
 </mapper>

@@ -12,9 +12,11 @@ import lombok.ToString;
 public final class Product {
     private final Long id;
     private final String name;
+    private final String description;
     private final Long categoryId;
     private final String categoryName;
     private final Long price;
+    private final int stock;
     private final String imageUrl;
     private final double rating;
     private final int reviewCount;
@@ -27,9 +29,11 @@ public final class Product {
     Product(
         Long id,
         String name,
+        String description,
         Long categoryId,
         String categoryName,
         Long price,
+        Integer stock,       // primitive → 래퍼 타입
         String imageUrl,
         Double rating,        // primitive → 래퍼 타입
         Integer reviewCount,  // primitive → 래퍼 타입
@@ -40,14 +44,17 @@ public final class Product {
     ) {
         // 유효성 검증
         validatePrice(price);
+        validateStock(stock);
         validateRating(rating);
         validateReviewCount(reviewCount);
 
         this.id = id;
         this.name = name;
+        this.description = description;
         this.categoryId = categoryId;
         this.categoryName = categoryName;
         this.price = price;
+        this.stock = stock;
         this.imageUrl = imageUrl;
         this.rating = rating;
         this.reviewCount = reviewCount;
@@ -59,6 +66,12 @@ public final class Product {
     private void validatePrice(Long price) {
         if (price != null && price < 0) {
             throw new IllegalArgumentException("가격은 0 이상이어야 합니다: " + price);
+        }
+    }
+
+    private void validateStock(Integer stock) {
+        if (stock == null || stock < 0) {
+            throw new IllegalArgumentException("재고는 0 이상이어야 합니다: " + stock);
         }
     }
 

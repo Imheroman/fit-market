@@ -15,7 +15,7 @@
           <!-- 탭 -->
           <div class="flex gap-3 border-b border-gray-200">
             <button
-              @click="activeTab = 'register'"
+              @click="handleTabChange('register')"
               class="px-6 py-3 font-semibold transition-colors border-b-2"
               :class="
                 activeTab === 'register'
@@ -26,7 +26,7 @@
               상품 등록
             </button>
             <button
-              @click="activeTab = 'list'"
+              @click="handleTabChange('list')"
               class="px-6 py-3 font-semibold transition-colors border-b-2"
               :class="
                 activeTab === 'list'
@@ -61,7 +61,7 @@
             <form @submit.prevent="handleSubmit" class="bg-white shadow-lg rounded-2xl p-6 md:p-8 border border-gray-200">
               <div class="space-y-6">
                 <h2 class="text-xl font-semibold text-gray-900 pb-3 border-b border-gray-200">
-                  상품 정보 입력
+                  {{ editingProductId ? '상품 정보 수정' : '상품 정보 입력' }}
                 </h2>
 
                 <div class="grid md:grid-cols-2 gap-6">
@@ -232,7 +232,7 @@
                     :disabled="isSubmitting"
                   >
                     <Loader2 v-if="isSubmitting" class="w-5 h-5 animate-spin" />
-                    <span>{{ isSubmitting ? '등록 중...' : '상품 등록하기' }}</span>
+                    <span>{{ isSubmitting ? (editingProductId ? '수정 중...' : '등록 중...') : (editingProductId ? '상품 수정하기' : '상품 등록하기') }}</span>
                   </button>
                 </div>
               </div>
@@ -245,9 +245,7 @@
               <div class="p-6 border-b border-gray-200">
                 <div class="flex items-center justify-between">
                   <h2 class="text-xl font-semibold text-gray-900">내 상품 목록</h2>
-                  <div class="text-sm text-gray-500">
-                    전체 {{ myProducts.length }}개 (활성: {{ activeProducts.length }}개)
-                  </div>
+                  <div class="text-sm text-gray-500">전체 {{ myProducts.length }}개</div>
                 </div>
               </div>
 
@@ -255,7 +253,7 @@
                 <Package class="w-16 h-16 mx-auto mb-4 text-gray-300" />
                 <p>등록된 상품이 없습니다.</p>
                 <button
-                  @click="activeTab = 'register'"
+                  @click="handleTabChange('register')"
                   class="mt-4 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
                   상품 등록하기
@@ -302,10 +300,10 @@
                       </div>
                       <div class="mt-3 flex gap-2">
                         <button
-                          @click="handleToggleStatus(product.id)"
-                          class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                          @click="handleEditProduct(product)"
+                          class="px-4 py-2 text-sm text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors"
                         >
-                          {{ product.isActive ? '판매중지' : '판매재개' }}
+                          수정
                         </button>
                         <button
                           @click="handleDeleteProduct(product.id)"
@@ -329,7 +327,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { CheckCircle2, AlertCircle, Loader2, Package, Upload } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
@@ -345,13 +343,28 @@ const {
   isSubmitting,
   successMessage,
   errorMessage,
+  editingProductId,
   myProducts,
-  activeProducts,
   registerProduct,
-  toggleProductStatus,
+  submitProduct,
+  setEditingProduct,
   deleteProduct,
   resetForm,
+  loadSellerProducts,
 } = useSellerProducts()
+
+// 페이지 로드 시 판매자 상품 목록 조회
+onMounted(() => {
+  loadSellerProducts()
+})
+
+// 탭 변경 핸들러
+const handleTabChange = async (tab) => {
+  activeTab.value = tab
+  if (tab === 'list') {
+    await loadSellerProducts()
+  }
+}
 
 const handleImageChange = (event) => {
   const file = event.target.files[0]
@@ -375,13 +388,18 @@ const handleImageChange = (event) => {
 }
 
 const handleSubmit = async () => {
-  const success = await registerProduct()
+  const success = await submitProduct()
   if (success) {
     imagePreview.value = null
     setTimeout(() => {
-      activeTab.value = 'list'
+      handleTabChange('list')
     }, 1500)
   }
+}
+
+const handleEditProduct = (product) => {
+  setEditingProduct(product)
+  activeTab.value = 'register'
 }
 
 const handleReset = () => {
@@ -389,10 +407,6 @@ const handleReset = () => {
     resetForm()
     imagePreview.value = null
   }
-}
-
-const handleToggleStatus = async (productId) => {
-  await toggleProductStatus(productId)
 }
 
 const handleDeleteProduct = async (productId) => {
