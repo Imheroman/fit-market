@@ -133,7 +133,7 @@
                   <div class="flex items-center gap-2 text-sm">
                     <Phone class="w-4 h-4 text-gray-400" />
                     <span class="text-gray-600">연락처:</span>
-                    <span class="font-medium text-gray-900">{{ app.contactPhone }}</span>
+                    <span class="font-medium text-gray-900">{{ formatPhoneNumber(app.contactPhone) }}</span>
                   </div>
                 </div>
                 <div class="space-y-2">
@@ -265,6 +265,7 @@ import {
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import { useSellerApplicationsAdmin } from '@/composables/useSellerApplication'
+import { formatPhoneNumber } from '@/utils/phone'
 
 const activeTab = ref('pending')
 const showModal = ref(false)

@@ -105,11 +105,17 @@
                   v-model="form.contactPhone"
                   type="text"
                   placeholder="010-1234-5678"
+                  inputmode="numeric"
+                  maxlength="13"
                   class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   :class="errors.contactPhone ? 'border-red-300' : 'border-gray-300'"
+                  @input="onContactPhoneInput"
                 />
                 <p v-if="errors.contactPhone" class="mt-1 text-sm text-red-600">
                   {{ errors.contactPhone }}
+                </p>
+                <p v-else class="mt-1 text-sm text-gray-500">
+                  숫자만 입력하면 하이픈(-)은 자동으로 채워둘게요.
                 </p>
               </div>
 
@@ -193,8 +199,16 @@ import { useSellerApplication } from '@/composables/useSellerApplication'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const { form, errors, isSubmitting, successMessage, errorMessage, submitApplication, resetForm } =
-  useSellerApplication()
+const {
+  form,
+  errors,
+  isSubmitting,
+  successMessage,
+  errorMessage,
+  handleContactPhoneInput,
+  submitApplication,
+  resetForm,
+} = useSellerApplication()
 
 const handleSubmit = async () => {
   const success = await submitApplication()
@@ -209,5 +223,9 @@ const handleReset = () => {
   if (confirm('입력한 내용을 모두 초기화하시겠습니까?')) {
     resetForm()
   }
+}
+
+const onContactPhoneInput = (event) => {
+  handleContactPhoneInput(event.target.value)
 }
 </script>

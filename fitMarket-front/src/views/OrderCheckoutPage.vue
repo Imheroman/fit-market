@@ -183,6 +183,7 @@ import AppFooter from '@/components/AppFooter.vue'
 import { useCart } from '@/composables/useCart'
 import { useAddresses } from '@/composables/useAddresses'
 import { useOrderStatus } from '@/composables/useOrderStatus'
+import { formatPhoneNumber } from '@/utils/phone'
 
 const router = useRouter()
 const MAX_VISIBLE_ADDRESSES = 3
@@ -195,7 +196,11 @@ const showAllAddresses = ref(false)
 
 const addressListOverflow = computed(() => addresses.value.length > MAX_VISIBLE_ADDRESSES)
 const displayedAddresses = computed(() => {
-  return showAllAddresses.value ? addresses.value : addresses.value.slice(0, MAX_VISIBLE_ADDRESSES)
+  const source = showAllAddresses.value ? addresses.value : addresses.value.slice(0, MAX_VISIBLE_ADDRESSES)
+  return source.map((address) => ({
+    ...address,
+    phone: formatPhoneNumber(address.phone),
+  }))
 })
 const remainingAddressCount = computed(() => Math.max(addresses.value.length - MAX_VISIBLE_ADDRESSES, 0))
 
