@@ -67,3 +67,29 @@ export async function deleteProduct(productId) {
     throw new Error(`상품 삭제 실패: ${error}`)
   }
 }
+
+export async function fetchBestProducts({ page = 1, size = 12 } = {}) {
+  const params = new URLSearchParams({ page: String(page), size: String(size) })
+  const response = await fetch(`${BASE_URL}/best?${params.toString()}`)
+  if (!response.ok) {
+    throw new Error(`베스트 상품 조회 실패: ${response.status}`)
+  }
+  return response.json()
+}
+
+export async function fetchNewProducts({ page = 1, size = 12 } = {}) {
+  const params = new URLSearchParams({ page: String(page), size: String(size) })
+  const response = await fetch(`${BASE_URL}/new?${params.toString()}`)
+  if (!response.ok) {
+    throw new Error(`신상품 조회 실패: ${response.status}`)
+  }
+  return response.json()
+}
+
+export async function fetchProductDetail(productId) {
+  const response = await fetch(`${BASE_URL}/${productId}`)
+  if (!response.ok) {
+    throw new Error(`상품 상세 조회 실패: ${response.status}`)
+  }
+  return response.json()
+}

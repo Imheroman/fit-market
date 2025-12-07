@@ -40,22 +40,18 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { Clock } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import ProductCard from '@/components/ProductCard.vue'
-import { useProducts } from '@/composables/useProducts'
 import { useCart } from '@/composables/useCart'
+import { useNewProducts } from '@/composables/useNewProducts'
 
-const { products, isLoading, errorMessage, toggleFavorite } = useProducts()
+const { products: sortedProducts, isLoading, errorMessage, toggleFavorite } = useNewProducts()
 const { addToCart } = useCart()
 
-// 최신 등록 기준: id 내림차순을 신상품 순으로 사용 (백엔드에서 최신 id가 최근 등록)
-const sortedProducts = computed(() => [...products.value].sort((a, b) => b.id - a.id))
-
 const handleAddToCart = (productId) => {
-  const product = products.value.find((p) => p.id === productId)
+  const product = sortedProducts.value.find((p) => p.id === productId)
   if (!product) return
 
   const priceNumber = typeof product.price === 'number'

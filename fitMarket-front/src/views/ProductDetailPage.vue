@@ -3,6 +3,10 @@
     <AppHeader />
 
     <div class="container mx-auto px-4 py-8">
+      <div v-if="isLoading" class="text-center text-gray-500 py-12">상품을 불러오는 중이에요...</div>
+      <div v-else-if="errorMessage" class="text-center text-red-600 py-12">{{ errorMessage }}</div>
+      <div v-else-if="!product" class="text-center text-gray-500 py-12">상품 정보를 찾을 수 없습니다.</div>
+      <template v-else>
       <!-- Breadcrumb -->
       <nav class="flex items-center gap-2 text-sm text-gray-600 mb-8">
         <a href="/" class="hover:text-green-600">홈</a>
@@ -135,16 +139,11 @@
       <div class="border-t border-green-100 pt-12">
         <h2 class="text-2xl font-bold mb-6">상품 상세 정보</h2>
         <div class="prose max-w-none">
-          <p class="text-gray-700 leading-relaxed mb-4">
-            신선한 재료로 만든 건강한 한끼 식사입니다. 영양 균형을 고려하여 전문 영양사가 설계한 메뉴로,
-            바쁜 일상 속에서도 건강한 식사를 즐기실 수 있습니다.
-          </p>
-          <p class="text-gray-700 leading-relaxed mb-4">
-            모든 식재료는 식품의약품안전처의 표준 식품 DB를 기반으로 영양 성분이 정확하게 계산되었으며,
-            신선도를 유지하기 위해 당일 조리하여 배송됩니다.
-          </p>
+          <p v-if="product.description" class="text-gray-700 leading-relaxed mb-4">{{ product.description }}</p>
+          <p v-else class="text-gray-500">상품 설명이 준비 중입니다.</p>
         </div>
       </div>
+      </template>
     </div>
 
     <AppFooter />
@@ -158,6 +157,7 @@ import { Star, Flame, ShoppingCart, ChevronRight, Minus, Plus } from 'lucide-vue
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import { useCart } from '@/composables/useCart'
+import { useProductDetail } from '@/composables/useProductDetail'
 
 const router = useRouter()
 const route = useRoute()
@@ -165,34 +165,38 @@ const { addToCart } = useCart()
 
 const quantity = ref(1)
 
-// Mock 데이터 (실제로는 route.params.id로 API 호출해서 백엔드에서 계산된 총 영양정보를 받음)
-const product = ref({
-  id: Number(route.params.id) || 1,
-  name: '그린 샐러드 도시락',
-  category: '도시락',
-  price: 8500,
-  image: '/fresh-green-salad-bowl.png',
-  rating: 4.8,
-  reviews: 124,
-  // 백엔드에서 계산된 총 영양정보 (상품 전체 기준)
+const defaultProduct = {
+  id: 0,
+  name: '',
+  category: '기타',
+  price: 0,
+  image: '',
+  rating: 0,
+  reviews: 0,
+  description: '',
+  stock: 0,
   nutrition: {
-    calories: 320,
-    protein: 18,
-    carbs: 35,
-    fat: 12,
-    sodium: 450,
-    sugars: 8,
-    fiber: 6,
-    saturatedFat: 2.5,
-    transFat: 0,
-    calcium: 120,
-  }
-})
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    sodium: null,
+    sugars: null,
+    fiber: null,
+    saturatedFat: null,
+    transFat: null,
+    calcium: null,
+  },
+}
 
-const formattedPrice = computed(() => `${product.value.price.toLocaleString()}원`)
+const { product: productRef, isLoading, errorMessage } = useProductDetail(ref(Number(route.params.id)))
+
+const product = computed(() => productRef.value ?? defaultProduct)
+
+const formattedPrice = computed(() => `${(product.value.price ?? 0).toLocaleString()}원`)
 
 // 백엔드에서 받은 총 영양정보를 그대로 사용
-const nutrition = computed(() => product.value.nutrition)
+const nutrition = computed(() => product.value.nutrition ?? defaultProduct.nutrition)
 
 const normalizedProduct = computed(() => ({
   id: product.value.id,
