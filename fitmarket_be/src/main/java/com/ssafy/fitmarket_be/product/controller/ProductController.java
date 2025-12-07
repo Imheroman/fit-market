@@ -45,6 +45,18 @@ public class ProductController {
     }
 
     /**
+     * 상품 수정.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductUpdateResponse> updateProduct(
+        @PathVariable Long id,
+        @Valid @RequestBody ProductUpdateRequest request
+    ) {
+        ProductUpdateResponse response = productService.updateProduct(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * 판매자의 상품 목록 조회 (userId 고정: 1).
      */
     @GetMapping("/seller")
