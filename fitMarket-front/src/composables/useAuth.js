@@ -1,63 +1,37 @@
-import { computed, ref } from 'vue'
-
-const mockUser = {
-  id: 1,
-  email: 'kim.youngwoong@example.com',
-  name: '김영웅',
-  role: 'ADMIN', // 'USER' | 'SELLER' | 'ADMIN'
-  phone: '010-1234-5678',
-  address: '서울시 강남구 테헤란로 123',
-  joinedAt: '2024-01-15',
-  token: 'mock-jwt-token',
-}
-
-const ensureRoleArray = (roles, role) => {
-  if (Array.isArray(roles) && roles.length > 0) return roles
-  if (role) return [role]
-  return ['USER']
-}
-
-const buildUserSession = (payload) => {
-  const base = payload ?? mockUser
-  return {
-    ...mockUser,
-    ...base,
-    roles: ensureRoleArray(base.role, base.role),
-  }
-}
-
-const user = ref(null)
+import { ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import { fetchUserProfile, deleteUserAccount } from '@/api/userApi';
+import { useSessionStore, buildUserSession, ensureRoleArray } from '@/stores/sessionStore';
 
 export function useAuth() {
-  const isAuthenticated = computed(() => Boolean(user.value))
-  const userName = computed(() => user.value?.name ?? '게스트')
+  const sessionStore = useSessionStore();
+  const { user, isAuthenticated, userName, isSeller, isAdmin, cartCount } = storeToRefs(sessionStore);
+  const isProfileLoading = ref(false);
+  const profileError = ref('');
 
-  // 권한 계층: ADMIN > SELLER > USER
-  const isAdmin = computed(() => user.value?.role === 'ADMIN')
-  const isSeller = computed(() => user.value?.role === 'SELLER' || user.value?.role === 'ADMIN')
+  const login = (sessionPayload) => sessionStore.login(sessionPayload);
+  const logout = () => sessionStore.logout();
+  const deleteAccount = async () => {
+    await deleteUserAccount();
+    sessionStore.deleteAccount();
+  };
+  const hydrateProfile = (profile) => sessionStore.hydrateProfile(profile);
 
-  const login = (sessionPayload) => {
-    user.value = buildUserSession(sessionPayload)
-    return user.value
-  }
+  const loadUserProfile = async () => {
+    isProfileLoading.value = true;
+    profileError.value = '';
 
-  const logout = () => {
-    user.value = null
-  }
-
-  const deleteAccount = () => {
-    user.value = null
-  }
-
-  const hydrateProfile = (profile) => {
-    if (!profile) return
-    const currentSnapshot = user.value ? buildUserSession(user.value) : buildUserSession()
-    user.value = {
-      ...currentSnapshot,
-      ...profile,
-      roles: ensureRoleArray(profile.roles ?? currentSnapshot.roles, profile.role ?? currentSnapshot.role),
+    try {
+      const profile = await fetchUserProfile();
+      hydrateProfile(profile);
+      return profile;
+    } catch (error) {
+      profileError.value = error?.message ?? '회원 정보를 불러오지 못했어요.';
+      throw error;
+    } finally {
+      isProfileLoading.value = false;
     }
-  }
+  };
 
   return {
     user,
@@ -65,11 +39,15 @@ export function useAuth() {
     userName,
     isSeller,
     isAdmin,
+    cartCount,
     login,
     logout,
     deleteAccount,
     hydrateProfile,
-  }
+    loadUserProfile,
+    isProfileLoading,
+    profileError,
+  };
 }
 
-export {mockUser}
+export { buildUserSession, ensureRoleArray };

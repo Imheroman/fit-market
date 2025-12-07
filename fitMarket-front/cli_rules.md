@@ -89,19 +89,24 @@ src/
 - **Single File Component(SFC):** 각 컴포넌트는 `.vue` 단일 파일로 관리하며, 템플릿·로직·스타일을 합친다.
 - **명확한 Props, Events 사용:** 컴포넌트간 데이터 전달은 props와 emits로만 구현한다.
 - 모든 코드의 마지막에는 ';' 세미콜론을 붙인다.
-
-```vue
-<script setup>
-defineProps<{ count: number }>();
-defineEmits<{ (e: 'update:count', value: number): void }>();
-</script>
-```
+- axios 사용: 백엔드 서버로의 직접적인 모든 요청은 restapi/index.js에 있는 fitmarket axios를 활용해서 요청한다.
 
 ## 구조적 설계 원칙 (Clean Architecture)
 
 - UI 로직과 비즈니스 로직 분리 : 핵심 로직은 composables(예: `useAuth.ts` 등)으로 분리 관리한다.
 - 기능별 비즈니스 로직(`composables/`), API통신(`services/` 또는 `api/`), 상태관리(`stores/`) 등을 독립적으로 만들어 결합도를 낮춘다.
 - 컴포넌트는 "단일 책임 원칙"(SRP) 준수하며, 한 파일/컴포넌트는 하나의 역할만 담당한다.
+- views/ 디렉토리에는 라우트 단위 페이지 컴포넌트만 위치시킨다.
+- components/ 디렉토리에는 재사용 가능한 UI 컴포넌트이거나, views/에서만 사용하는 컴포넌트를 둔다.
+- /views와 /components에는 하위에 도메인별 폴더를 만들어 페이지를 구분할 수 있다.
+- vue 템플릿간 이동 시 router를 직접적으로 사용하기 보다는 router-link를 사용한다.
+  - 예외: 프로그래밍적으로 라우팅이 필요한 경우 또는 다른 API 호출 시에만 router 인스턴스를 사용.
+  - 참고 코드
+    ```js
+    <router-link :to="{ name: 'home' }">
+        홈으로
+    </router-link>
+    ```
 
 ```plaintext
 src/
