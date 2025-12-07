@@ -60,6 +60,11 @@ public interface ProductMapper {
     );
 
     /**
+     * 상품 삭제 (소프트 삭제).
+     */
+    void deleteProduct(@Param("productId") Long productId);
+
+    /**
      * 판매자의 상품 목록 조회 (userId).
      */
     List<Product> selectProductsByUserId(@Param("userId") Long userId);
