@@ -245,9 +245,7 @@
               <div class="p-6 border-b border-gray-200">
                 <div class="flex items-center justify-between">
                   <h2 class="text-xl font-semibold text-gray-900">내 상품 목록</h2>
-                  <div class="text-sm text-gray-500">
-                    전체 {{ myProducts.length }}개 (활성: {{ activeProducts.length }}개)
-                  </div>
+                  <div class="text-sm text-gray-500">전체 {{ myProducts.length }}개</div>
                 </div>
               </div>
 
@@ -308,12 +306,6 @@
                           수정
                         </button>
                         <button
-                          @click="handleToggleStatus(product.id)"
-                          class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          {{ product.isActive ? '판매중지' : '판매재개' }}
-                        </button>
-                        <button
                           @click="handleDeleteProduct(product.id)"
                           class="px-4 py-2 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
                         >
@@ -335,7 +327,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { CheckCircle2, AlertCircle, Loader2, Package, Upload } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
@@ -353,11 +345,9 @@ const {
   errorMessage,
   editingProductId,
   myProducts,
-  activeProducts,
   registerProduct,
   submitProduct,
   setEditingProduct,
-  toggleProductStatus,
   deleteProduct,
   resetForm,
   loadSellerProducts,
@@ -417,10 +407,6 @@ const handleReset = () => {
     resetForm()
     imagePreview.value = null
   }
-}
-
-const handleToggleStatus = async (productId) => {
-  await toggleProductStatus(productId)
 }
 
 const handleDeleteProduct = async (productId) => {
