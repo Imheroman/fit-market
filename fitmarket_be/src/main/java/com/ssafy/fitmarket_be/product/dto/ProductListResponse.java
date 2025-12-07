@@ -9,6 +9,7 @@ import com.ssafy.fitmarket_be.product.domain.Product;
 public record ProductListResponse(
     Long id,
     String name,
+    String description,
     Long categoryId,
     String categoryName,
     Long price,
@@ -25,6 +26,7 @@ public record ProductListResponse(
         return new ProductListResponse(
             product.getId(),
             product.getName(),
+            product.getDescription(),
             product.getCategoryId(),
             product.getCategoryName(),
             product.getPrice(),
