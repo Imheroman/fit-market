@@ -1,3 +1,5 @@
+import { formatPhoneNumber, sanitizePhoneDigits } from '@/utils/phone';
+
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const API_BASE_URL = 'http://localhost:8080/api'
 const jsonHeaders = {
@@ -11,13 +13,6 @@ const parseResponseBody = async (response) => {
     console.warn('Failed to parse response body', error)
     return null
   }
-}
-
-const formatPhoneNumber = (value) => {
-  const digits = value.replace(/[^0-9]/g, '').slice(0, 11)
-  if (digits.length <= 3) return digits
-  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`
-  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`
 }
 
 export async function loginUser(payload) {
@@ -89,7 +84,7 @@ export async function registerUser(payload) {
     throw new Error('이름을 입력해주세요.')
   }
 
-  const normalizedPhone = phone?.replace(/[^0-9]/g, '') ?? ''
+  const normalizedPhone = sanitizePhoneDigits(phone ?? '')
   if (normalizedPhone.length < 10) {
     throw new Error('휴대폰 번호를 정확하게 입력해주세요.')
   }

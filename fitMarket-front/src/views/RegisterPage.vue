@@ -36,17 +36,19 @@
               <div>
                 <label for="register-password" class="flex items-center justify-between text-sm font-semibold text-gray-700">
                   비밀번호
-                  <span class="text-xs font-normal text-gray-400">8자 이상 입력해주세요</span>
+                  <span class="text-xs font-normal text-gray-400">영문+숫자 8~16자</span>
                 </label>
                 <input
                   id="register-password"
                   v-model="form.password"
                   type="password"
                   autocomplete="new-password"
+                  maxlength="16"
                   placeholder="새 비밀번호"
                   class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-100"
                 />
                 <p v-if="errors.password" class="mt-1 text-sm text-red-500">{{ errors.password }}</p>
+                <p v-else class="mt-1 text-xs text-gray-500">숫자와 영문을 모두 넣어 8~16자로 만들어 주세요.</p>
               </div>
 
               <div>
@@ -56,6 +58,7 @@
                   v-model="form.confirmPassword"
                   type="password"
                   autocomplete="new-password"
+                  maxlength="16"
                   placeholder="비밀번호를 다시 입력해주세요"
                   class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-100"
                 />
@@ -70,10 +73,12 @@
                   v-model="form.name"
                   type="text"
                   autocomplete="name"
+                  maxlength="30"
                   placeholder="홍길동"
                   class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-100"
                 />
                 <p v-if="errors.name" class="mt-1 text-sm text-red-500">{{ errors.name }}</p>
+                <p v-else class="mt-1 text-xs text-gray-500">한글 또는 영문으로 2~30자까지 입력할 수 있어요.</p>
               </div>
 
               <div>
@@ -85,10 +90,12 @@
                   inputmode="numeric"
                   autocomplete="tel"
                   placeholder="010-0000-0000"
+                  maxlength="13"
                   @input="onPhoneInput"
                   class="mt-2 w-full rounded-2xl border border-gray-200 px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-100"
                 />
                 <p v-if="errors.phone" class="mt-1 text-sm text-red-500">{{ errors.phone }}</p>
+                <p v-else class="mt-1 text-xs text-gray-500">숫자만 입력하면 하이픈(-)은 자동으로 넣어드릴게요.</p>
               </div>
             </div>
 
