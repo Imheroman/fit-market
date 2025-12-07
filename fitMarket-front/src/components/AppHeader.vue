@@ -41,7 +41,7 @@
         <div class="flex items-center gap-3">
           <AppHeaderLoggedInActions
             v-if="isAuthenticated"
-            :cart-count="cartCount"
+            :cart-count="headerCartCount"
             :user-name="userName"
             @logout="handleLogout"
           />
@@ -53,22 +53,30 @@
 </template>
 
 <script setup>
-import { Leaf } from 'lucide-vue-next'
-import { useRouter } from 'vue-router'
-import { useCart } from '@/composables/useCart'
-import { useAuth } from '@/composables/useAuth'
-import AppHeaderLoggedInActions from '@/components/header/AppHeaderLoggedInActions.vue'
-import AppHeaderLoggedOutActions from '@/components/header/AppHeaderLoggedOutActions.vue'
+import { computed } from 'vue';
+import { Leaf } from 'lucide-vue-next';
+import { useRouter } from 'vue-router';
+import { useCart } from '@/composables/useCart';
+import { useAuth } from '@/composables/useAuth';
+import AppHeaderLoggedInActions from '@/components/header/AppHeaderLoggedInActions.vue';
+import AppHeaderLoggedOutActions from '@/components/header/AppHeaderLoggedOutActions.vue';
 
-const router = useRouter()
-const { cartCount } = useCart()
-const { isAuthenticated, userName, isSeller, isAdmin, login, logout } = useAuth()
+const router = useRouter();
+const { cartCount: cartItemCount } = useCart();
+const { isAuthenticated, userName, isSeller, isAdmin, cartCount: authCartCount, login, logout } = useAuth();
+
+const headerCartCount = computed(() => {
+  if (isAuthenticated.value) {
+    return Number.isFinite(authCartCount.value) ? Math.max(0, authCartCount.value) : cartItemCount.value;
+  }
+  return 0;
+});
 
 const handleLogin = () => {
-  router.push({ name: 'login' })
-}
+  router.push({ name: 'login' });
+};
 
 const handleLogout = () => {
-  logout()
-}
+  logout();
+};
 </script>

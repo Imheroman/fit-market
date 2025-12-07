@@ -46,20 +46,21 @@ export function useUserProfile() {
   }
 
   const loadProfile = async () => {
-    isLoading.value = true
-    serverError.value = ''
+    isLoading.value = true;
+    serverError.value = '';
 
     try {
-      const profile = await fetchUserProfile()
-      setFormValues(profile)
-      snapshot.value = JSON.parse(JSON.stringify(form))
+      const profile = await fetchUserProfile();
+      hydrateProfile(profile);
+      setFormValues(profile);
+      snapshot.value = JSON.parse(JSON.stringify(form));
     } catch (error) {
-      console.error(error)
-      serverError.value = '회원 정보를 불러오지 못했어요.'
+      console.error(error);
+      serverError.value = error?.message ?? '회원 정보를 불러오지 못했어요.';
     } finally {
-      isLoading.value = false
+      isLoading.value = false;
     }
-  }
+  };
 
   const isDirty = computed(() => {
     if (!snapshot.value) return false
