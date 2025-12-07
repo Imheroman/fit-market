@@ -15,7 +15,7 @@
           <!-- 탭 -->
           <div class="flex gap-3 border-b border-gray-200">
             <button
-              @click="activeTab = 'register'"
+              @click="handleTabChange('register')"
               class="px-6 py-3 font-semibold transition-colors border-b-2"
               :class="
                 activeTab === 'register'
@@ -26,7 +26,7 @@
               상품 등록
             </button>
             <button
-              @click="activeTab = 'list'"
+              @click="handleTabChange('list')"
               class="px-6 py-3 font-semibold transition-colors border-b-2"
               :class="
                 activeTab === 'list'
@@ -255,7 +255,7 @@
                 <Package class="w-16 h-16 mx-auto mb-4 text-gray-300" />
                 <p>등록된 상품이 없습니다.</p>
                 <button
-                  @click="activeTab = 'register'"
+                  @click="handleTabChange('register')"
                   class="mt-4 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
                   상품 등록하기
@@ -329,7 +329,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { CheckCircle2, AlertCircle, Loader2, Package, Upload } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
@@ -351,7 +351,21 @@ const {
   toggleProductStatus,
   deleteProduct,
   resetForm,
+  loadSellerProducts,
 } = useSellerProducts()
+
+// 페이지 로드 시 판매자 상품 목록 조회
+onMounted(() => {
+  loadSellerProducts()
+})
+
+// 탭 변경 핸들러
+const handleTabChange = async (tab) => {
+  activeTab.value = tab
+  if (tab === 'list') {
+    await loadSellerProducts()
+  }
+}
 
 const handleImageChange = (event) => {
   const file = event.target.files[0]
@@ -379,7 +393,7 @@ const handleSubmit = async () => {
   if (success) {
     imagePreview.value = null
     setTimeout(() => {
-      activeTab.value = 'list'
+      handleTabChange('list')
     }, 1500)
   }
 }

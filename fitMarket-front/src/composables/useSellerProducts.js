@@ -1,5 +1,5 @@
 import { ref, reactive, computed } from 'vue'
-import { createProduct } from '@/api/productsApi'
+import { createProduct, fetchSellerProducts } from '@/api/productsApi'
 
 export const PRODUCT_CATEGORIES = [
   { value: 'lunchbox', label: '도시락', categoryId: 1 },
@@ -10,42 +10,7 @@ export const PRODUCT_CATEGORIES = [
   { value: 'snack', label: '건강 간식', categoryId: 2 },
 ]
 
-const sellerProducts = ref([
-  {
-    id: 101,
-    sellerId: 2,
-    sellerName: '건강한 밥상',
-    name: '퀴노아 닭가슴살 파워볼',
-    category: 'protein',
-    price: 9800,
-    description: '고단백 저칼로리 식단으로 운동 후 최적의 식사입니다.',
-    image: '/quinoa-chicken-bowl-healthy.png',
-    calories: 380,
-    protein: 35,
-    carbs: 42,
-    fat: 8,
-    stock: 50,
-    isActive: true,
-    createdAt: '2025-01-20T10:00:00+09:00',
-  },
-  {
-    id: 102,
-    sellerId: 2,
-    sellerName: '건강한 밥상',
-    name: '지중해식 그릴 샐러드',
-    category: 'salad',
-    price: 11500,
-    description: '신선한 채소와 올리브유로 만든 건강한 샐러드입니다.',
-    image: '/mediterranean-salad.png',
-    calories: 290,
-    protein: 15,
-    carbs: 25,
-    fat: 16,
-    stock: 30,
-    isActive: true,
-    createdAt: '2025-01-19T14:30:00+09:00',
-  },
-])
+const sellerProducts = ref([])
 
 const createDefaultForm = () => ({
   name: '',
@@ -249,6 +214,40 @@ export function useSellerProducts() {
     errorMessage.value = ''
   }
 
+  const loadSellerProducts = async () => {
+    try {
+      const products = await fetchSellerProducts()
+
+      // 백엔드 데이터를 프론트엔드 형식으로 매핑
+      sellerProducts.value = products.map((p) => {
+        // categoryId로 category value 찾기
+        const categoryObj = PRODUCT_CATEGORIES.find((cat) => cat.categoryId === p.categoryId)
+
+        return {
+          id: p.id,
+          sellerId: 1, // 백엔드 응답에 없음
+          sellerName: '건강한 밥상', // TODO: 실제 판매자 정보 사용
+          name: p.name,
+          category: categoryObj?.value || 'lunchbox',
+          price: p.price,
+          description: '', // 백엔드 응답에 description 없음
+          image: p.imageUrl,
+          weight: 0, // 백엔드 응답에 weight 없음
+          stock: 0, // 백엔드 응답에 stock 없음
+          calories: p.calories,
+          protein: p.protein,
+          carbs: p.carbs,
+          fat: p.fat,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        }
+      })
+    } catch (error) {
+      console.error('판매자 상품 조회 실패:', error)
+      errorMessage.value = '상품 목록을 불러오지 못했습니다.'
+    }
+  }
+
   return {
     form,
     errors,
@@ -263,5 +262,6 @@ export function useSellerProducts() {
     toggleProductStatus,
     deleteProduct,
     resetForm,
+    loadSellerProducts,
   }
 }

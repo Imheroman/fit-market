@@ -29,3 +29,13 @@ export async function createProduct(productData) {
 
   return response.json()
 }
+
+export async function fetchSellerProducts() {
+  const response = await fetch(`${BASE_URL}/seller`, {
+    credentials: 'include', // 쿠키 포함
+  })
+  if (!response.ok) {
+    throw new Error(`판매자 상품 조회 실패: ${response.status}`)
+  }
+  return response.json()
+}
