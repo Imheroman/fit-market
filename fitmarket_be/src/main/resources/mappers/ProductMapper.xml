@@ -10,6 +10,7 @@
             <arg column="category_id" javaType="long"/>
             <arg column="category_name" javaType="string"/>
             <arg column="price" javaType="long"/>
+            <arg column="stock" javaType="int"/>
             <arg column="image_url" javaType="string"/>
             <arg column="rating" javaType="double"/>
             <arg column="review_count" javaType="int"/>
@@ -26,6 +27,7 @@
             p.id,
             p.name,
             p.price,
+            p.stock,
             p.image_url,
             p.product_category_id AS category_id,
             pc.name AS category_name,
@@ -58,6 +60,7 @@
             p.product_category_id AS category_id,
             pc.name AS category_name,
             p.price,
+            p.stock,
             p.image_url,
             0.0 AS rating,
             0 AS review_count,
@@ -106,6 +109,7 @@
             p.id,
             p.name,
             p.price,
+            p.stock,
             p.image_url,
             p.product_category_id AS category_id,
             pc.name AS category_name,

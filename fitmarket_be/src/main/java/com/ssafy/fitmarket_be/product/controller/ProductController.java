@@ -1,8 +1,7 @@
 package com.ssafy.fitmarket_be.product.controller;
 
 import com.ssafy.fitmarket_be.global.dto.PageResponse;
-import com.ssafy.fitmarket_be.product.dto.ProductCreateRequest;
-import com.ssafy.fitmarket_be.product.dto.ProductResponse;
+import com.ssafy.fitmarket_be.product.dto.*;
 import com.ssafy.fitmarket_be.product.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,11 +22,11 @@ public class ProductController {
      * 상품 목록 조회 (페이징).
      */
     @GetMapping
-    public ResponseEntity<PageResponse<ProductResponse>> getProducts(
+    public ResponseEntity<PageResponse<ProductListResponse>> getProducts(
         @RequestParam(defaultValue = "1") Integer page,
         @RequestParam(defaultValue = "20") Integer size
     ) {
-        PageResponse<ProductResponse> response = productService.getProducts(page, size);
+        PageResponse<ProductListResponse> response = productService.getProducts(page, size);
         return ResponseEntity.ok(response);
     }
 
@@ -35,10 +34,10 @@ public class ProductController {
      * 상품 등록.
      */
     @PostMapping
-    public ResponseEntity<ProductResponse> createProduct(
+    public ResponseEntity<ProductCreateResponse> createProduct(
         @Valid @RequestBody ProductCreateRequest request
     ) {
-        ProductResponse response = productService.createProduct(request);
+        ProductCreateResponse response = productService.createProduct(request);
 
         return ResponseEntity
             .created(URI.create("/products/" + response.id()))
@@ -49,9 +48,9 @@ public class ProductController {
      * 판매자의 상품 목록 조회 (userId 고정: 1).
      */
     @GetMapping("/seller")
-    public ResponseEntity<List<ProductResponse>> getSellerProducts() {
+    public ResponseEntity<List<ProductListResponse>> getSellerProducts() {
         Long userId = 1L;
-        List<ProductResponse> response = productService.getSellerProducts(userId);
+        List<ProductListResponse> response = productService.getSellerProducts(userId);
         return ResponseEntity.ok(response);
     }
 }
