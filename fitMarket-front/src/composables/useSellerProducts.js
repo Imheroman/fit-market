@@ -47,14 +47,6 @@ export function useSellerProducts() {
     return sellerProducts.value
   })
 
-  const activeProducts = computed(() => {
-    return myProducts.value.filter((p) => p.isActive)
-  })
-
-  const inactiveProducts = computed(() => {
-    return myProducts.value.filter((p) => !p.isActive)
-  })
-
   const resetErrors = () => {
     Object.keys(errors).forEach((key) => {
       errors[key] = ''
@@ -164,7 +156,6 @@ export function useSellerProducts() {
         protein: response.protein,
         carbs: response.carbs,
         fat: response.fat,
-        isActive: true,
         createdAt: new Date().toISOString(),
       }
 
@@ -179,21 +170,6 @@ export function useSellerProducts() {
     } finally {
       isSubmitting.value = false
     }
-  }
-
-  const applyLocalUpdate = (productId, updates) => {
-    const product = sellerProducts.value.find((p) => p.id === productId)
-    if (product) {
-      Object.assign(product, updates)
-      return true
-    }
-    return false
-  }
-
-  const toggleProductStatus = async (productId) => {
-    const product = sellerProducts.value.find((p) => p.id === productId)
-    if (!product) return false
-    return applyLocalUpdate(productId, { isActive: !product.isActive })
   }
 
   const deleteProduct = async (productId) => {
@@ -348,7 +324,6 @@ export function useSellerProducts() {
           protein: p.protein,
           carbs: p.carbs,
           fat: p.fat,
-          isActive: true,
           createdAt: new Date().toISOString(),
         }
       })
@@ -366,12 +341,9 @@ export function useSellerProducts() {
     errorMessage,
     editingProductId,
     myProducts,
-    activeProducts,
-    inactiveProducts,
     registerProduct,
     submitProduct,
     setEditingProduct,
-    toggleProductStatus,
     deleteProduct,
     resetForm,
     loadSellerProducts,
