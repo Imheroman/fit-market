@@ -204,4 +204,35 @@ CREATE TABLE `order_products` (
 INSERT INTO `order_approval_status` (`name`) VALUES
 ('pending'), ('confirmed'), ('shipping'), ('delivered'), ('cancelled');
 
+-- ============================================
+-- 샘플 데이터 (개발/테스트용)
+-- ============================================
+
+-- 샘플 사용자 (판매자 역할)
+INSERT INTO `users` (`id`, `name`, `email`, `password`, `phone`, `role`)
+VALUES (1, '김영웅', 'seller@example.com', '{noop}password123', '010-1234-5678', 'USER');
+
+-- 샘플 카테고리
+INSERT INTO `product_categories` (`id`, `name`) VALUES
+(1, '도시락'),
+(2, '밀키트');
+
+-- 샘플 식품 정보 (영양소)
+INSERT INTO `food` (
+    `id`, `code`, `name`, `calories`, `protein`, `carbs`, `fat`,
+    `sodium`, `sugars`, `fiber`, `saturated_fat`, `trans_fat`, `calcium`
+) VALUES (
+    1, 'FD-001', '그린 샐러드 도시락',
+    '320', '18', '35', '12',
+    '450', '8', '6', '2.5', '0', '120'
+);
+
+-- 샘플 상품
+INSERT INTO `products` (
+    `user_id`, `product_category_id`, `name`, `description`, `price`, `stock`, `image_url`, `food_id`
+) VALUES (
+    1, 1, '그린 샐러드 도시락', '신선한 채소와 닭가슴살을 담은 샐러드 도시락',
+    8500, 50, '/fresh-green-salad-bowl.png', 1
+);
+
 SELECT 'FitMarket 데이터베이스 초기화 완료 (Strict Mode)!' AS message;
