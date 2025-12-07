@@ -1,5 +1,10 @@
 import { ref, reactive, computed } from 'vue'
-import { createProduct } from '@/api/productsApi'
+import {
+  createProduct,
+  fetchSellerProducts,
+  updateProduct as updateProductApi,
+  deleteProduct as deleteProductApi,
+} from '@/api/productsApi'
 
 export const PRODUCT_CATEGORIES = [
   { value: 'lunchbox', label: '도시락', categoryId: 1 },
@@ -10,42 +15,7 @@ export const PRODUCT_CATEGORIES = [
   { value: 'snack', label: '건강 간식', categoryId: 2 },
 ]
 
-const sellerProducts = ref([
-  {
-    id: 101,
-    sellerId: 2,
-    sellerName: '건강한 밥상',
-    name: '퀴노아 닭가슴살 파워볼',
-    category: 'protein',
-    price: 9800,
-    description: '고단백 저칼로리 식단으로 운동 후 최적의 식사입니다.',
-    image: '/quinoa-chicken-bowl-healthy.png',
-    calories: 380,
-    protein: 35,
-    carbs: 42,
-    fat: 8,
-    stock: 50,
-    isActive: true,
-    createdAt: '2025-01-20T10:00:00+09:00',
-  },
-  {
-    id: 102,
-    sellerId: 2,
-    sellerName: '건강한 밥상',
-    name: '지중해식 그릴 샐러드',
-    category: 'salad',
-    price: 11500,
-    description: '신선한 채소와 올리브유로 만든 건강한 샐러드입니다.',
-    image: '/mediterranean-salad.png',
-    calories: 290,
-    protein: 15,
-    carbs: 25,
-    fat: 16,
-    stock: 30,
-    isActive: true,
-    createdAt: '2025-01-19T14:30:00+09:00',
-  },
-])
+const sellerProducts = ref([])
 
 const createDefaultForm = () => ({
   name: '',
@@ -71,17 +41,10 @@ export function useSellerProducts() {
   const isSubmitting = ref(false)
   const successMessage = ref('')
   const errorMessage = ref('')
+  const editingProductId = ref(null)
 
   const myProducts = computed(() => {
     return sellerProducts.value
-  })
-
-  const activeProducts = computed(() => {
-    return myProducts.value.filter((p) => p.isActive)
-  })
-
-  const inactiveProducts = computed(() => {
-    return myProducts.value.filter((p) => !p.isActive)
   })
 
   const resetErrors = () => {
@@ -176,6 +139,8 @@ export function useSellerProducts() {
       const response = await createProduct(productData)
 
       // 로컬 상품 목록에 추가 (UI 업데이트용)
+      // API 응답에 stock이 없으면 입력값으로 대체
+      const createdStock = response?.stock ?? productData.stock
       const newProduct = {
         id: response.id,
         sellerId: response.userId || 1,
@@ -186,12 +151,11 @@ export function useSellerProducts() {
         description: form.description,
         image: response.imageUrl,
         weight: Number(form.weight),
-        stock: response.stock,
+        stock: createdStock,
         calories: response.calories,
         protein: response.protein,
         carbs: response.carbs,
         fat: response.fat,
-        isActive: true,
         createdAt: new Date().toISOString(),
       }
 
@@ -208,37 +172,123 @@ export function useSellerProducts() {
     }
   }
 
-  const updateProduct = async (productId, updates) => {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 300))
-      const product = sellerProducts.value.find((p) => p.id === productId)
-      if (product) {
-        Object.assign(product, updates)
-      }
-      return true
-    } catch (error) {
-      console.error(error)
-      return false
-    }
-  }
-
-  const toggleProductStatus = async (productId) => {
-    const product = sellerProducts.value.find((p) => p.id === productId)
-    if (!product) return false
-    return updateProduct(productId, { isActive: !product.isActive })
-  }
-
   const deleteProduct = async (productId) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 300))
+      isSubmitting.value = true
+      errorMessage.value = ''
+      successMessage.value = ''
+
+      await deleteProductApi(productId)
       const index = sellerProducts.value.findIndex((p) => p.id === productId)
       if (index !== -1) {
         sellerProducts.value.splice(index, 1)
       }
+      successMessage.value = '상품이 삭제되었습니다.'
       return true
     } catch (error) {
       console.error(error)
+      errorMessage.value = error.message || '상품 삭제 중 오류가 발생했습니다.'
       return false
+    } finally {
+      isSubmitting.value = false
+    }
+  }
+
+  const setEditingProduct = (product) => {
+    editingProductId.value = product.id
+    form.name = product.name
+    form.category = product.category
+    form.price = product.price.toString()
+    form.description = product.description
+    form.stock = product.stock.toString()
+    form.weight = product.weight.toString()
+    form.imageFile = null // 수정 시에는 이미지를 변경하지 않을 수도 있음
+  }
+
+  const submitProduct = async () => {
+    // 수정 모드일 때는 이미지 파일 검증 건너뛰기 (기존 이미지 유지)
+    if (editingProductId.value && !form.imageFile) {
+      errors.imageFile = '' // 수정 시 이미지는 선택사항
+    }
+
+    // 수정 모드면 등록, 아니면 수정
+    if (editingProductId.value) {
+      return await updateProductSubmit()
+    } else {
+      return await registerProduct()
+    }
+  }
+
+  const updateProductSubmit = async () => {
+    // 이미지 제외하고 검증
+    const tempImageFile = form.imageFile
+    if (!tempImageFile) {
+      form.imageFile = { name: 'placeholder' } // 임시 값 설정
+    }
+
+    if (!validate()) {
+      form.imageFile = tempImageFile // 원래 값 복원
+      errorMessage.value = '입력 항목을 확인해주세요.'
+      return false
+    }
+
+    form.imageFile = tempImageFile // 원래 값 복원
+    isSubmitting.value = true
+    errorMessage.value = ''
+    successMessage.value = ''
+
+    try {
+      const selectedCategory = PRODUCT_CATEGORIES.find((cat) => cat.value === form.category)
+      if (!selectedCategory) {
+        throw new Error('올바른 카테고리를 선택해주세요.')
+      }
+
+      // 기존 상품 찾기
+      const existingProduct = sellerProducts.value.find((p) => p.id === editingProductId.value)
+      const imageUrl = form.imageFile ? form.imageFile.name : existingProduct.image
+
+      const productData = {
+        name: form.name,
+        categoryId: selectedCategory.categoryId,
+        price: Number(form.price),
+        description: form.description,
+        stock: Number(form.stock),
+        imageUrl: imageUrl,
+        userId: 1,
+      }
+
+      const response = await updateProductApi(editingProductId.value, productData)
+
+      // 로컬 상품 목록 업데이트
+      const productIndex = sellerProducts.value.findIndex((p) => p.id === editingProductId.value)
+      if (productIndex !== -1) {
+        const updatedStock = response?.stock ?? productData.stock
+        sellerProducts.value[productIndex] = {
+          ...sellerProducts.value[productIndex],
+          name: response?.name ?? form.name,
+          category: form.category,
+          price: response?.price ?? Number(form.price),
+          description: form.description,
+          image: response?.imageUrl ?? sellerProducts.value[productIndex].image,
+          weight: Number(form.weight),
+          stock: updatedStock,
+          calories: response?.calories ?? sellerProducts.value[productIndex].calories,
+          protein: response?.protein ?? sellerProducts.value[productIndex].protein,
+          carbs: response?.carbs ?? sellerProducts.value[productIndex].carbs,
+          fat: response?.fat ?? sellerProducts.value[productIndex].fat,
+        }
+      }
+
+      successMessage.value = '상품이 수정되었습니다.'
+      Object.assign(form, createDefaultForm())
+      editingProductId.value = null
+      return true
+    } catch (error) {
+      console.error(error)
+      errorMessage.value = error.message || '상품 수정 중 오류가 발생했습니다.'
+      return false
+    } finally {
+      isSubmitting.value = false
     }
   }
 
@@ -247,6 +297,40 @@ export function useSellerProducts() {
     resetErrors()
     successMessage.value = ''
     errorMessage.value = ''
+    editingProductId.value = null
+  }
+
+  const loadSellerProducts = async () => {
+    try {
+      const products = await fetchSellerProducts()
+
+      // 백엔드 데이터를 프론트엔드 형식으로 매핑
+      sellerProducts.value = products.map((p) => {
+        // categoryId로 category value 찾기
+        const categoryObj = PRODUCT_CATEGORIES.find((cat) => cat.categoryId === p.categoryId)
+
+        return {
+          id: p.id,
+          sellerId: 1, // 백엔드 응답에 없음
+          sellerName: '건강한 밥상', // TODO: 실제 판매자 정보 사용
+          name: p.name,
+          category: categoryObj?.value || 'lunchbox',
+          price: p.price,
+          description: p.description ?? '',
+          image: p.imageUrl,
+          weight: 0, // 백엔드 응답에 weight 없음
+          stock: p.stock ?? 0,
+          calories: p.calories,
+          protein: p.protein,
+          carbs: p.carbs,
+          fat: p.fat,
+          createdAt: new Date().toISOString(),
+        }
+      })
+    } catch (error) {
+      console.error('판매자 상품 조회 실패:', error)
+      errorMessage.value = '상품 목록을 불러오지 못했습니다.'
+    }
   }
 
   return {
@@ -255,13 +339,13 @@ export function useSellerProducts() {
     isSubmitting,
     successMessage,
     errorMessage,
+    editingProductId,
     myProducts,
-    activeProducts,
-    inactiveProducts,
     registerProduct,
-    updateProduct,
-    toggleProductStatus,
+    submitProduct,
+    setEditingProduct,
     deleteProduct,
     resetForm,
+    loadSellerProducts,
   }
 }
