@@ -1,9 +1,5 @@
 import { onMounted, ref } from 'vue'
-import { fetchProducts } from '@/api/productsApi'
-
-const products = ref([])
-const isLoading = ref(false)
-const errorMessage = ref('')
+import { fetchNewProducts } from '@/api/productsApi'
 
 const mapProduct = (item) => ({
   id: item.id,
@@ -13,7 +9,6 @@ const mapProduct = (item) => ({
   image: item.imageUrl,
   rating: item.rating ?? 0,
   reviews: item.reviewCount ?? 0,
-  // 백엔드에서 평탄화된 구조로 전달됨
   calories: item.calories ?? 0,
   protein: item.protein ?? 0,
   carbs: item.carbs ?? 0,
@@ -21,35 +16,37 @@ const mapProduct = (item) => ({
   isFavorite: false,
 })
 
-export function useProducts() {
+export function useNewProducts({ page = 1, size = 12 } = {}) {
+  const products = ref([])
+  const isLoading = ref(false)
+  const errorMessage = ref('')
+
   const loadProducts = async () => {
     isLoading.value = true
     errorMessage.value = ''
     try {
-      const response = await fetchProducts({ page: 1, size: 20 })
-      products.value = (response.content ?? []).map(mapProduct)
+      const response = await fetchNewProducts({ page, size })
+      const content = Array.isArray(response?.content) ? response.content : []
+      products.value = content.map(mapProduct)
     } catch (error) {
       console.error(error)
-      errorMessage.value = '상품을 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
+      errorMessage.value = '신상품을 불러오지 못했습니다.'
     } finally {
       isLoading.value = false
     }
   }
 
   const toggleFavorite = (productId) => {
-    const product = products.value.find(p => p.id === productId)
+    const product = products.value.find((p) => p.id === productId)
     if (product) {
       product.isFavorite = !product.isFavorite
     }
   }
 
-  const getProductById = (id) => {
-    return products.value.find(p => p.id === id)
-  }
-
   onMounted(() => {
-    // 홈 진입 시마다 최신 목록을 불러온다
-    loadProducts()
+    if (!products.value.length) {
+      loadProducts()
+    }
   })
 
   return {
@@ -57,7 +54,6 @@ export function useProducts() {
     isLoading,
     errorMessage,
     toggleFavorite,
-    getProductById,
     loadProducts,
   }
 }

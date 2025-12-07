@@ -40,28 +40,20 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { Star } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import ProductCard from '@/components/ProductCard.vue'
-import { useProducts } from '@/composables/useProducts'
 import { useCart } from '@/composables/useCart'
+import { useBestProducts } from '@/composables/useBestProducts'
 
-const { products, isLoading, errorMessage, toggleFavorite } = useProducts()
+const { products, isLoading, errorMessage, toggleFavorite } = useBestProducts()
 const { addToCart } = useCart()
 
-// 베스트 정렬: 평점 내림차순 -> 리뷰 많은 순 -> id 최신순
-const sortedProducts = computed(() =>
-  [...products.value].sort((a, b) => {
-    if (b.rating !== a.rating) return b.rating - a.rating
-    if (b.reviews !== a.reviews) return b.reviews - a.reviews
-    return b.id - a.id
-  })
-)
+const sortedProducts = products
 
 const handleAddToCart = (productId) => {
-  const product = products.value.find((p) => p.id === productId)
+  const product = sortedProducts.value.find((p) => p.id === productId)
   if (!product) return
 
   const priceNumber = typeof product.price === 'number'
