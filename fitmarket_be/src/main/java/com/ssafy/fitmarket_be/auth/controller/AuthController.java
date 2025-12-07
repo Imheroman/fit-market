@@ -31,26 +31,26 @@ public class AuthController {
   private final JwtUtil jwtUtil;
 //  private final CartService cartService;
 
-  @PostMapping("/login")
-  public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request,
-      HttpServletResponse response) {
-    log.trace("attempt login email: {}", request.getEmail());
+@PostMapping("/login")
+public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request,
+    HttpServletResponse response) {
+  log.trace("attempt login email: {}", request.getEmail());
 
-    UsernamePasswordAuthenticationToken authToken =
-        new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword());
+  UsernamePasswordAuthenticationToken authToken =
+      new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword());
 
-    Authentication authentication = this.authenticationManager.authenticate(authToken);
-    CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
+  Authentication authentication = this.authenticationManager.authenticate(authToken);
+  CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
 
-    String token = this.jwtUtil.create(user.getUsername(), user.getAuthorities());
-    Cookie cookie = CookieUtils.create("token", token);
-    response.addCookie(cookie);
+  String token = this.jwtUtil.create(user.getId(), user.getUsername(), user.getAuthorities());
+  Cookie cookie = CookieUtils.create("token", token);
+  response.addCookie(cookie);
 
-    log.trace("login success email: {}, token: {}", request.getEmail(), token);
+  log.trace("login success email: {}, token: {}", request.getEmail(), token);
 //    int cartCount = cartService.countByUserId(user.getId());
-    int cartCount = 0;
-    return ResponseEntity.ok(new LoginResponse(user.getName(), cartCount));                                                // Changed
-  }
+  int cartCount = 0;
+  return ResponseEntity.ok(new LoginResponse(user.getName(), cartCount));                                                // Changed
+}
 
   @NoArgsConstructor
   @Getter

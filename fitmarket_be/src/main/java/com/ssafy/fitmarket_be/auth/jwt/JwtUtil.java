@@ -28,14 +28,14 @@ public class JwtUtil {
     this.key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
   }
 
-  public String create(String username, Collection<? extends GrantedAuthority> authorities) {
+  public String create(Long id, String username, Collection<? extends GrantedAuthority> authorities) {
     String role = authorities.stream()
         .map(GrantedAuthority::getAuthority)
         .collect(Collectors.joining(","));
 
     return Jwts.builder().header().add("typ", "JWT") // 헤더: 타입 지정 (필수적이진 않음)
         .and()
-        .subject(username)
+        .subject(String.valueOf(id))
         .claim(USER_NAME, username) // email
         .claim(ROLE, role)         // role
         .issuedAt(new Date(System.currentTimeMillis())) // 발행 시간
@@ -45,13 +45,14 @@ public class JwtUtil {
   }
 
   /**
-   * 토큰에서 username 추출
+   * 토큰에서 user sequence id 추출
    *
    * @param token
    * @return
    */
-  public String getUsername(String token) {
-    return parseClaims(token).getSubject();
+  public Long getId(String token) {
+    String id = parseClaims(token).getSubject();
+    return Long.parseLong(id);
   }
 
   /**

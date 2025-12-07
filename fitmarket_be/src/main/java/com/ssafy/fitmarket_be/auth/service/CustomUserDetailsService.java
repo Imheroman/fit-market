@@ -21,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService { // Changed
     User user = this.userRepository.findByEmail(email)
         .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 유저"));
 
-    if (Objects.isNull(user.getDeletedDate())) {
+    if (!Objects.isNull(user.getDeletedDate())) {
       throw new RuntimeException("탈퇴한 회원입니다.");
     }
 
