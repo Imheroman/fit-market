@@ -7,9 +7,12 @@ import com.ssafy.fitmarket_be.product.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/products")
@@ -42,5 +45,17 @@ public class ProductController {
         return ResponseEntity
             .created(URI.create("/products/" + response.id()))
             .body(response);
+    }
+
+    /**
+     * 판매자의 상품 목록 조회 (로그인한 사용자).
+     */
+    @GetMapping("/seller")
+    public ResponseEntity<List<ProductResponse>> getSellerProducts(
+        @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        String email = userDetails.getUsername();
+        List<ProductResponse> response = productService.getSellerProductsByEmail(email);
+        return ResponseEntity.ok(response);
     }
 }

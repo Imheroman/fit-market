@@ -75,4 +75,14 @@ public class ProductService {
 
         return ProductResponse.from(product);
     }
+
+    /**
+     * 판매자의 상품 목록 조회 (email).
+     */
+    public List<ProductResponse> getSellerProductsByEmail(String email) {
+        List<Product> products = productMapper.selectProductsByEmail(email);
+        return products.stream()
+            .map(ProductResponse::from)
+            .toList();
+    }
 }
