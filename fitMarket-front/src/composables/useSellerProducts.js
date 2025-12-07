@@ -340,7 +340,7 @@ export function useSellerProducts() {
           name: p.name,
           category: categoryObj?.value || 'lunchbox',
           price: p.price,
-          description: '', // 백엔드 응답에 description 없음
+          description: p.description ?? '',
           image: p.imageUrl,
           weight: 0, // 백엔드 응답에 weight 없음
           stock: p.stock ?? 0,
