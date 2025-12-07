@@ -76,6 +76,28 @@ public class ProductService {
     }
 
     /**
+     * 상품 수정.
+     */
+    @Transactional
+    public ProductUpdateResponse updateProduct(Long productId, ProductUpdateRequest request) {
+        // 상품 수정
+        productMapper.updateProduct(
+            productId,
+            request.name(),
+            request.categoryId(),
+            request.price(),
+            request.description(),
+            request.stock(),
+            request.imageUrl()
+        );
+
+        // 수정된 상품 조회
+        Product product = productMapper.selectProductById(productId);
+
+        return ProductUpdateResponse.from(product);
+    }
+
+    /**
      * 판매자의 상품 목록 조회 (userId).
      */
     public List<ProductListResponse> getSellerProducts(Long userId) {

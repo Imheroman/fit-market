@@ -103,6 +103,19 @@
         SELECT LAST_INSERT_ID()
     </select>
 
+    <!-- 상품 수정 -->
+    <update id="updateProduct">
+        UPDATE products
+        SET name = #{name},
+            product_category_id = #{categoryId},
+            price = #{price},
+            description = #{description},
+            stock = #{stock},
+            image_url = #{imageUrl}
+        WHERE id = #{productId}
+          AND deleted_date IS NULL
+    </update>
+
     <!-- 판매자의 상품 목록 조회 (userId) -->
     <select id="selectProductsByUserId" resultMap="ProductResultMap">
         SELECT

@@ -47,6 +47,19 @@ public interface ProductMapper {
     Long selectLastInsertId();
 
     /**
+     * 상품 수정.
+     */
+    void updateProduct(
+        @Param("productId") Long productId,
+        @Param("name") String name,
+        @Param("categoryId") Long categoryId,
+        @Param("price") Long price,
+        @Param("description") String description,
+        @Param("stock") Integer stock,
+        @Param("imageUrl") String imageUrl
+    );
+
+    /**
      * 판매자의 상품 목록 조회 (userId).
      */
     List<Product> selectProductsByUserId(@Param("userId") Long userId);
