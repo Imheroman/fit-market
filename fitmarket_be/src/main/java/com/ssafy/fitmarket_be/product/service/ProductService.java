@@ -98,6 +98,14 @@ public class ProductService {
     }
 
     /**
+     * 상품 삭제 (소프트 삭제).
+     */
+    @Transactional
+    public void deleteProduct(Long productId) {
+        productMapper.deleteProduct(productId);
+    }
+
+    /**
      * 판매자의 상품 목록 조회 (userId).
      */
     public List<ProductListResponse> getSellerProducts(Long userId) {
