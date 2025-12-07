@@ -10,6 +10,11 @@
     where email = #{email}
   </select>
 
+  <select id="findBy" resultMap="userMap">
+    SELECT * FROM users
+    where id = #{id}
+  </select>
+
   <insert id="save" useGeneratedKeys="true" keyProperty="id">
     INSERT INTO users ( name, email, password, phone )
     VALUES ( #{name}, #{email}, #{password}, #{phone} )
@@ -33,7 +38,7 @@
       </choose>
     </set>
     <where>
-      email = #{email}
+      id = #{id}
     </where>
   </update>
 
@@ -41,7 +46,7 @@
     UPDATE users
     <set>deleted_date = NOW()</set>
     <where>
-      email = #{email}
+      id = #{id}
     </where>
   </update>
 

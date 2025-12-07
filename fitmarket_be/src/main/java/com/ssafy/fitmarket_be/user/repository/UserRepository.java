@@ -1,7 +1,6 @@
 package com.ssafy.fitmarket_be.user.repository;
 
 import com.ssafy.fitmarket_be.entity.User;
-import com.ssafy.fitmarket_be.user.dto.UserUpdateRequestDto;
 import java.util.Optional;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -11,11 +10,13 @@ public interface UserRepository {
 
   Optional<User> findByEmail(String email);
 
+  Optional<User> findBy(Long id);
+
   int save(User user);
 
-  int delete(String email);
+  int delete(Long id);
 
-  int update(@Param("email") String username,
+  int update(@Param("id") Long id,
       @Param("column") String column,
       @Param("value") String value);
 }
