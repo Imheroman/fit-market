@@ -7,6 +7,7 @@
         <constructor>
             <idArg column="id" javaType="long"/>
             <arg column="name" javaType="string"/>
+            <arg column="description" javaType="string"/>
             <arg column="category_id" javaType="long"/>
             <arg column="category_name" javaType="string"/>
             <arg column="price" javaType="long"/>
@@ -26,6 +27,7 @@
         SELECT
             p.id,
             p.name,
+            p.description,
             p.price,
             p.stock,
             p.image_url,
@@ -57,6 +59,7 @@
         SELECT
             p.id,
             p.name,
+            p.description,
             p.product_category_id AS category_id,
             pc.name AS category_name,
             p.price,
@@ -129,6 +132,7 @@
         SELECT
             p.id,
             p.name,
+            p.description,
             p.price,
             p.stock,
             p.image_url,

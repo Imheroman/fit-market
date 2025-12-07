@@ -12,6 +12,7 @@ import lombok.ToString;
 public final class Product {
     private final Long id;
     private final String name;
+    private final String description;
     private final Long categoryId;
     private final String categoryName;
     private final Long price;
@@ -28,6 +29,7 @@ public final class Product {
     Product(
         Long id,
         String name,
+        String description,
         Long categoryId,
         String categoryName,
         Long price,
@@ -48,6 +50,7 @@ public final class Product {
 
         this.id = id;
         this.name = name;
+        this.description = description;
         this.categoryId = categoryId;
         this.categoryName = categoryName;
         this.price = price;
