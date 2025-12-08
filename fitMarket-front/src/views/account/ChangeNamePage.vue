@@ -78,7 +78,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
@@ -89,11 +89,11 @@ const router = useRouter();
 const { user, loadUserProfile, isProfileLoading, profileError } = useAuth();
 const { name, error, serverError, successMessage, isSubmitting, isDirty, setInitialValue, submit, reset } = useChangeName();
 const isInitializing = ref(true);
+const profileName = computed(() => user.value?.name ?? '');
 
 const hydrateFromProfile = async () => {
   try {
-    const profile = await loadUserProfile();
-    setInitialValue(profile?.name ?? user.value?.name ?? '');
+    await loadUserProfile();
   } catch (errorResponse) {
     console.error(errorResponse);
   } finally {
@@ -105,9 +105,18 @@ onMounted(() => {
   hydrateFromProfile();
 });
 
+watch(
+  profileName,
+  (value) => {
+    setInitialValue(value);
+  },
+  { immediate: true }
+);
+
 const handleSubmit = async () => {
   const result = await submit();
   if (result) {
+    await loadUserProfile();
     router.push('/mypage');
   }
 };

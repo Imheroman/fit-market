@@ -53,6 +53,19 @@
               </span>
             </div>
 
+            <p
+              v-if="isAddressLoading"
+              class="text-sm text-gray-600 bg-green-50 border border-green-100 rounded-lg px-3 py-2 mb-4"
+            >
+              배송지 정보를 불러오는 중이에요.
+            </p>
+            <p
+              v-else-if="addressErrorMessage"
+              class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4"
+            >
+              {{ addressErrorMessage }}
+            </p>
+
             <div class="border border-green-100 rounded-2xl p-5 bg-gradient-to-br from-green-50/60 to-white">
               <div class="flex flex-col gap-2">
                 <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">받는 분</p>
@@ -193,7 +206,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { CheckCircle, MapPin, ShieldCheck, BadgeCheck, PackageCheck, AlertTriangle, Edit3 } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
@@ -205,7 +218,7 @@ import { formatPhoneNumber } from '@/utils/phone'
 
 const router = useRouter()
 const { cartItems, totalPrice } = useCart()
-const { selectedAddress } = useAddresses()
+const { selectedAddress, loadAddresses, isLoading: isAddressLoading, errorMessage: addressErrorMessage } = useAddresses()
 const { orderNumber, shippingFee, isCancelled, cancellationFee, canFreeCancel, cancelOrder } = useOrderStatus()
 
 const totalPayment = computed(() => totalPrice.value + shippingFee)
@@ -236,4 +249,10 @@ const handleCancelRequest = () => {
 const navigateToProduct = (productId) => {
   router.push({ name: 'product-detail', params: { id: productId } })
 }
+
+onMounted(() => {
+  loadAddresses().catch((error) => {
+    console.error(error)
+  })
+})
 </script>

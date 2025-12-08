@@ -35,7 +35,20 @@
             </div>
 
             <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
+              <div
+                v-if="isAddressLoading"
+                class="border border-dashed border-green-200 rounded-xl p-4 text-sm text-gray-600 bg-green-50/60"
+              >
+                배송지를 불러오는 중이에요. 잠시만 기다려 주세요.
+              </div>
+              <div
+                v-else-if="addressErrorMessage"
+                class="border border-red-200 bg-red-50 rounded-xl p-4 text-sm text-red-700"
+              >
+                {{ addressErrorMessage }}
+              </div>
               <label
+                v-else
                 v-for="address in displayedAddresses"
                 :key="address.id"
                 class="block border rounded-xl p-4 cursor-pointer transition-all"
@@ -64,7 +77,7 @@
             </div>
 
             <button
-              v-if="addressListOverflow"
+              v-if="addressListOverflow && !isAddressLoading && !addressErrorMessage"
               class="mt-4 w-full border border-green-200 text-green-700 font-semibold py-2 rounded-lg hover:bg-green-50 transition-colors"
               @click="toggleAddressList"
             >
@@ -189,7 +202,15 @@ const router = useRouter()
 const MAX_VISIBLE_ADDRESSES = 3
 
 const { cartItems, totalPrice } = useCart()
-const { addresses, selectedAddress, selectedAddressId, selectAddress } = useAddresses()
+const {
+  addresses,
+  selectedAddress,
+  selectedAddressId,
+  selectAddress,
+  loadAddresses,
+  isLoading: isAddressLoading,
+  errorMessage: addressErrorMessage,
+} = useAddresses()
 const { shippingFee, resetOrderStatus, completePayment } = useOrderStatus()
 
 const showAllAddresses = ref(false)
@@ -230,5 +251,8 @@ const navigateToProduct = (productId) => {
 
 onMounted(() => {
   resetOrderStatus()
+  loadAddresses().catch((error) => {
+    console.error(error)
+  })
 })
 </script>
