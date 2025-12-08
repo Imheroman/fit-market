@@ -59,6 +59,7 @@ CREATE TABLE `seller_applications` (
 
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_date` TIMESTAMP NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_seller_app_user` (`user_id`),           -- 유저당 1개의 신청 정보만 유지 (1:1 Extension)
     UNIQUE KEY `uk_seller_app_biz_num` (`business_number`), -- 사업자 번호 중복 방지
@@ -74,6 +75,7 @@ CREATE TABLE `address` (
     `address_line_detail` VARCHAR(255) NOT NULL,
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -82,8 +84,10 @@ CREATE TABLE `user_address` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `user_id` BIGINT NOT NULL,
     `address_id` BIGINT NOT NULL,
+    `is_main` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '대표 주소 여부(1: 대표)',
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_date` TIMESTAMP NULL,
     PRIMARY KEY (`id`),
     CONSTRAINT `fk_user_address_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_user_address_address` FOREIGN KEY (`address_id`) REFERENCES `address` (`id`) ON DELETE CASCADE
@@ -108,6 +112,7 @@ CREATE TABLE `food` (
     `calcium` VARCHAR(255) NULL,
     `created_date` VARCHAR(255) NULL,
     `modified_date` VARCHAR(255) NULL,
+    `deleted_date` TIMESTAMP NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_food_code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -119,6 +124,7 @@ CREATE TABLE `product_categories` (
     `name` VARCHAR(100) NOT NULL,
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_date` TIMESTAMP NULL,
     PRIMARY KEY (`id`),
     CONSTRAINT `fk_product_categories_parent` FOREIGN KEY (`parent_id`) REFERENCES `product_categories` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -149,6 +155,7 @@ CREATE TABLE `shopping_cart_products` (
     `quantity` INT NOT NULL,
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_date` TIMESTAMP NULL,
     `user_id` BIGINT NOT NULL,
     `product_id` BIGINT NOT NULL,
     PRIMARY KEY (`id`),
@@ -162,6 +169,7 @@ CREATE TABLE `order_approval_status` (
     `name` VARCHAR(100) NOT NULL DEFAULT 'pending',
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_date` TIMESTAMP NULL,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -178,6 +186,7 @@ CREATE TABLE `orders` (
     `comment` VARCHAR(255) NULL,
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_date` TIMESTAMP NULL,
     PRIMARY KEY (`id`),
     CONSTRAINT `fk_orders_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_orders_address` FOREIGN KEY (`address_id`) REFERENCES `address` (`id`) ON DELETE RESTRICT,
@@ -193,6 +202,7 @@ CREATE TABLE `order_products` (
     `price` BIGINT NOT NULL,
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_date` TIMESTAMP NULL,
     PRIMARY KEY (`id`),
     CONSTRAINT `fk_order_products_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_order_products_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT
