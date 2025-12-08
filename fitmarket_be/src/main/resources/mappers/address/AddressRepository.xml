@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.fitmarket_be.address.repository.AddressRepository">
+
+  <resultMap id="AddressResultMap" type="Address">
+    <id property="id" column="id"/>
+    <result property="postalCode" column="postal_code"/>
+    <result property="addressLine" column="address_line"/>
+    <result property="addressLineDetail" column="address_line_detail"/>
+    <result property="createdDate" column="created_date"/>
+    <result property="modifiedDate" column="modified_date"/>
+    <result property="deletedDate" column="deleted_date"/>
+  </resultMap>
+
+  <select id="findAllByUserId" resultMap="AddressResultMap">
+    SELECT
+      a.id,
+      a.postal_code,
+      a.address_line,
+      a.address_line_detail,
+      a.created_date,
+      a.modified_date,
+      a.deleted_date
+    FROM address a
+    JOIN user_address ua ON a.id = ua.address_id
+    WHERE ua.user_id = #{userId}
+      AND a.deleted_date IS NULL
+      AND ua.deleted_date IS NULL
+    ORDER BY a.created_date DESC
+  </select>
+
+  <select id="findByIdAndUserId" resultMap="AddressResultMap">
+    SELECT
+      a.id,
+      a.postal_code,
+      a.address_line,
+      a.address_line_detail,
+      a.created_date,
+      a.modified_date,
+      a.deleted_date
+    FROM address a
+    JOIN user_address ua ON a.id = ua.address_id
+    WHERE a.id = #{id}
+      AND ua.user_id = #{userId}
+      AND a.deleted_date IS NULL
+      AND ua.deleted_date IS NULL
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO address (
+      postal_code,
+      address_line,
+      address_line_detail
+    ) VALUES (
+      #{postalCode},
+      #{addressLine},
+      #{addressLineDetail}
+    )
+  </insert>
+
+  <insert id="insertUserAddress">
+    INSERT INTO user_address (
+      user_id,
+      address_id
+    ) VALUES (
+      #{userId},
+      #{addressId}
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE address a
+    JOIN user_address ua ON a.id = ua.address_id
+    <set>
+      <if test="postalCode != null">
+        postal_code = #{postalCode},
+      </if>
+      <if test="addressLine != null">
+        address_line = #{addressLine},
+      </if>
+      <if test="addressLineDetail != null">
+        address_line_detail = #{addressLineDetail},
+      </if>
+      modified_date = CURRENT_TIMESTAMP
+    </set>
+    WHERE a.id = #{id}
+      AND ua.user_id = #{userId}
+      AND a.deleted_date IS NULL
+      AND ua.deleted_date IS NULL
+  </update>
+
+  <update id="delete">
+    UPDATE address a
+    JOIN user_address ua ON a.id = ua.address_id
+    SET a.deleted_date = CURRENT_TIMESTAMP,
+        ua.deleted_date = CURRENT_TIMESTAMP
+    WHERE a.id = #{id}
+      AND ua.user_id = #{userId}
+      AND a.deleted_date IS NULL
+      AND ua.deleted_date IS NULL
+  </update>
+</mapper>
