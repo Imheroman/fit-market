@@ -14,6 +14,8 @@ import SellerProductRegisterPage from "@/views/SellerProductRegisterPage.vue"
 import AdminSellerApplicationsPage from "@/views/AdminSellerApplicationsPage.vue"
 import LoginPage from "@/views/LoginPage.vue"
 import RegisterPage from "@/views/RegisterPage.vue"
+import NewProductsPage from "@/views/NewProductsPage.vue"
+import BestProductsPage from "@/views/BestProductsPage.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,6 +24,16 @@ const router = createRouter({
       path: "/",
       name: "home",
       component: HomePage,
+    },
+    {
+      path: "/products/new",
+      name: "new-products",
+      component: NewProductsPage,
+    },
+    {
+      path: "/products/best",
+      name: "best-products",
+      component: BestProductsPage,
     },
     {
       path: "/product/:id",

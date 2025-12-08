@@ -3,11 +3,10 @@ package com.ssafy.fitmarket_be.product.dto;
 import com.ssafy.fitmarket_be.product.domain.Product;
 
 /**
- * 상품 응답 DTO.
- * Controller에서 클라이언트에게 반환하는 상품 정보.
- * 프론트엔드 요구사항에 맞춰 평탄화된 구조 사용.
+ * 상품 수정 응답 DTO.
+ * 수정된 상품의 정보를 반환합니다.
  */
-public record ProductResponse(
+public record ProductUpdateResponse(
     Long id,
     String name,
     Long categoryId,
@@ -16,17 +15,17 @@ public record ProductResponse(
     String imageUrl,
     double rating,
     int reviewCount,
-    // 영양 정보 (평탄화)
+    // 영양 정보
     int calories,
     int protein,
     int carbs,
     int fat
 ) {
     /**
-     * Domain 객체를 DTO로 변환합니다.
+     * Domain 객체를 수정 응답 DTO로 변환합니다.
      */
-    public static ProductResponse from(Product product) {
-        return new ProductResponse(
+    public static ProductUpdateResponse from(Product product) {
+        return new ProductUpdateResponse(
             product.getId(),
             product.getName(),
             product.getCategoryId(),
