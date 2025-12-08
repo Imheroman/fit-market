@@ -27,14 +27,14 @@ public class UserController {
 
   private final UserService userService;
 
-@GetMapping
-public ResponseEntity<UserDetailResponseDto> find(
-    @AuthenticationPrincipal(expression = "id") Long id) {
-  UserDetailResponseDto user = this.userService.findById(id);
+  @GetMapping
+  public ResponseEntity<UserDetailResponseDto> find(
+      @AuthenticationPrincipal(expression = "id") Long id) {
+    UserDetailResponseDto user = this.userService.findById(id);
 
-  return ResponseEntity.status(HttpStatus.OK)
-      .body(user);
-}
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(user);
+  }
 
   @PostMapping("/signup")
   public ResponseEntity<Void> signup(@RequestBody UserSignupRequestDto requestDto) {
