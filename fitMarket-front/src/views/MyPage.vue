@@ -41,14 +41,28 @@
             @view-order="handleViewOrder"
           />
 
-          <MyAddressesSection
-            v-else
-            :addresses="addresses"
-            @add-address="handleAddAddress"
-            @edit-address="handleEditAddressInfo"
-            @set-default="handleSetDefault"
-            @remove-address="handleRemoveAddress"
-          />
+          <template v-else>
+            <div class="space-y-6">
+              <MyAddressesSection
+                :addresses="addresses"
+                :is-loading="isAddressLoading"
+                :error-message="addressErrorMessage"
+                @add-address="handleAddAddress"
+                @edit-address="handleEditAddressInfo"
+                @set-default="handleSetDefault"
+                @remove-address="handleRemoveAddress"
+              />
+
+              <MyAddressForm
+                :mode="addressFormMode"
+                :initial-data="addressFormData"
+                :is-submitting="isAddressSubmitting"
+                :submit-error="addressSubmitError"
+                @submit="handleSubmitAddress"
+                @cancel="resetAddressForm"
+              />
+            </div>
+          </template>
         </div>
       </div>
     </main>
@@ -68,7 +82,8 @@ import MyPageTabs from '@/components/mypage/MyPageTabs.vue';
 import MyProfileSection from '@/components/mypage/MyProfileSection.vue';
 import MyOrdersSection from '@/components/mypage/MyOrdersSection.vue';
 import MyAddressesSection from '@/components/mypage/MyAddressesSection.vue';
-import { useAuth, ensureRoleArray } from '@/composables/useAuth';
+import MyAddressForm from '@/components/mypage/MyAddressForm.vue';
+import { useAuth } from '@/composables/useAuth';
 import { useOrderHistory } from '@/composables/useOrderHistory';
 import { useAddresses } from '@/composables/useAddresses';
 import { formatPhoneNumber } from '@/utils/phone';
@@ -76,7 +91,17 @@ import { formatPhoneNumber } from '@/utils/phone';
 const router = useRouter();
 const { user, isAuthenticated, deleteAccount, loadUserProfile, isProfileLoading, profileError } = useAuth();
 const { filterOptions, selectedRange, filteredOrders, filterDescription, setFilter } = useOrderHistory();
-const { addresses, setDefaultAddress, removeAddress } = useAddresses();
+const {
+  addresses,
+  loadAddresses,
+  addAddress,
+  editAddress,
+  setDefaultAddress,
+  removeAddress,
+  isLoading: isAddressLoading,
+  isMutating: isAddressSubmitting,
+  errorMessage: addressErrorMessage,
+} = useAddresses();
 
 const tabs = [
   { label: '기본 정보', value: 'profile', icon: UserRound },
@@ -85,10 +110,13 @@ const tabs = [
 ];
 
 const activeTab = ref('profile');
+const addressFormMode = ref('create');
+const addressFormData = ref(createEmptyAddress());
+const addressSubmitError = ref('');
 
 onMounted(async () => {
   try {
-    await loadUserProfile();
+    await Promise.all([loadUserProfile(), loadAddresses()]);
   } catch (error) {
     console.error(error);
   }
@@ -116,6 +144,18 @@ const setActiveTab = (value) => {
   activeTab.value = value;
 };
 
+function createEmptyAddress() {
+  return {
+    label: '',
+    recipient: user.value?.name ?? '',
+    phone: user.value?.phone ?? '',
+    addressLine: '',
+    detailAddress: '',
+    instructions: '',
+    isDefault: addresses.value.length === 0,
+  };
+}
+
 const handleEditProfile = () => {
   router.push('/mypage/edit');
 };
@@ -138,25 +178,66 @@ const handleViewOrder = (orderNumber) => {
 };
 
 const handleSetDefault = (addressId) => {
-  setDefaultAddress(addressId);
-  window.alert('기본 배송지를 업데이트했어요.');
+  setDefaultAddress(addressId)
+    .then(() => {
+      window.alert('기본 배송지를 업데이트했어요.');
+    })
+    .catch((error) => {
+      console.error(error);
+      window.alert(error?.message ?? '기본 배송지 설정에 실패했어요.');
+    });
 };
 
 const handleAddAddress = () => {
-  window.alert('새 배송지 등록 기능은 곧 연결할게요. 당분간은 고객센터로 요청해 주세요.');
+  addressFormMode.value = 'create';
+  addressSubmitError.value = '';
+  addressFormData.value = createEmptyAddress();
 };
 
 const handleEditAddressInfo = (address) => {
-  window.alert(`${address.label} 배송지 수정 기능은 준비 중이에요.`);
+  addressFormMode.value = 'edit';
+  addressSubmitError.value = '';
+  addressFormData.value = { ...address };
 };
 
-const handleRemoveAddress = (addressId) => {
+const handleRemoveAddress = async (addressId) => {
   if (addresses.value.length <= 1) {
     window.alert('배송지는 최소 1개 이상 필요해요.');
     return;
   }
 
   if (!confirm('이 배송지를 삭제할까요?')) return;
-  removeAddress(addressId);
+
+  try {
+    await removeAddress(addressId);
+    window.alert('배송지를 삭제했어요.');
+    resetAddressForm();
+  } catch (error) {
+    console.error(error);
+    window.alert(error?.message ?? '배송지를 삭제하지 못했어요.');
+  }
+};
+
+const handleSubmitAddress = async (payload) => {
+  addressSubmitError.value = '';
+
+  try {
+    if (addressFormMode.value === 'edit' && addressFormData.value?.id) {
+      await editAddress(addressFormData.value.id, payload);
+      window.alert('배송지를 수정했어요.');
+    } else {
+      await addAddress(payload);
+      window.alert('새 배송지를 등록했어요.');
+    }
+    resetAddressForm();
+  } catch (error) {
+    console.error(error);
+    addressSubmitError.value = error?.message ?? '배송지 저장에 실패했어요.';
+  }
+};
+
+const resetAddressForm = () => {
+  addressFormMode.value = 'create';
+  addressFormData.value = createEmptyAddress();
 };
 </script>

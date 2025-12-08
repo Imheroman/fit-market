@@ -137,6 +137,7 @@ onMounted(async () => {
 const handleSubmit = async () => {
   const result = await submit();
   if (result) {
+    await loadUserProfile();
     router.push('/mypage');
   }
 };

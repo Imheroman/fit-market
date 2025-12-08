@@ -80,7 +80,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
@@ -92,11 +92,11 @@ const { user, loadUserProfile, isProfileLoading, profileError } = useAuth();
 const { phone, error, serverError, successMessage, isSubmitting, isDirty, setInitialValue, submit, reset, formatPhone } =
   useChangePhone();
 const isInitializing = ref(true);
+const profilePhone = computed(() => user.value?.phone ?? '');
 
 const hydrateFromProfile = async () => {
   try {
-    const profile = await loadUserProfile();
-    setInitialValue(profile?.phone ?? user.value?.phone ?? '');
+    await loadUserProfile();
   } catch (errorResponse) {
     console.error(errorResponse);
   } finally {
@@ -108,6 +108,14 @@ onMounted(() => {
   hydrateFromProfile();
 });
 
+watch(
+  profilePhone,
+  (value) => {
+    setInitialValue(value);
+  },
+  { immediate: true }
+);
+
 const handleInput = (event) => {
   phone.value = formatPhone(event.target.value);
 };
@@ -115,6 +123,7 @@ const handleInput = (event) => {
 const handleSubmit = async () => {
   const result = await submit();
   if (result) {
+    await loadUserProfile();
     router.push('/mypage');
   }
 };
