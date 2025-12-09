@@ -2,6 +2,7 @@ package com.ssafy.fitmarket_be.auth.config;
 
 import com.ssafy.fitmarket_be.auth.filter.CustomAuthenticationFilter;
 import com.ssafy.fitmarket_be.auth.filter.CustomLogoutFilter;
+import com.ssafy.fitmarket_be.auth.filter.SecurityExceptionHandlingFilter;
 import com.ssafy.fitmarket_be.auth.jwt.JwtUtil;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +41,10 @@ public class SecurityConfig {
   }
 
   @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  public SecurityFilterChain filterChain(HttpSecurity http,
+      SecurityExceptionHandlingFilter exceptionFilter,
+      CustomAuthenticationFilter authenticationFilter,
+      CustomLogoutFilter logoutFilter) throws Exception {
     http
         .csrf(AbstractHttpConfigurer::disable)  // csrf disable (session 안 쓰므로 불필요)
         // ✅ CORS 활성화
@@ -48,8 +52,9 @@ public class SecurityConfig {
         .formLogin(AbstractHttpConfigurer::disable)  // form login disable ( 커스텀 필터 쓰므로 불필요)
         .httpBasic(AbstractHttpConfigurer::disable)  // http basic authentication disable
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .addFilterBefore(new CustomAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
-        .addFilterBefore(new CustomLogoutFilter(), LogoutFilter.class);
+        .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(exceptionFilter, CustomAuthenticationFilter.class)
+        .addFilterBefore(logoutFilter, LogoutFilter.class);
 
     http
         .authorizeHttpRequests(auth -> auth
