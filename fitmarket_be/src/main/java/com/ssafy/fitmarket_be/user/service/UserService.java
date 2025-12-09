@@ -3,6 +3,7 @@ package com.ssafy.fitmarket_be.user.service;
 import com.ssafy.fitmarket_be.entity.User;
 import com.ssafy.fitmarket_be.user.dto.UserDetailResponseDto;
 import com.ssafy.fitmarket_be.user.dto.UserSignupRequestDto;
+import com.ssafy.fitmarket_be.user.dto.UserUpdateResponseDto;
 import com.ssafy.fitmarket_be.user.mapper.UserMapper;
 import com.ssafy.fitmarket_be.user.repository.UserRepository;
 import java.util.Optional;
@@ -62,30 +63,36 @@ public class UserService {
   }
 
   @Transactional
-  public void updateName(Long id, String name) {
+  public UserUpdateResponseDto updateName(Long id, String name) {
     int result = this.update(id, "name", name);
 
     if (result <= 0) {
       throw new RuntimeException("회원 이름 수정 실패 이메일: ".concat(id.toString()));
     }
+
+    return new UserUpdateResponseDto(name);
   }
 
   @Transactional
-  public void updatePhone(Long id, String phone) {
+  public UserUpdateResponseDto updatePhone(Long id, String phone) {
     int result = this.update(id, "phone", phone);
 
     if (result <= 0) {
       throw new RuntimeException("회원 전화번호 수정 실패 이메일: ".concat(id.toString()));
     }
+
+    return new UserUpdateResponseDto(phone);
   }
 
   @Transactional
-  public void updatePassword(Long id, String password) {
+  public UserUpdateResponseDto updatePassword(Long id, String password) {
     int result = this.update(id, "password", this.passwordEncoder.encode(password));
 
     if (result <= 0) {
       throw new RuntimeException("회원 이름 수정 실패 이메일: ".concat(id.toString()));
     }
+
+    return new UserUpdateResponseDto("");
   }
 
   private int update(Long id, String column, String value) {

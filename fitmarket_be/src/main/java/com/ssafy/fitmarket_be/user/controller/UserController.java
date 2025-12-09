@@ -4,6 +4,7 @@ import com.ssafy.fitmarket_be.auth.dto.CustomUserDetails;
 import com.ssafy.fitmarket_be.user.dto.UserDetailResponseDto;
 import com.ssafy.fitmarket_be.user.dto.UserSignupRequestDto;
 import com.ssafy.fitmarket_be.user.dto.UserUpdateRequestDto;
+import com.ssafy.fitmarket_be.user.dto.UserUpdateResponseDto;
 import com.ssafy.fitmarket_be.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,24 +46,27 @@ public class UserController {
   }
 
   @PatchMapping("/name")
-  public ResponseEntity<Void> updateName(@AuthenticationPrincipal(expression = "id") Long id,
+  public ResponseEntity<UserUpdateResponseDto> updateName(@AuthenticationPrincipal(expression = "id") Long id,
       @RequestBody UserUpdateRequestDto request) {
-    this.userService.updateName(id, request.getValue());
-    return ResponseEntity.status(HttpStatus.OK).build();
+    UserUpdateResponseDto profile = this.userService.updateName(id,
+        request.getValue());
+    return ResponseEntity.status(HttpStatus.OK).body(profile);
   }
 
   @PatchMapping("/phone")
-  public ResponseEntity<Void> updatePhone(@AuthenticationPrincipal(expression = "id") Long id,
+  public ResponseEntity<UserUpdateResponseDto> updatePhone(@AuthenticationPrincipal(expression = "id") Long id,
       @RequestBody UserUpdateRequestDto request) {
-    this.userService.updatePhone(id, request.getValue());
-    return ResponseEntity.status(HttpStatus.OK).build();
+    UserUpdateResponseDto profile = this.userService.updatePhone(id,
+        request.getValue());
+    return ResponseEntity.status(HttpStatus.OK).body(profile);
   }
 
   @PatchMapping("/password")
-  public ResponseEntity<Void> updatePassword(@AuthenticationPrincipal(expression = "id") Long id,
+  public ResponseEntity<UserUpdateResponseDto> updatePassword(@AuthenticationPrincipal(expression = "id") Long id,
       @RequestBody UserUpdateRequestDto request) {
-    this.userService.updatePassword(id, request.getValue());
-    return ResponseEntity.status(HttpStatus.OK).build();
+    UserUpdateResponseDto profile = this.userService.updatePassword(id,
+        request.getValue());
+    return ResponseEntity.status(HttpStatus.OK).body(profile);
   }
 
   @DeleteMapping
