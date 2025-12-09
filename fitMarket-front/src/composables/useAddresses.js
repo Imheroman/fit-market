@@ -99,7 +99,13 @@ const addAddress = async (payload) => {
   try {
     const requestBody = buildAddressPayload(payload);
     const created = await createAddress(requestBody);
-    const normalized = normalizeAddress(created);
+    const normalized = created && created.id ? normalizeAddress(created) : null;
+
+    if (!normalized) {
+      await loadAddresses();
+      return savedAddresses.value.find((addr) => addr.main) ?? savedAddresses.value[0] ?? null;
+    }
+
     const nextMainId = normalized.main
       ? normalized.id
       : findMainId(savedAddresses.value) ?? normalized.id;

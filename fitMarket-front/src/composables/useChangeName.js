@@ -59,10 +59,14 @@ export function useChangeName() {
     successMessage.value = '';
 
     try {
-      const profile = await updateUserName(name.value.trim());
+      const trimmedName = name.value.trim();
+      const response = await updateUserName(trimmedName);
+      const profile = response?.profile ?? response ?? null;
+      const message = response?.message ?? `${trimmedName}으로 저장했어요.`;
       hydrateProfile(profile);
-      setInitialValue(profile?.name ?? name.value.trim());
-      successMessage.value = '새 이름으로 저장했어요.';
+      setInitialValue(profile?.name ?? trimmedName);
+      successMessage.value = message;
+      console.log("changed profile:", profile);
       return profile;
     } catch (errorResponse) {
       serverError.value = errorResponse?.message ?? '이름을 바꾸지 못했어요.';
@@ -79,6 +83,13 @@ export function useChangeName() {
     successMessage.value = '';
   };
 
+  const clear = () => {
+    name.value = '';
+    error.value = '';
+    serverError.value = '';
+    successMessage.value = '';
+  };
+
   return {
     name,
     error,
@@ -89,5 +100,6 @@ export function useChangeName() {
     setInitialValue,
     submit,
     reset,
+    clear,
   };
 }
