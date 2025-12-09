@@ -2,6 +2,7 @@
 -- FitMarket Database 초기화 스크립트 (Strict Mode)
 -- ============================================
 
+
 DROP DATABASE IF EXISTS fitmarket;
 CREATE DATABASE fitmarket
 DEFAULT CHARACTER SET utf8mb4
@@ -70,12 +71,16 @@ CREATE TABLE `seller_applications` (
 -- 3. 주소 테이블
 CREATE TABLE `address` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(16) NULL,
+    `recipient` VARCHAR(100) NOT NULL,
+    `phone` VARCHAR(30) NOT NULL,
+    `memo` VARCHAR(200) NULL,
     `postal_code` VARCHAR(15) NULL,
     `address_line` VARCHAR(255) NOT NULL,
     `address_line_detail` VARCHAR(255) NOT NULL,
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `deleted_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_date` TIMESTAMP NOT NULL,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -89,8 +94,8 @@ CREATE TABLE `user_address` (
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `deleted_date` TIMESTAMP NULL,
     PRIMARY KEY (`id`),
-    CONSTRAINT `fk_user_address_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_user_address_address` FOREIGN KEY (`address_id`) REFERENCES `address` (`id`) ON DELETE CASCADE
+    CONSTRAINT `fk_user_address_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+    CONSTRAINT `fk_user_address_address` FOREIGN KEY (`address_id`) REFERENCES `address` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 5. 표준 식품 DB
