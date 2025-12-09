@@ -7,6 +7,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
@@ -67,8 +68,7 @@ public class LoggingFilter implements Filter {
     String queryString = request.getQueryString();
 
     // 요청 바디 (ContentCachingRequestWrapper를 사용해야 읽을 수 있습니다)
-    String requestBody = new String(request.getContentAsByteArray(),
-        request.getCharacterEncoding());
+    String requestBody = new String(request.getContentAsByteArray(), StandardCharsets.UTF_8);
 
     log.trace(">>>> Request [{}] URI: {} (Query: {}) | Body: {}", method, uri, queryString,
         requestBody);
@@ -80,8 +80,7 @@ public class LoggingFilter implements Filter {
     int status = response.getStatus();
 
     // 응답 바디 (ContentCachingResponseWrapper를 사용해야 읽을 수 있습니다)
-    String responseBody = new String(response.getContentAsByteArray(),
-        response.getCharacterEncoding());
+    String responseBody = new String(response.getContentAsByteArray(), StandardCharsets.UTF_8);
 
     log.trace("<<<< Response [{}] URI: {} | Status: {} | Body: {}", request.getMethod(), uri,
         status, responseBody);
