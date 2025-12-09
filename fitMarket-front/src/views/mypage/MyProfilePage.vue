@@ -40,7 +40,7 @@ const profileFields = computed(() => (
         { label: '이름', value: user.value.name },
         { label: '이메일', value: user.value.email },
         { label: '연락처', value: user.value.phone ? formatPhoneNumber(user.value.phone) : '-' },
-        { label: '주소', value: user.value.address ?? '-' },
+        // { label: '주소', value: user.value.address ?? '-' },
         { label: '가입일', value: formattedCreatedDate.value || '?' },
         { label: '권한', value: user.value.role ?? '?' },
       ]

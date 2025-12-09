@@ -32,13 +32,24 @@
 
               <div class="space-y-2">
                 <label class="block text-sm font-medium text-gray-700">이름</label>
-                <input
-                  v-model="name"
-                  type="text"
-                  maxlength="30"
-                  class="w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-100"
-                  placeholder="이름을 입력해주세요"
-                />
+                <div class="relative">
+                  <input
+                    v-model="name"
+                    type="text"
+                    maxlength="30"
+                    class="w-full rounded-xl border border-gray-200 px-4 py-3 pr-12 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                    placeholder="이름을 입력해주세요"
+                  />
+                  <button
+                    v-if="name"
+                    type="button"
+                    class="absolute inset-y-0 right-3 my-auto h-9 w-9 rounded-full text-lg text-gray-400 hover:text-gray-700"
+                    aria-label="입력 지우기"
+                    @click="handleClear"
+                  >
+                    X
+                  </button>
+                </div>
                 <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
                 <p class="text-xs text-gray-500">한글 또는 영문 2~30자로 입력해주세요.</p>
               </div>
@@ -87,7 +98,8 @@ import { useChangeName } from '@/composables/useChangeName';
 
 const router = useRouter();
 const { user, loadUserProfile, isProfileLoading, profileError } = useAuth();
-const { name, error, serverError, successMessage, isSubmitting, isDirty, setInitialValue, submit, reset } = useChangeName();
+const { name, error, serverError, successMessage, isSubmitting, isDirty, setInitialValue, submit, reset, clear } =
+  useChangeName();
 const isInitializing = ref(true);
 const profileName = computed(() => user.value?.name ?? '');
 
@@ -117,11 +129,17 @@ const handleSubmit = async () => {
   const result = await submit();
   if (result) {
     await loadUserProfile();
+    const message = successMessage.value || '이름을 바꿨어요.';
+    window.alert(message);
     router.push('/mypage');
   }
 };
 
 const handleReset = () => {
   reset();
+};
+
+const handleClear = () => {
+  clear();
 };
 </script>

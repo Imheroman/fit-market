@@ -68,6 +68,23 @@ export function useChangePassword() {
     successMessage.value = '';
   };
 
+  const clearField = (field) => {
+    if (field === 'currentPassword') {
+      currentPassword.value = '';
+      errors.value.currentPassword = '';
+    }
+    if (field === 'newPassword') {
+      newPassword.value = '';
+      errors.value.newPassword = '';
+    }
+    if (field === 'confirmPassword') {
+      confirmPassword.value = '';
+      errors.value.confirmPassword = '';
+    }
+    serverError.value = '';
+    successMessage.value = '';
+  };
+
   const submit = async () => {
     if (!validate()) {
       successMessage.value = '';
@@ -79,13 +96,13 @@ export function useChangePassword() {
     successMessage.value = '';
 
     try {
-      const result = await updateUserPassword({
+      const response = await updateUserPassword({
         currentPassword: currentPassword.value,
         newPassword: newPassword.value,
       });
       resetForm();
-      successMessage.value = '새 비밀번호로 잠갔어요.';
-      return result;
+      successMessage.value = response?.message ?? '새 비밀번호로 잠갔어요.';
+      return response?.result ?? response ?? { success: true };
     } catch (errorResponse) {
       serverError.value = errorResponse?.message ?? '비밀번호를 바꾸지 못했어요.';
       return null;
@@ -104,5 +121,6 @@ export function useChangePassword() {
     isSubmitting,
     submit,
     resetForm,
+    clearField,
   };
 }

@@ -25,10 +25,16 @@ export async function createAddress(payload) {
   try {
     const response = await fitmarket.post('/addresses', payload, { withCredentials: true });
     const created = extractPayload(response);
-    if (!created) {
-      throw new Error('새 배송지 정보를 확인할 수 없어요.');
+    if (created) {
+      return created;
     }
-    return created;
+
+    const isSuccessStatus = response?.status >= 200 && response.status < 300;
+    if (isSuccessStatus) {
+      return { success: true };
+    }
+
+    throw new Error('새 배송지 정보를 확인할 수 없어요.');
   } catch (error) {
     const message = resolveErrorMessage(error, '배송지 추가에 실패했어요. 입력값을 확인하고 다시 시도해 주세요.');
     const wrapped = new Error(message);
@@ -45,10 +51,10 @@ export async function updateAddress(addressId, payload) {
   try {
     const response = await fitmarket.patch(`/addresses/${addressId}`, payload, { withCredentials: true });
     const updated = extractPayload(response);
-    if (!updated) {
-      throw new Error('수정된 배송지 정보를 확인할 수 없어요.');
+    if (updated) {
+      return updated;
     }
-    return updated;
+    return { id: addressId, ...payload };
   } catch (error) {
     const message = resolveErrorMessage(error, '배송지 수정에 실패했어요. 잠시 후 다시 시도해 주세요.');
     const wrapped = new Error(message);

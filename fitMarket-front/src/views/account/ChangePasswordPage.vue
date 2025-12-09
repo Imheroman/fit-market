@@ -42,24 +42,46 @@
 
               <div class="space-y-2">
                 <label class="block text-sm font-medium text-gray-700">현재 비밀번호</label>
-                <input
-                  v-model="currentPassword"
-                  type="password"
-                  class="w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-100"
-                  placeholder="현재 비밀번호를 입력해주세요"
-                />
+                <div class="relative">
+                  <input
+                    v-model="currentPassword"
+                    type="password"
+                    class="w-full rounded-xl border border-gray-200 px-4 py-3 pr-12 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                    placeholder="현재 비밀번호를 입력해주세요"
+                  />
+                  <button
+                    v-if="currentPassword"
+                    type="button"
+                    class="absolute inset-y-0 right-3 my-auto h-9 w-9 rounded-full text-lg text-gray-400 hover:text-gray-700"
+                    aria-label="현재 비밀번호 지우기"
+                    @click="handleClear('currentPassword')"
+                  >
+                    X
+                  </button>
+                </div>
                 <p v-if="errors.currentPassword" class="text-sm text-red-500">{{ errors.currentPassword }}</p>
               </div>
 
               <div class="space-y-2">
                 <label class="block text-sm font-medium text-gray-700">새 비밀번호</label>
-                <input
-                  v-model="newPassword"
-                  type="password"
-                  maxlength="16"
-                  class="w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-100"
-                  placeholder="영문+숫자 조합 8~16자"
-                />
+                <div class="relative">
+                  <input
+                    v-model="newPassword"
+                    type="password"
+                    maxlength="16"
+                    class="w-full rounded-xl border border-gray-200 px-4 py-3 pr-12 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                    placeholder="영문+숫자 조합 8~16자"
+                  />
+                  <button
+                    v-if="newPassword"
+                    type="button"
+                    class="absolute inset-y-0 right-3 my-auto h-9 w-9 rounded-full text-lg text-gray-400 hover:text-gray-700"
+                    aria-label="새 비밀번호 지우기"
+                    @click="handleClear('newPassword')"
+                  >
+                    X
+                  </button>
+                </div>
                 <p v-if="errors.newPassword" class="text-sm text-red-500">{{ errors.newPassword }}</p>
                 <div class="text-xs text-gray-500 space-y-1">
                   <p>영문과 숫자를 모두 포함해 주세요.</p>
@@ -69,13 +91,24 @@
 
               <div class="space-y-2">
                 <label class="block text-sm font-medium text-gray-700">새 비밀번호 확인</label>
-                <input
-                  v-model="confirmPassword"
-                  type="password"
-                  maxlength="16"
-                  class="w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-100"
-                  placeholder="한 번 더 입력해주세요"
-                />
+                <div class="relative">
+                  <input
+                    v-model="confirmPassword"
+                    type="password"
+                    maxlength="16"
+                    class="w-full rounded-xl border border-gray-200 px-4 py-3 pr-12 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                    placeholder="한 번 더 입력해주세요"
+                  />
+                  <button
+                    v-if="confirmPassword"
+                    type="button"
+                    class="absolute inset-y-0 right-3 my-auto h-9 w-9 rounded-full text-lg text-gray-400 hover:text-gray-700"
+                    aria-label="새 비밀번호 확인 지우기"
+                    @click="handleClear('confirmPassword')"
+                  >
+                    X
+                  </button>
+                </div>
                 <p v-if="errors.confirmPassword" class="text-sm text-red-500">{{ errors.confirmPassword }}</p>
               </div>
 
@@ -123,8 +156,18 @@ import { useChangePassword } from '@/composables/useChangePassword';
 
 const router = useRouter();
 const { isAuthenticated, isProfileLoading, profileError, loadUserProfile } = useAuth();
-const { currentPassword, newPassword, confirmPassword, errors, serverError, successMessage, isSubmitting, submit, resetForm } =
-  useChangePassword();
+const {
+  currentPassword,
+  newPassword,
+  confirmPassword,
+  errors,
+  serverError,
+  successMessage,
+  isSubmitting,
+  submit,
+  resetForm,
+  clearField,
+} = useChangePassword();
 
 onMounted(async () => {
   try {
@@ -138,11 +181,17 @@ const handleSubmit = async () => {
   const result = await submit();
   if (result) {
     await loadUserProfile();
+    const message = successMessage.value || '비밀번호를 바꿨어요.';
+    window.alert(message);
     router.push('/mypage');
   }
 };
 
 const handleReset = () => {
   resetForm();
+};
+
+const handleClear = (field) => {
+  clearField(field);
 };
 </script>
