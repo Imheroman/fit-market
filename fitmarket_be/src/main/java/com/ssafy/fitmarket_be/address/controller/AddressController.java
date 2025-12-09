@@ -8,6 +8,8 @@ import java.net.URI;
 import java.util.List;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/addresses")
 public class AddressController {
 
@@ -31,6 +34,7 @@ public class AddressController {
   public ResponseEntity<List<AddressResponseDto>> findAddresses(
       @AuthenticationPrincipal(expression = "id") Long userId) {
     List<AddressResponseDto> addresses = this.addressService.findAddresses(userId);
+    log.debug("address result: {}", addresses);
     return ResponseEntity.status(HttpStatus.OK).body(addresses);
   }
 
@@ -44,6 +48,7 @@ public class AddressController {
   @PostMapping
   public ResponseEntity<Void> create(@AuthenticationPrincipal(expression = "id") Long userId,
       @Valid @RequestBody AddressCreateRequestDto request) {
+    log.trace("create request: {}", request);
     Long addressId = this.addressService.create(userId, request);
     return ResponseEntity.status(HttpStatus.CREATED)
         .location(URI.create("/addresses/" + addressId))
@@ -55,6 +60,13 @@ public class AddressController {
       @PathVariable Long id,
       @Valid @RequestBody AddressUpdateRequestDto request) {
     this.addressService.update(userId, id, request);
+    return ResponseEntity.status(HttpStatus.OK).build();
+  }
+
+  @PatchMapping("/{id}/main")
+  public ResponseEntity<Void> setMain(@AuthenticationPrincipal(expression = "id") Long userId,
+      @PathVariable Long id) {
+    this.addressService.setMain(userId, id);
     return ResponseEntity.status(HttpStatus.OK).build();
   }
 
