@@ -9,6 +9,17 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class AddressUpdateRequestDto {
+  @Size(max = 16, message = "수령인은 16자 이내로 입력해주세요.")
+  private String name;
+
+  @Size(max = 100, message = "수령인은 100자 이내로 입력해주세요.")
+  private String recipient;
+
+  @Size(max = 30, message = "전화번호는 30자 이내로 입력해 주세요.")
+  private String phone;
+
+  @Size(max = 255, message = "메모는 200자 이내로 입력해 주세요.")
+  private String memo;
 
   @Size(max = 15, message = "우편번호는 15자 이내로 입력해 주세요.")
   private String postalCode;
@@ -19,7 +30,19 @@ public class AddressUpdateRequestDto {
   @Size(max = 255, message = "상세 주소는 255자 이내로 입력해 주세요.")
   private String addressLineDetail;
 
-  public boolean hasUpdatableField() {
-    return postalCode != null || addressLine != null || addressLineDetail != null;
+  private Boolean main;
+
+  public boolean hasAddressFieldUpdate() {
+    return name != null
+        || recipient != null
+        || phone != null
+        || memo != null
+        || postalCode != null
+        || addressLine != null
+        || addressLineDetail != null;
+  }
+
+  public boolean shouldUpdateMain() {
+    return main;
   }
 }
