@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue';
-import { fetchAddresses, createAddress, updateAddress, deleteAddress } from '@/api/addressApi';
+import { fetchAddresses, createAddress, updateAddress, deleteAddress, setMainAddress } from '@/api/addressApi';
 import { sanitizePhoneDigits } from '@/utils/phone';
 
 const savedAddresses = ref([]);
@@ -9,31 +9,51 @@ const isMutating = ref(false);
 const errorMessage = ref('');
 const hasLoaded = ref(false);
 
+const buildAddressPayload = (payload) => {
+  const phoneDigits = sanitizePhoneDigits(payload?.phone ?? '').slice(0, 11);
+  const body = {
+    name: (payload?.name ?? '').trim(),
+    recipient: (payload?.recipient ?? '').trim(),
+    phone: phoneDigits,
+    memo: (payload?.memo ?? '').trim(),
+    postalCode: (payload?.postalCode ?? '').trim(),
+    addressLine: (payload?.addressLine ?? '').trim(),
+    addressLineDetail: (payload?.addressLineDetail ?? '').trim(),
+    main: Boolean(payload?.main),
+  };
+
+  return body;
+};
+
 const normalizeAddress = (address) => ({
   id: address?.id,
-  label: address?.label ?? '배송지',
+  name: address?.name ?? '',
   recipient: address?.recipient ?? '',
   phone: sanitizePhoneDigits(address?.phone ?? ''),
+  memo: address?.memo ?? '',
+  postalCode: address?.postalCode ?? '',
   addressLine: address?.addressLine ?? '',
-  detailAddress: address?.detailAddress ?? '',
-  instructions: address?.instructions ?? '',
-  isDefault: Boolean(address?.isDefault),
+  addressLineDetail: address?.addressLineDetail ?? '',
+  main: Boolean(address?.main ?? false),
+  createdDate: address?.createdDate ?? null,
+  modifiedDate: address?.modifiedDate ?? null,
+  deletedDate: address?.deletedDate ?? null,
 });
 
-const findDefaultId = (list) => list.find((addr) => addr.isDefault)?.id ?? null;
+const findMainId = (list) => list.find((addr) => addr.main)?.id ?? null;
 
-const markDefault = (list, defaultId) => {
-  if (!defaultId) return list;
+const markMain = (list, mainId) => {
+  if (!mainId) return list;
   return list.map((addr) => ({
     ...addr,
-    isDefault: addr.id === defaultId,
+    main: addr.id === mainId,
   }));
 };
 
 const syncSelection = () => {
-  const defaultId = findDefaultId(savedAddresses.value);
-  if (defaultId) {
-    selectedAddressId.value = defaultId;
+  const mainId = findMainId(savedAddresses.value);
+  if (mainId) {
+    selectedAddressId.value = mainId;
     return;
   }
 
@@ -50,8 +70,9 @@ const loadAddresses = async () => {
   try {
     const response = await fetchAddresses();
     const normalized = response.map((item) => normalizeAddress(item));
-    const defaultId = findDefaultId(normalized) ?? normalized[0]?.id ?? null;
-    savedAddresses.value = markDefault(normalized, defaultId);
+    console.log("normalized addresses:", normalized);
+    const mainId = findMainId(normalized) ?? normalized[0]?.id ?? null;
+    savedAddresses.value = markMain(normalized, mainId);
     syncSelection();
     hasLoaded.value = true;
   } catch (error) {
@@ -76,13 +97,14 @@ const addAddress = async (payload) => {
   errorMessage.value = '';
 
   try {
-    const created = await createAddress(payload);
+    const requestBody = buildAddressPayload(payload);
+    const created = await createAddress(requestBody);
     const normalized = normalizeAddress(created);
-    const nextDefaultId = normalized.isDefault
+    const nextMainId = normalized.main
       ? normalized.id
-      : findDefaultId(savedAddresses.value) ?? normalized.id;
+      : findMainId(savedAddresses.value) ?? normalized.id;
 
-    const nextList = markDefault([...savedAddresses.value, normalized], nextDefaultId);
+    const nextList = markMain([...savedAddresses.value, normalized], nextMainId);
     savedAddresses.value = nextList;
     syncSelection();
     return normalized;
@@ -102,14 +124,15 @@ const editAddress = async (addressId, payload) => {
   errorMessage.value = '';
 
   try {
-    const updated = await updateAddress(addressId, payload);
+    const requestBody = buildAddressPayload(payload);
+    const updated = await updateAddress(addressId, requestBody);
     const normalized = normalizeAddress(updated);
     const nextList = savedAddresses.value.map((addr) => (addr.id === addressId ? normalized : addr));
-    const nextDefaultId = normalized.isDefault
+    const nextMainId = normalized.main
       ? normalized.id
-      : findDefaultId(nextList) ?? nextList[0]?.id ?? null;
+      : findMainId(nextList) ?? nextList[0]?.id ?? null;
 
-    savedAddresses.value = markDefault(nextList, nextDefaultId);
+    savedAddresses.value = markMain(nextList, nextMainId);
     syncSelection();
     return normalized;
   } catch (error) {
@@ -124,19 +147,19 @@ const editAddress = async (addressId, payload) => {
 const setDefaultAddress = async (addressId) => {
   if (!addressId) return;
 
+  const targetExists = savedAddresses.value.some((addr) => addr.id === addressId);
+  if (!targetExists) {
+    throw new Error('선택한 배송지를 찾지 못했어요.');
+  }
+
   isMutating.value = true;
   errorMessage.value = '';
 
   try {
-    const updated = await updateAddress(addressId, { isDefault: true });
-    const normalized = normalizeAddress(updated);
-    const nextList = savedAddresses.value.map((addr) =>
-      addr.id === addressId ? normalized : { ...addr, isDefault: false }
-    );
-
-    savedAddresses.value = markDefault(nextList, addressId);
+    await setMainAddress(addressId);
+    savedAddresses.value = markMain(savedAddresses.value, addressId);
     syncSelection();
-    return normalized;
+    return savedAddresses.value.find((addr) => addr.id === addressId) ?? null;
   } catch (error) {
     console.error(error);
     errorMessage.value = error?.message ?? '기본 배송지 설정에 실패했어요.';
@@ -148,10 +171,6 @@ const setDefaultAddress = async (addressId) => {
 
 const removeAddress = async (addressId) => {
   if (!addressId) return;
-  if (savedAddresses.value.length <= 1) {
-    errorMessage.value = '배송지는 최소 1개 이상 필요해요.';
-    return;
-  }
 
   isMutating.value = true;
   errorMessage.value = '';
@@ -159,9 +178,9 @@ const removeAddress = async (addressId) => {
   try {
     await deleteAddress(addressId);
     const nextList = savedAddresses.value.filter((addr) => addr.id !== addressId);
-    const nextDefaultId = findDefaultId(nextList) ?? nextList[0]?.id ?? null;
+    const nextMainId = findMainId(nextList) ?? nextList[0]?.id ?? null;
 
-    savedAddresses.value = markDefault(nextList, nextDefaultId);
+    savedAddresses.value = markMain(nextList, nextMainId);
     syncSelection();
   } catch (error) {
     console.error(error);
@@ -177,7 +196,7 @@ export function useAddresses() {
 
   const addresses = computed(() => savedAddresses.value);
 
-  const defaultAddress = computed(() => savedAddresses.value.find((addr) => addr.isDefault) ?? null);
+  const defaultAddress = computed(() => savedAddresses.value.find((addr) => addr.main) ?? null);
 
   const selectedAddress = computed(() => {
     const target = savedAddresses.value.find((addr) => addr.id === selectedAddressId.value);

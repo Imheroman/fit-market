@@ -30,7 +30,7 @@
               </div>
               <span class="inline-flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">
                 <MapPin class="w-4 h-4" />
-                {{ selectedAddress?.label }}
+                {{ selectedAddress?.name || selectedAddress?.recipient || '배송지' }}
               </span>
             </div>
 
@@ -64,12 +64,15 @@
                         :checked="selectedAddressId === address.id"
                         @change="handleAddressChange(address.id)"
                       />
-                      <p class="font-semibold">{{ address.label }}</p>
-                      <span v-if="address.isDefault" class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">기본</span>
+                      <p class="font-semibold">{{ address.name || address.recipient || '배송지' }}</p>
+                      <span v-if="address.main" class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">기본</span>
                     </div>
                     <p class="text-sm text-gray-700">{{ address.recipient }} · {{ address.phone }}</p>
-                    <p class="text-sm text-gray-500">{{ address.addressLine }} {{ address.detailAddress }}</p>
-                    <p class="text-xs text-gray-400 mt-2">{{ address.instructions }}</p>
+                    <p class="text-sm text-gray-500">
+                      {{ address.addressLine }} {{ address.addressLineDetail }}
+                      <span v-if="address.postalCode" class="text-gray-400">({{ address.postalCode }})</span>
+                    </p>
+                    <p v-if="address.memo" class="text-xs text-gray-400 mt-2">{{ address.memo }}</p>
                   </div>
                   <CheckCircle class="w-5 h-5 text-green-500" v-if="selectedAddressId === address.id" />
                 </div>
@@ -142,8 +145,8 @@
               <h2 class="text-xl font-bold mb-4">주문 요약</h2>
               <div class="space-y-2 text-sm text-gray-600">
                 <p>총 {{ cartItems.length }}개 상품</p>
-                <p>선택한 배송지: {{ selectedAddress?.addressLine }}</p>
-                <p>희망 전달 메모: {{ selectedAddress?.instructions }}</p>
+                <p>선택한 배송지: {{ selectedAddress?.addressLine }} {{ selectedAddress?.addressLineDetail }}</p>
+                <p>배송 메모: {{ selectedAddress?.memo || '입력된 메모가 없어요.' }}</p>
               </div>
             </div>
           </div>
