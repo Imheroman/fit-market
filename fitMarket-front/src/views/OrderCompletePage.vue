@@ -49,7 +49,8 @@
                 :class="canEditAddress ? 'text-green-600 bg-green-50' : 'text-gray-500 bg-gray-100'"
               >
                 <MapPin class="w-4 h-4" />
-                {{ formattedSelectedAddress?.label }} {{ canEditAddress ? '수정 가능' : isCancelled ? '배송 중단' : '수정 잠금' }}
+                {{ formattedSelectedAddress?.name || formattedSelectedAddress?.recipient || '배송지' }}
+                {{ canEditAddress ? '수정 가능' : isCancelled ? '배송 중단' : '수정 잠금' }}
               </span>
             </div>
 
@@ -70,8 +71,11 @@
               <div class="flex flex-col gap-2">
                 <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">받는 분</p>
                 <p class="text-lg font-bold">{{ formattedSelectedAddress?.recipient }} · {{ formattedSelectedAddress?.phone }}</p>
-                <p class="text-gray-700">{{ formattedSelectedAddress?.addressLine }} {{ formattedSelectedAddress?.detailAddress }}</p>
-                <p class="text-sm text-gray-500">요청사항: {{ formattedSelectedAddress?.instructions }}</p>
+                <p class="text-gray-700">
+                  {{ formattedSelectedAddress?.addressLine }} {{ formattedSelectedAddress?.addressLineDetail }}
+                  <span v-if="formattedSelectedAddress?.postalCode" class="text-gray-400">({{ formattedSelectedAddress?.postalCode }})</span>
+                </p>
+                <p class="text-sm text-gray-500">배송 메모: {{ formattedSelectedAddress?.memo || '입력된 메모가 없어요.' }}</p>
               </div>
             </div>
 
@@ -226,12 +230,17 @@ const totalPayment = computed(() => totalPrice.value + shippingFee)
 const canEditAddress = computed(() => canFreeCancel.value && !isCancelled.value)
 
 const formattedSelectedAddress = computed(() => {
-  if (!selectedAddress.value) return null
+  if (!selectedAddress.value) return null;
   return {
     ...selectedAddress.value,
+    name: selectedAddress.value.name ?? selectedAddress.value.label ?? '',
+    addressLineDetail:
+      selectedAddress.value.addressLineDetail ?? selectedAddress.value.detailAddress ?? '',
+    memo: selectedAddress.value.memo ?? selectedAddress.value.instructions ?? '',
+    postalCode: selectedAddress.value.postalCode ?? '',
     phone: formatPhoneNumber(selectedAddress.value.phone),
-  }
-})
+  };
+});
 
 const handleEditAddress = () => {
   if (!canEditAddress.value) return

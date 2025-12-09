@@ -72,3 +72,19 @@ export async function deleteAddress(addressId) {
     throw wrapped;
   }
 }
+
+export async function setMainAddress(addressId) {
+  if (!addressId) {
+    throw new Error('기본 배송지로 설정할 주소를 찾지 못했어요.');
+  }
+
+  try {
+    const response = await fitmarket.patch(`/addresses/${addressId}/main`, null, { withCredentials: true });
+    return extractPayload(response) ?? { success: true };
+  } catch (error) {
+    const message = resolveErrorMessage(error, '기본 배송지 설정에 실패했어요. 잠시 후 다시 시도해 주세요.');
+    const wrapped = new Error(message);
+    wrapped.cause = error;
+    throw wrapped;
+  }
+}
