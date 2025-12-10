@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.fitmarket_be.auth.CookieUtils;
 import com.ssafy.fitmarket_be.auth.dto.CustomUserDetails;
 import com.ssafy.fitmarket_be.auth.jwt.JwtUtil;
-import com.ssafy.fitmarket_be.cart.service.CartService;
+import com.ssafy.fitmarket_be.cart.service.ShoppingCartService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,7 +28,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
   private final JwtUtil jwtUtil;
   private final ObjectMapper objectMapper;
-  private final CartService cartService;
+  private final ShoppingCartService shoppingCartService;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -40,7 +40,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
     response.addCookie(cookie);
 
     // 4. Cart 정보 조회 (서비스 호출)
-    int cartCount = cartService.countCartItems(user.getId());
+    int cartCount = shoppingCartService.countCartItems(user.getId());
     log.info("로그인 성공: userId={}, cartCount={}", user.getId(), cartCount);
 
     // 5. JSON 응답 생성
