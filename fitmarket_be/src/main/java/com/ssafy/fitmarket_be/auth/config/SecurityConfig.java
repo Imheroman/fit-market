@@ -1,8 +1,11 @@
 package com.ssafy.fitmarket_be.auth.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.fitmarket_be.auth.filter.CustomAuthenticationFilter;
+import com.ssafy.fitmarket_be.auth.filter.CustomLoginFilter;
 import com.ssafy.fitmarket_be.auth.filter.CustomLogoutFilter;
 import com.ssafy.fitmarket_be.auth.filter.SecurityExceptionHandlingFilter;
+import com.ssafy.fitmarket_be.auth.handler.LoginSuccessHandler;
 import com.ssafy.fitmarket_be.auth.jwt.JwtUtil;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -28,15 +31,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-  private final JwtUtil jwtUtil;
-
   @Bean
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
   }
 
   @Bean
-  public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+  public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)
+      throws Exception {
     return configuration.getAuthenticationManager();
   }
 
@@ -44,11 +46,15 @@ public class SecurityConfig {
   public SecurityFilterChain filterChain(HttpSecurity http,
       SecurityExceptionHandlingFilter exceptionFilter,
       CustomAuthenticationFilter authenticationFilter,
+      CustomLoginFilter loginFilter, LoginSuccessHandler loginSuccessHandler,
       CustomLogoutFilter logoutFilter) throws Exception {
+
+    loginFilter.setAuthenticationSuccessHandler(loginSuccessHandler); // 핸들러 등록!
+
     http
         .csrf(AbstractHttpConfigurer::disable)  // csrf disable (session 안 쓰므로 불필요)
         // ✅ CORS 활성화
-         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .formLogin(AbstractHttpConfigurer::disable)  // form login disable ( 커스텀 필터 쓰므로 불필요)
         .httpBasic(AbstractHttpConfigurer::disable)  // http basic authentication disable
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
