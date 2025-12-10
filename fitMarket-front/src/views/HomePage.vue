@@ -142,18 +142,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { Search, Flame, Leaf, ShoppingCart, ArrowRight } from 'lucide-vue-next'
-import AppHeader from '@/components/AppHeader.vue'
-import AppFooter from '@/components/AppFooter.vue'
-import ProductCard from '@/components/ProductCard.vue'
-import { useProducts } from '@/composables/useProducts'
-import { useCart } from '@/composables/useCart'
+import { ref } from 'vue';
+import { Search, Flame, Leaf, ShoppingCart, ArrowRight } from 'lucide-vue-next';
+import AppHeader from '@/components/AppHeader.vue';
+import AppFooter from '@/components/AppFooter.vue';
+import ProductCard from '@/components/ProductCard.vue';
+import { useProducts } from '@/composables/useProducts';
+import { useCart } from '@/composables/useCart';
 
-const { products, isLoading, errorMessage, toggleFavorite } = useProducts()
-const { addToCart } = useCart()
+const { products, isLoading, errorMessage, toggleFavorite } = useProducts();
+const { addToCart } = useCart();
 
-const searchQuery = ref('')
+const searchQuery = ref('');
 
 const categories = [
   { name: '도시락', count: 45 },
@@ -163,24 +163,28 @@ const categories = [
   { name: '스무디', count: 18 },
 ]
 
-const handleAddToCart = (productId) => {
-  const product = products.value.find(p => p.id === productId)
-  if (!product) return
+const handleAddToCart = async (productId) => {
+  const product = products.value.find((p) => p.id === productId);
+  if (!product) return;
 
   const priceNumber = typeof product.price === 'number'
     ? product.price
-    : parseInt(String(product.price).replace(/[^0-9]/g, ''), 10)
+    : parseInt(String(product.price).replace(/[^0-9]/g, ''), 10);
 
-  addToCart({
-    id: product.id,
-    name: product.name,
-    category: product.category,
-    price: priceNumber,
-    image: product.image,
-    calories: product.calories,
-    protein: product.protein,
-    carbs: product.carbs,
-    fat: product.fat,
-  })
-}
+  try {
+    await addToCart({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      price: priceNumber,
+      image: product.image,
+      calories: product.calories,
+      protein: product.protein,
+      carbs: product.carbs,
+      fat: product.fat,
+    });
+  } catch (error) {
+    window.alert(error?.message ?? '장바구니에 담지 못했어요. 다시 시도해 주세요.');
+  }
+};
 </script>

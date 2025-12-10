@@ -53,7 +53,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { Leaf } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { useCart } from '@/composables/useCart';
@@ -62,12 +62,18 @@ import AppHeaderLoggedInActions from '@/components/header/AppHeaderLoggedInActio
 import AppHeaderLoggedOutActions from '@/components/header/AppHeaderLoggedOutActions.vue';
 
 const router = useRouter();
-const { cartCount: cartItemCount } = useCart();
-const { isAuthenticated, userName, isSeller, isAdmin, cartCount: authCartCount, login, logout } = useAuth();
+const { cartCount: cartItemCount, isInitialized: isCartInitialized, loadCart, resetCart } = useCart();
+const { isAuthenticated, userName, isSeller, isAdmin, cartCount: authCartCount, logout } = useAuth();
 
 const headerCartCount = computed(() => {
   if (isAuthenticated.value) {
-    return Number.isFinite(authCartCount.value) ? Math.max(0, authCartCount.value) : cartItemCount.value;
+    if (isCartInitialized.value) {
+      return cartItemCount.value;
+    }
+    if (Number.isFinite(authCartCount.value)) {
+      return Math.max(0, authCartCount.value);
+    }
+    return cartItemCount.value;
   }
   return 0;
 });
@@ -78,5 +84,29 @@ const handleLogin = () => {
 
 const handleLogout = () => {
   logout();
+  resetCart();
 };
+
+const tryLoadCart = (force = false) => {
+  if (!isAuthenticated.value) return;
+  loadCart({ force }).catch((error) => {
+    console.error('장바구니를 불러오지 못했어요.', error);
+  });
+};
+
+onMounted(() => {
+  tryLoadCart();
+});
+
+watch(
+  () => isAuthenticated.value,
+  (next, prev) => {
+    if (next && !prev) {
+      tryLoadCart(true);
+    }
+    if (!next) {
+      resetCart();
+    }
+  }
+);
 </script>
