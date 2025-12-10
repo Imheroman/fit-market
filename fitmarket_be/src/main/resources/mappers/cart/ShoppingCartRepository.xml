@@ -60,7 +60,7 @@
 
   <update id="incrementQuantity">
     UPDATE shopping_cart_products
-    SET quantity = quantity + #{quantity},
+    SET quantity = LEAST(quantity + #{quantity}, 100),
         modified_date = CURRENT_TIMESTAMP
     WHERE user_id = #{userId}
       AND product_id = #{productId}
@@ -69,12 +69,12 @@
 
   <insert id="insert">
     INSERT INTO shopping_cart_products (user_id, product_id, quantity)
-    VALUES (#{userId}, #{productId}, #{quantity})
+    VALUES (#{userId}, #{productId}, LEAST(#{quantity}, 100))
   </insert>
 
   <update id="updateQuantity">
     UPDATE shopping_cart_products
-    SET quantity = #{quantity},
+    SET quantity = LEAST(#{quantity}, 100),
         modified_date = CURRENT_TIMESTAMP
     WHERE id = #{cartItemId}
       AND user_id = #{userId}

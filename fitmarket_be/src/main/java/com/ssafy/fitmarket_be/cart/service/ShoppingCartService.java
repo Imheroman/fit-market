@@ -18,6 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class ShoppingCartService {
 
+  private static final int MIN_QUANTITY = 1;
+  private static final int MAX_QUANTITY = 100;
+
   private final ShoppingCartRepository shoppingCartRepository;
   private final ShoppingCartMapper shoppingCartMapper;
 
@@ -49,33 +52,31 @@ public class ShoppingCartService {
    *
    * @param userId    사용자 식별자
    * @param productId 상품 식별자
-   * @param quantity  추가할 수량
+   * @param quantity  추가할 수량(1~100, 합산 시 최대 100으로 제한)
    * @return 새로운 상품이 담겼다면 true, 기존 상품 수량이 늘어났다면 false
    */
   @Transactional
   public boolean addItem(Long userId, Long productId, int quantity) {
-    if (quantity < 1) {
-      throw new IllegalArgumentException("수량은 1개 이상부터 담을 수 있어요.");
-    }
+    int normalizedQuantity = normalizeQuantity(quantity);
 
-    int updated = this.shoppingCartRepository.incrementQuantity(userId, productId, quantity);
+    int updated = this.shoppingCartRepository.incrementQuantity(userId, productId, normalizedQuantity);
     if (updated > 0) {
       log.debug(
           "update cart item for product {} increased by {} for user {}",
           productId,
-          quantity,
+          normalizedQuantity,
           userId
       );
       return false;
     }
 
-    int inserted = this.shoppingCartRepository.insert(userId, productId, quantity);
+    int inserted = this.shoppingCartRepository.insert(userId, productId, normalizedQuantity);
     if (inserted <= 0) {
       throw new IllegalArgumentException("장바구니에 상품을 담지 못했어요. 잠시 후 다시 시도해 주세요.");
     }
 
     log.debug("insert product {} added to cart for user {} with quantity {}", productId, userId,
-        quantity);
+        normalizedQuantity);
     return true;
   }
 
@@ -84,20 +85,18 @@ public class ShoppingCartService {
    *
    * @param userId     사용자 식별자
    * @param cartItemId 장바구니 아이템 식별자
-   * @param quantity   수정할 수량
+   * @param quantity   수정할 수량(1~100, 최대 100으로 제한)
    */
   @Transactional
   public void updateQuantity(Long userId, Long cartItemId, int quantity) {
-    if (quantity < 1) {
-      throw new IllegalArgumentException("수량은 1개 이상부터 담을 수 있어요.");
-    }
+    int normalizedQuantity = normalizeQuantity(quantity);
 
-    int updated = this.shoppingCartRepository.updateQuantity(cartItemId, userId, quantity);
+    int updated = this.shoppingCartRepository.updateQuantity(cartItemId, userId, normalizedQuantity);
     if (updated <= 0) {
       throw new IllegalArgumentException("수정할 장바구니 상품을 찾을 수 없어요. 다시 시도해 주세요.");
     }
 
-    log.debug("cart item {} quantity updated to {} for user {}", cartItemId, quantity, userId);
+    log.debug("cart item {} quantity updated to {} for user {}", cartItemId, normalizedQuantity, userId);
   }
 
   /**
@@ -114,5 +113,13 @@ public class ShoppingCartService {
     }
 
     log.debug("cart item {} soft deleted for user {}", cartItemId, userId);
+  }
+
+  private int normalizeQuantity(int quantity) {
+    if (quantity < MIN_QUANTITY) {
+      throw new IllegalArgumentException("수량은 1개 이상부터 담을 수 있어요.");
+    }
+
+    return Math.min(quantity, MAX_QUANTITY);
   }
 }
