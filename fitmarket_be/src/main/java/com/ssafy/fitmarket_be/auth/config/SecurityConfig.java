@@ -31,6 +31,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
   private final AuthenticationConfiguration authenticationConfiguration;
   private final ObjectMapper objectMapper;
 
@@ -53,7 +54,8 @@ public class SecurityConfig {
       CustomLogoutFilter logoutFilter) throws Exception {
 
     // setting login filter
-    AuthenticationManager authenticationManager = this.authenticationManager(authenticationConfiguration);
+    AuthenticationManager authenticationManager = this.authenticationManager(
+        authenticationConfiguration);
     CustomLoginFilter loginFilter = new CustomLoginFilter(authenticationManager, objectMapper);
     loginFilter.setAuthenticationSuccessHandler(loginSuccessHandler); // 핸들러 등록
 
