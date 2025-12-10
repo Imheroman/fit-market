@@ -27,7 +27,6 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
     this.objectMapper = objectMapper;
 
     setFilterProcessesUrl("/auth/login");  // login uri
-//    setFilterProcessesUrl("/api/auth/login");
   }
 
   /**
@@ -57,30 +56,6 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
       throw new RuntimeException(e);
     }
   }
-
-//  /**
-//   * 로그인 성공 후 로직
-//   *
-//   * @param request
-//   * @param response
-//   * @param chain
-//   * @param authResult the object returned from the <tt>attemptAuthentication</tt> method.
-//   * @throws IOException
-//   * @throws ServletException
-//   */
-//  @Override
-//  protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
-//      FilterChain chain, Authentication authResult) {
-//    CustomUserDetails user = (CustomUserDetails) authResult.getPrincipal();
-//
-//    String token = this.jwtUtil.create(user.getId(), user.getUsername(), user.getAuthorities());
-//    Cookie cookie = CookieUtils.create("token", token);
-//
-//    log.trace("created token: {}", token);
-//
-//    response.addCookie(cookie);
-//    response.setStatus(HttpStatus.OK.value());
-//  }
 
   static class LoginRequest {
 
