@@ -1,10 +1,26 @@
 import {defineStore} from 'pinia';
 import {addCartItem, deleteCartItem, fetchCartItems, updateCartItemQuantity} from '@/api/cartApi';
 
+const MIN_QUANTITY = 1;
+const MAX_QUANTITY = 100;
+
 const toNumber = (value) => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return 0;
   return parsed;
+};
+
+const clampQuantity = (value) => {
+  const parsed = Math.floor(toNumber(value) || 0);
+  if (Number.isNaN(parsed)) return MIN_QUANTITY;
+  if (parsed < MIN_QUANTITY) return MIN_QUANTITY;
+  if (parsed > MAX_QUANTITY) return MAX_QUANTITY;
+  return parsed;
+};
+
+const isQuantityInRange = (value) => {
+  const parsed = Math.floor(toNumber(value) || 0);
+  return parsed >= MIN_QUANTITY && parsed <= MAX_QUANTITY;
 };
 
 const mapCartItem = (item) => ({
@@ -14,7 +30,7 @@ const mapCartItem = (item) => ({
   categoryId: item?.categoryId,
   category: item?.categoryName ?? item?.category ?? '',
   price: toNumber(item?.price),
-  quantity: toNumber(item?.quantity ?? 1),
+  quantity: clampQuantity(item?.quantity ?? MIN_QUANTITY),
   image: item?.imageUrl ?? item?.image ?? '',
   calories: toNumber(item?.nutrition?.calories ?? item?.calories),
   protein: toNumber(item?.nutrition?.protein ?? item?.protein),
@@ -30,7 +46,7 @@ export const useCartStore = defineStore('cart', {
     errorMessage: '',
   }),
   getters: {
-    cartCount: (state) => state.cartItems.reduce((sum, item) => sum + (item.quantity ?? 0), 0),
+    cartCount: (state) => state.cartItems.length,
     totalPrice: (state) => state.cartItems.reduce((sum, item) => sum + (item.price ?? 0) * (item.quantity ?? 0), 0),
     totalNutrition: (state) =>
         state.cartItems.reduce(
@@ -67,15 +83,16 @@ export const useCartStore = defineStore('cart', {
     },
     async addToCart(product, quantity = 1) {
       if (!product?.id && !product?.productId) return;
-      if (quantity < 1) {
-        this.errorMessage = '수량은 최소 1개 이상이에요.';
+      if (!isQuantityInRange(quantity)) {
+        this.errorMessage = '수량은 1~100개까지만 담을 수 있어요.';
         return;
       }
 
       this.errorMessage = '';
 
       try {
-        await addCartItem(product.productId ?? product.id, quantity);
+        const normalizedQuantity = clampQuantity(quantity);
+        await addCartItem(product.productId ?? product.id, normalizedQuantity);
         await this.loadCart({force: true});
       } catch (error) {
         this.errorMessage = error?.message ?? '장바구니에 담지 못했어요. 다시 시도해 주세요.';
@@ -87,18 +104,19 @@ export const useCartStore = defineStore('cart', {
         this.errorMessage = '상품 정보를 찾지 못했어요. 새로고침 후 다시 시도해 주세요.';
         return;
       }
-      if (newQuantity < 1) {
-        this.errorMessage = '수량은 최소 1개 이상이에요.';
+      if (!isQuantityInRange(newQuantity)) {
+        this.errorMessage = '수량은 1~100개까지만 바꿀 수 있어요.';
         return;
       }
 
       this.errorMessage = '';
 
       try {
-        await updateCartItemQuantity(cartItemId, newQuantity);
+        const normalizedQuantity = clampQuantity(newQuantity);
+        await updateCartItemQuantity(cartItemId, normalizedQuantity);
         const item = this.cartItems.find((cartItem) => cartItem.cartItemId === cartItemId);
         if (item) {
-          item.quantity = newQuantity;
+          item.quantity = normalizedQuantity;
         } else {
           await this.loadCart({force: true});
         }
