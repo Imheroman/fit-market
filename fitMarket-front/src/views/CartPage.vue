@@ -42,7 +42,7 @@
                   <div class="flex items-center border border-green-200 rounded-lg">
                     <button
                       class="px-3 py-1 hover:bg-green-50 transition-colors disabled:opacity-50"
-                      :disabled="isItemBusy(item)"
+                      :disabled="isItemBusy(item) || item.quantity <= MIN_QUANTITY"
                       @click="handleQuantityChange(item, -1)"
                     >
                       <Minus class="w-4 h-4" />
@@ -50,7 +50,7 @@
                     <div class="px-4 py-1 font-semibold min-w-[40px] text-center">{{ item.quantity }}</div>
                     <button
                       class="px-3 py-1 hover:bg-green-50 transition-colors disabled:opacity-50"
-                      :disabled="isItemBusy(item)"
+                      :disabled="isItemBusy(item) || item.quantity >= MAX_QUANTITY"
                       @click="handleQuantityChange(item, 1)"
                     >
                       <Plus class="w-4 h-4" />
@@ -147,6 +147,8 @@ import AppFooter from '@/components/AppFooter.vue';
 import { useCart } from '@/composables/useCart';
 
 const router = useRouter();
+const MIN_QUANTITY = 1;
+const MAX_QUANTITY = 100;
 const { cartItems, totalPrice, totalNutrition, isLoading, errorMessage, loadCart, updateQuantity, removeItem } = useCart();
 const pendingItemId = ref(null);
 
@@ -156,11 +158,12 @@ const shippingFee = 3000;
 
 const formatNumber = (value) => Number(value ?? 0).toLocaleString();
 const isItemBusy = (item) => pendingItemId.value === item.cartItemId || isLoading.value;
+const removeConfirmMessage = '상품을 삭제하겠습니까? 담아둔 상품을 지우면 다시 담아야 해요.';
 
 const handleQuantityChange = async (item, delta) => {
-  const nextQuantity = (item?.quantity ?? 1) + delta;
-  if (nextQuantity < 1) {
-    window.alert('수량은 최소 1개 이상이에요.');
+  const nextQuantity = (item?.quantity ?? MIN_QUANTITY) + delta;
+  if (nextQuantity < MIN_QUANTITY || nextQuantity > MAX_QUANTITY) {
+    window.alert('수량은 1~100개까지만 선택할 수 있어요.');
     return;
   }
 
@@ -175,6 +178,11 @@ const handleQuantityChange = async (item, delta) => {
 };
 
 const handleRemoveItem = async (item) => {
+  const shouldRemove = window.confirm(removeConfirmMessage);
+  if (!shouldRemove) {
+    return;
+  }
+
   pendingItemId.value = item.cartItemId;
   try {
     await removeItem(item.cartItemId);

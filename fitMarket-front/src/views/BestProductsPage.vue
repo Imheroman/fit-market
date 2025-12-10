@@ -72,6 +72,7 @@ const handleAddToCart = async (productId) => {
       carbs: product.carbs,
       fat: product.fat,
     });
+    window.alert('장바구니에 담겼어요! 결제 전에 언제든 수정할 수 있어요.');
   } catch (error) {
     window.alert(error?.message ?? '장바구니에 담지 못했어요. 다시 시도해 주세요.');
   }
