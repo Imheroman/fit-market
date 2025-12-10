@@ -1,13 +1,13 @@
 <template>
   <div
-    class="group overflow-hidden border border-green-100 hover:shadow-xl hover:border-green-300 transition-all duration-300 rounded-xl bg-white cursor-pointer"
-    @click="navigateToDetail"
+      class="group overflow-hidden border border-green-100 hover:shadow-xl hover:border-green-300 transition-all duration-300 rounded-xl bg-white cursor-pointer"
+      @click="navigateToDetail"
   >
     <div class="relative overflow-hidden aspect-square bg-green-50">
       <img
-        :src="product.image"
-        :alt="product.name"
-        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          :src="product.image"
+          :alt="product.name"
+          class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
       />
       <span class="absolute top-3 left-3 px-3 py-1 bg-green-500 text-white text-sm font-medium rounded-full">
         {{ product.category }}
@@ -20,7 +20,7 @@
       </div>
 
       <div class="flex items-center gap-1 mb-3">
-        <Star class="w-4 h-4 fill-yellow-400 text-yellow-400" />
+        <Star class="w-4 h-4 fill-yellow-400 text-yellow-400"/>
         <span class="text-sm font-medium">{{ product.rating }}</span>
         <span class="text-sm text-gray-600">({{ product.reviews }})</span>
       </div>
@@ -47,11 +47,11 @@
       <div class="flex items-center justify-between">
         <span class="text-xl font-bold text-green-600">{{ displayPrice }}</span>
         <button
-          @click.stop="handleAddToCart"
-          class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
+            @click.stop="handleAddToCart"
+            class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
         >
           장바구니
-          <ShoppingCart class="w-4 h-4" />
+          <ShoppingCart class="w-4 h-4"/>
         </button>
       </div>
     </div>
@@ -59,9 +59,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { Star, ShoppingCart } from 'lucide-vue-next'
+import {computed} from 'vue'
+import {useRouter} from 'vue-router'
+import {Star, ShoppingCart} from 'lucide-vue-next'
 
 const router = useRouter()
 
@@ -82,7 +82,7 @@ const displayPrice = computed(() => {
 })
 
 const navigateToDetail = () => {
-  router.push({ name: 'product-detail', params: { id: props.product.id } })
+  router.push({name: 'product-detail', params: {id: props.product.id}})
 }
 
 const handleAddToCart = () => {
