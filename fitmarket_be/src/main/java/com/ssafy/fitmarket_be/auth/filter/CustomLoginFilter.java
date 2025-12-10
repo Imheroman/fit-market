@@ -10,9 +10,7 @@ import org.springframework.security.authentication.AuthenticationServiceExceptio
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.stereotype.Component;
 
-@Component
 @Slf4j
 public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
@@ -29,6 +27,7 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
     this.objectMapper = objectMapper;
 
     setFilterProcessesUrl("/auth/login");  // login uri
+//    setFilterProcessesUrl("/api/auth/login");
   }
 
   /**

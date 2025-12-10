@@ -31,6 +31,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+  private final AuthenticationConfiguration authenticationConfiguration;
+  private final ObjectMapper objectMapper;
+
   @Bean
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
@@ -46,10 +49,13 @@ public class SecurityConfig {
   public SecurityFilterChain filterChain(HttpSecurity http,
       SecurityExceptionHandlingFilter exceptionFilter,
       CustomAuthenticationFilter authenticationFilter,
-      CustomLoginFilter loginFilter, LoginSuccessHandler loginSuccessHandler,
+      LoginSuccessHandler loginSuccessHandler,
       CustomLogoutFilter logoutFilter) throws Exception {
 
-    loginFilter.setAuthenticationSuccessHandler(loginSuccessHandler); // 핸들러 등록!
+    // setting login filter
+    AuthenticationManager authenticationManager = this.authenticationManager(authenticationConfiguration);
+    CustomLoginFilter loginFilter = new CustomLoginFilter(authenticationManager, objectMapper);
+    loginFilter.setAuthenticationSuccessHandler(loginSuccessHandler); // 핸들러 등록
 
     http
         .csrf(AbstractHttpConfigurer::disable)  // csrf disable (session 안 쓰므로 불필요)
@@ -58,6 +64,7 @@ public class SecurityConfig {
         .formLogin(AbstractHttpConfigurer::disable)  // form login disable ( 커스텀 필터 쓰므로 불필요)
         .httpBasic(AbstractHttpConfigurer::disable)  // http basic authentication disable
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(exceptionFilter, CustomAuthenticationFilter.class)
         .addFilterBefore(logoutFilter, LogoutFilter.class);
