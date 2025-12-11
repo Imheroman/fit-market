@@ -787,3 +787,5 @@ gradle-app.setting
 **/cli_request.md
 **/work_summary
 **/summary
+
+/fitmarket_be/**/application-prod.yaml
