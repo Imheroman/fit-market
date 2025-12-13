@@ -32,15 +32,26 @@
 
               <div class="space-y-2">
                 <label class="block text-sm font-medium text-gray-700">연락처</label>
-                <input
-                  :value="phone"
-                  type="tel"
-                  inputmode="numeric"
-                  maxlength="13"
-                  class="w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-100"
-                  placeholder="010-0000-0000"
-                  @input="handleInput"
-                />
+                <div class="relative">
+                  <input
+                    :value="phone"
+                    type="tel"
+                    inputmode="numeric"
+                    maxlength="13"
+                    class="w-full rounded-xl border border-gray-200 px-4 py-3 pr-12 focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                    placeholder="010-0000-0000"
+                    @input="handleInput"
+                  />
+                  <button
+                    v-if="phone"
+                    type="button"
+                    class="absolute inset-y-0 right-3 my-auto h-9 w-9 rounded-full text-lg text-gray-400 hover:text-gray-700"
+                    aria-label="입력 지우기"
+                    @click="handleClear"
+                  >
+                    X
+                  </button>
+                </div>
                 <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
                 <p class="text-xs text-gray-500">대시(-)는 자동으로 채워드려요.</p>
               </div>
@@ -80,7 +91,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
@@ -89,14 +100,25 @@ import { useChangePhone } from '@/composables/useChangePhone';
 
 const router = useRouter();
 const { user, loadUserProfile, isProfileLoading, profileError } = useAuth();
-const { phone, error, serverError, successMessage, isSubmitting, isDirty, setInitialValue, submit, reset, formatPhone } =
-  useChangePhone();
+const {
+  phone,
+  error,
+  serverError,
+  successMessage,
+  isSubmitting,
+  isDirty,
+  setInitialValue,
+  submit,
+  reset,
+  formatPhone,
+  clear,
+} = useChangePhone();
 const isInitializing = ref(true);
+const profilePhone = computed(() => user.value?.phone ?? '');
 
 const hydrateFromProfile = async () => {
   try {
-    const profile = await loadUserProfile();
-    setInitialValue(profile?.phone ?? user.value?.phone ?? '');
+    await loadUserProfile();
   } catch (errorResponse) {
     console.error(errorResponse);
   } finally {
@@ -108,18 +130,34 @@ onMounted(() => {
   hydrateFromProfile();
 });
 
+watch(
+  profilePhone,
+  (value) => {
+    setInitialValue(value);
+  },
+  { immediate: true }
+);
+
 const handleInput = (event) => {
   phone.value = formatPhone(event.target.value);
 };
 
 const handleSubmit = async () => {
   const result = await submit();
+  console.log("phone change result:", result)
   if (result) {
+    await loadUserProfile();
+    const message = successMessage.value || '연락처를 새로 저장했어요.';
+    window.alert(message);
     router.push('/mypage');
   }
 };
 
 const handleReset = () => {
   reset();
+};
+
+const handleClear = () => {
+  clear();
 };
 </script>

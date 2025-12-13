@@ -49,16 +49,33 @@
                 :class="canEditAddress ? 'text-green-600 bg-green-50' : 'text-gray-500 bg-gray-100'"
               >
                 <MapPin class="w-4 h-4" />
-                {{ formattedSelectedAddress?.label }} {{ canEditAddress ? '수정 가능' : isCancelled ? '배송 중단' : '수정 잠금' }}
+                {{ formattedSelectedAddress?.name || formattedSelectedAddress?.recipient || '배송지' }}
+                {{ canEditAddress ? '수정 가능' : isCancelled ? '배송 중단' : '수정 잠금' }}
               </span>
             </div>
+
+            <p
+              v-if="isAddressLoading"
+              class="text-sm text-gray-600 bg-green-50 border border-green-100 rounded-lg px-3 py-2 mb-4"
+            >
+              배송지 정보를 불러오는 중이에요.
+            </p>
+            <p
+              v-else-if="addressErrorMessage"
+              class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4"
+            >
+              {{ addressErrorMessage }}
+            </p>
 
             <div class="border border-green-100 rounded-2xl p-5 bg-gradient-to-br from-green-50/60 to-white">
               <div class="flex flex-col gap-2">
                 <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">받는 분</p>
                 <p class="text-lg font-bold">{{ formattedSelectedAddress?.recipient }} · {{ formattedSelectedAddress?.phone }}</p>
-                <p class="text-gray-700">{{ formattedSelectedAddress?.addressLine }} {{ formattedSelectedAddress?.detailAddress }}</p>
-                <p class="text-sm text-gray-500">요청사항: {{ formattedSelectedAddress?.instructions }}</p>
+                <p class="text-gray-700">
+                  {{ formattedSelectedAddress?.addressLine }} {{ formattedSelectedAddress?.addressLineDetail }}
+                  <span v-if="formattedSelectedAddress?.postalCode" class="text-gray-400">({{ formattedSelectedAddress?.postalCode }})</span>
+                </p>
+                <p class="text-sm text-gray-500">배송 메모: {{ formattedSelectedAddress?.memo || '입력된 메모가 없어요.' }}</p>
               </div>
             </div>
 
@@ -151,12 +168,14 @@
             <p class="text-sm text-gray-500">총 {{ cartItems.length }}건</p>
           </div>
 
-          <div class="divide-y divide-green-100">
+          <div v-if="isCartLoading" class="py-6 text-center text-gray-500">장바구니를 불러오는 중이에요.</div>
+          <div v-else-if="!cartItems.length" class="py-6 text-center text-gray-500">결제된 상품이 없어요.</div>
+          <div v-else class="divide-y divide-green-100">
             <div
               v-for="item in cartItems"
-              :key="item.id"
+              :key="item.cartItemId || item.productId"
               class="py-4 flex items-center gap-4 cursor-pointer transition-colors hover:bg-green-50/70 px-2 rounded-xl"
-              @click="navigateToProduct(item.id)"
+              @click="navigateToProduct(item.productId || item.id)"
             >
               <img :src="item.image" :alt="item.name" class="w-20 h-20 rounded-xl object-cover bg-green-50" />
               <div class="flex-1">
@@ -193,47 +212,60 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { CheckCircle, MapPin, ShieldCheck, BadgeCheck, PackageCheck, AlertTriangle, Edit3 } from 'lucide-vue-next'
-import AppHeader from '@/components/AppHeader.vue'
-import AppFooter from '@/components/AppFooter.vue'
-import { useCart } from '@/composables/useCart'
-import { useAddresses } from '@/composables/useAddresses'
-import { useOrderStatus } from '@/composables/useOrderStatus'
-import { formatPhoneNumber } from '@/utils/phone'
+import { computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { CheckCircle, MapPin, ShieldCheck, BadgeCheck, PackageCheck, AlertTriangle, Edit3 } from 'lucide-vue-next';
+import AppHeader from '@/components/AppHeader.vue';
+import AppFooter from '@/components/AppFooter.vue';
+import { useCart } from '@/composables/useCart';
+import { useAddresses } from '@/composables/useAddresses';
+import { useOrderStatus } from '@/composables/useOrderStatus';
+import { formatPhoneNumber } from '@/utils/phone';
 
-const router = useRouter()
-const { cartItems, totalPrice } = useCart()
-const { selectedAddress } = useAddresses()
-const { orderNumber, shippingFee, isCancelled, cancellationFee, canFreeCancel, cancelOrder } = useOrderStatus()
+const router = useRouter();
+const { cartItems, totalPrice, isLoading: isCartLoading, loadCart } = useCart();
+const { selectedAddress, loadAddresses, isLoading: isAddressLoading, errorMessage: addressErrorMessage } = useAddresses();
+const { orderNumber, shippingFee, isCancelled, cancellationFee, canFreeCancel, cancelOrder } = useOrderStatus();
 
-const totalPayment = computed(() => totalPrice.value + shippingFee)
+const totalPayment = computed(() => totalPrice.value + shippingFee);
 
-const canEditAddress = computed(() => canFreeCancel.value && !isCancelled.value)
+const canEditAddress = computed(() => canFreeCancel.value && !isCancelled.value);
 
 const formattedSelectedAddress = computed(() => {
-  if (!selectedAddress.value) return null
+  if (!selectedAddress.value) return null;
   return {
     ...selectedAddress.value,
+    name: selectedAddress.value.name ?? selectedAddress.value.label ?? '',
+    addressLineDetail:
+      selectedAddress.value.addressLineDetail ?? selectedAddress.value.detailAddress ?? '',
+    memo: selectedAddress.value.memo ?? selectedAddress.value.instructions ?? '',
+    postalCode: selectedAddress.value.postalCode ?? '',
     phone: formatPhoneNumber(selectedAddress.value.phone),
-  }
-})
+  };
+});
 
 const handleEditAddress = () => {
-  if (!canEditAddress.value) return
-  window.alert('배송지 변경 기능을 곧 연결할게요. 지금은 고객센터로 요청해 주세요.')
-}
+  if (!canEditAddress.value) return;
+  window.alert('배송지 변경 기능을 곧 연결할게요. 지금은 고객센터로 요청해 주세요.');
+};
 
 const handleCancelRequest = () => {
-  if (isCancelled.value) return
-  const confirmed = window.confirm('결제를 취소할까요? 취소하면 배송도 함께 중단돼요.')
-  if (!confirmed) return
-  cancelOrder()
-  window.alert('주문과 결제가 모두 취소되었어요.')
-}
+  if (isCancelled.value) return;
+  const confirmed = window.confirm('결제를 취소할까요? 취소하면 배송도 함께 중단돼요.');
+  if (!confirmed) return;
+  cancelOrder();
+  window.alert('주문과 결제가 모두 취소되었어요.');
+};
 
 const navigateToProduct = (productId) => {
-  router.push({ name: 'product-detail', params: { id: productId } })
-}
+  if (!productId) return;
+  router.push({ name: 'product-detail', params: { id: productId } });
+};
+
+onMounted(() => {
+  loadCart({ force: true }).catch((error) => console.error(error));
+  loadAddresses().catch((error) => {
+    console.error(error);
+  });
+});
 </script>
