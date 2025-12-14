@@ -1,16 +1,15 @@
 package com.ssafy.fitmarket_be.user.controller;
 
-import com.ssafy.fitmarket_be.auth.dto.CustomUserDetails;
 import com.ssafy.fitmarket_be.user.dto.UserDetailResponseDto;
 import com.ssafy.fitmarket_be.user.dto.UserSignupRequestDto;
 import com.ssafy.fitmarket_be.user.dto.UserUpdateRequestDto;
+import com.ssafy.fitmarket_be.user.dto.UserUpdateResponseDto;
 import com.ssafy.fitmarket_be.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -27,14 +26,14 @@ public class UserController {
 
   private final UserService userService;
 
-@GetMapping
-public ResponseEntity<UserDetailResponseDto> find(
-    @AuthenticationPrincipal(expression = "id") Long id) {
-  UserDetailResponseDto user = this.userService.findById(id);
+  @GetMapping
+  public ResponseEntity<UserDetailResponseDto> find(
+      @AuthenticationPrincipal(expression = "id") Long id) {
+    UserDetailResponseDto user = this.userService.findById(id);
 
-  return ResponseEntity.status(HttpStatus.OK)
-      .body(user);
-}
+    return ResponseEntity.status(HttpStatus.OK)
+        .body(user);
+  }
 
   @PostMapping("/signup")
   public ResponseEntity<Void> signup(@RequestBody UserSignupRequestDto requestDto) {
@@ -45,24 +44,30 @@ public ResponseEntity<UserDetailResponseDto> find(
   }
 
   @PatchMapping("/name")
-  public ResponseEntity<Void> updateName(@AuthenticationPrincipal(expression = "id") Long id,
+  public ResponseEntity<UserUpdateResponseDto> updateName(
+      @AuthenticationPrincipal(expression = "id") Long id,
       @RequestBody UserUpdateRequestDto request) {
-    this.userService.updateName(id, request.getValue());
-    return ResponseEntity.status(HttpStatus.OK).build();
+    UserUpdateResponseDto profile = this.userService.updateName(id,
+        request.getValue());
+    return ResponseEntity.status(HttpStatus.OK).body(profile);
   }
 
   @PatchMapping("/phone")
-  public ResponseEntity<Void> updatePhone(@AuthenticationPrincipal(expression = "id") Long id,
+  public ResponseEntity<UserUpdateResponseDto> updatePhone(
+      @AuthenticationPrincipal(expression = "id") Long id,
       @RequestBody UserUpdateRequestDto request) {
-    this.userService.updatePhone(id, request.getValue());
-    return ResponseEntity.status(HttpStatus.OK).build();
+    UserUpdateResponseDto profile = this.userService.updatePhone(id,
+        request.getValue());
+    return ResponseEntity.status(HttpStatus.OK).body(profile);
   }
 
   @PatchMapping("/password")
-  public ResponseEntity<Void> updatePassword(@AuthenticationPrincipal(expression = "id") Long id,
+  public ResponseEntity<UserUpdateResponseDto> updatePassword(
+      @AuthenticationPrincipal(expression = "id") Long id,
       @RequestBody UserUpdateRequestDto request) {
-    this.userService.updatePassword(id, request.getValue());
-    return ResponseEntity.status(HttpStatus.OK).build();
+    UserUpdateResponseDto profile = this.userService.updatePassword(id,
+        request.getValue());
+    return ResponseEntity.status(HttpStatus.OK).body(profile);
   }
 
   @DeleteMapping

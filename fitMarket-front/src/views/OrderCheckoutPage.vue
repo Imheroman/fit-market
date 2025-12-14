@@ -30,12 +30,25 @@
               </div>
               <span class="inline-flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">
                 <MapPin class="w-4 h-4" />
-                {{ selectedAddress?.label }}
+                {{ selectedAddress?.name || selectedAddress?.recipient || '배송지' }}
               </span>
             </div>
 
             <div class="space-y-4 max-h-96 overflow-y-auto pr-1">
+              <div
+                v-if="isAddressLoading"
+                class="border border-dashed border-green-200 rounded-xl p-4 text-sm text-gray-600 bg-green-50/60"
+              >
+                배송지를 불러오는 중이에요. 잠시만 기다려 주세요.
+              </div>
+              <div
+                v-else-if="addressErrorMessage"
+                class="border border-red-200 bg-red-50 rounded-xl p-4 text-sm text-red-700"
+              >
+                {{ addressErrorMessage }}
+              </div>
               <label
+                v-else
                 v-for="address in displayedAddresses"
                 :key="address.id"
                 class="block border rounded-xl p-4 cursor-pointer transition-all"
@@ -51,12 +64,15 @@
                         :checked="selectedAddressId === address.id"
                         @change="handleAddressChange(address.id)"
                       />
-                      <p class="font-semibold">{{ address.label }}</p>
-                      <span v-if="address.isDefault" class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">기본</span>
+                      <p class="font-semibold">{{ address.name || address.recipient || '배송지' }}</p>
+                      <span v-if="address.main" class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">기본</span>
                     </div>
                     <p class="text-sm text-gray-700">{{ address.recipient }} · {{ address.phone }}</p>
-                    <p class="text-sm text-gray-500">{{ address.addressLine }} {{ address.detailAddress }}</p>
-                    <p class="text-xs text-gray-400 mt-2">{{ address.instructions }}</p>
+                    <p class="text-sm text-gray-500">
+                      {{ address.addressLine }} {{ address.addressLineDetail }}
+                      <span v-if="address.postalCode" class="text-gray-400">({{ address.postalCode }})</span>
+                    </p>
+                    <p v-if="address.memo" class="text-xs text-gray-400 mt-2">{{ address.memo }}</p>
                   </div>
                   <CheckCircle class="w-5 h-5 text-green-500" v-if="selectedAddressId === address.id" />
                 </div>
@@ -64,7 +80,7 @@
             </div>
 
             <button
-              v-if="addressListOverflow"
+              v-if="addressListOverflow && !isAddressLoading && !addressErrorMessage"
               class="mt-4 w-full border border-green-200 text-green-700 font-semibold py-2 rounded-lg hover:bg-green-50 transition-colors"
               @click="toggleAddressList"
             >
@@ -129,8 +145,8 @@
               <h2 class="text-xl font-bold mb-4">주문 요약</h2>
               <div class="space-y-2 text-sm text-gray-600">
                 <p>총 {{ cartItems.length }}개 상품</p>
-                <p>선택한 배송지: {{ selectedAddress?.addressLine }}</p>
-                <p>희망 전달 메모: {{ selectedAddress?.instructions }}</p>
+                <p>선택한 배송지: {{ selectedAddress?.addressLine }} {{ selectedAddress?.addressLineDetail }}</p>
+                <p>배송 메모: {{ selectedAddress?.memo || '입력된 메모가 없어요.' }}</p>
               </div>
             </div>
           </div>
@@ -145,12 +161,13 @@
             <span class="text-sm text-gray-500">총 {{ cartItems.length }}건</span>
           </div>
 
-          <div v-if="cartItems.length" class="divide-y divide-green-100">
+          <div v-if="isCartLoading" class="py-6 text-center text-gray-500">장바구니를 불러오는 중이에요.</div>
+          <div v-else-if="cartItems.length" class="divide-y divide-green-100">
             <div
               v-for="item in cartItems"
-              :key="item.id"
+              :key="item.cartItemId || item.productId"
               class="py-4 flex items-center gap-4 cursor-pointer transition-colors hover:bg-green-50/70 px-2 rounded-xl"
-              @click="navigateToProduct(item.id)"
+              @click="navigateToProduct(item.productId || item.id)"
             >
               <img :src="item.image" :alt="item.name" class="w-20 h-20 rounded-xl object-cover bg-green-50" />
               <div class="flex-1">
@@ -175,60 +192,73 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { MapPin, ShieldCheck, Gift, Wallet, CheckCircle } from 'lucide-vue-next'
-import AppHeader from '@/components/AppHeader.vue'
-import AppFooter from '@/components/AppFooter.vue'
-import { useCart } from '@/composables/useCart'
-import { useAddresses } from '@/composables/useAddresses'
-import { useOrderStatus } from '@/composables/useOrderStatus'
-import { formatPhoneNumber } from '@/utils/phone'
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { MapPin, ShieldCheck, Gift, Wallet, CheckCircle } from 'lucide-vue-next';
+import AppHeader from '@/components/AppHeader.vue';
+import AppFooter from '@/components/AppFooter.vue';
+import { useCart } from '@/composables/useCart';
+import { useAddresses } from '@/composables/useAddresses';
+import { useOrderStatus } from '@/composables/useOrderStatus';
+import { formatPhoneNumber } from '@/utils/phone';
 
-const router = useRouter()
-const MAX_VISIBLE_ADDRESSES = 3
+const router = useRouter();
+const MAX_VISIBLE_ADDRESSES = 3;
 
-const { cartItems, totalPrice } = useCart()
-const { addresses, selectedAddress, selectedAddressId, selectAddress } = useAddresses()
-const { shippingFee, resetOrderStatus, completePayment } = useOrderStatus()
+const { cartItems, totalPrice, isLoading: isCartLoading, loadCart } = useCart();
+const {
+  addresses,
+  selectedAddress,
+  selectedAddressId,
+  selectAddress,
+  loadAddresses,
+  isLoading: isAddressLoading,
+  errorMessage: addressErrorMessage,
+} = useAddresses();
+const { shippingFee, resetOrderStatus, completePayment } = useOrderStatus();
 
-const showAllAddresses = ref(false)
+const showAllAddresses = ref(false);
 
-const addressListOverflow = computed(() => addresses.value.length > MAX_VISIBLE_ADDRESSES)
+const addressListOverflow = computed(() => addresses.value.length > MAX_VISIBLE_ADDRESSES);
 const displayedAddresses = computed(() => {
-  const source = showAllAddresses.value ? addresses.value : addresses.value.slice(0, MAX_VISIBLE_ADDRESSES)
+  const source = showAllAddresses.value ? addresses.value : addresses.value.slice(0, MAX_VISIBLE_ADDRESSES);
   return source.map((address) => ({
     ...address,
     phone: formatPhoneNumber(address.phone),
-  }))
-})
-const remainingAddressCount = computed(() => Math.max(addresses.value.length - MAX_VISIBLE_ADDRESSES, 0))
+  }));
+});
+const remainingAddressCount = computed(() => Math.max(addresses.value.length - MAX_VISIBLE_ADDRESSES, 0));
 
-const totalPayment = computed(() => totalPrice.value + shippingFee)
+const totalPayment = computed(() => totalPrice.value + shippingFee);
 
 const handleAddressChange = (addressId) => {
-  selectAddress(addressId)
-}
+  selectAddress(addressId);
+};
 
 const toggleAddressList = () => {
-  showAllAddresses.value = !showAllAddresses.value
-}
+  showAllAddresses.value = !showAllAddresses.value;
+};
 
 const handlePayment = () => {
   if (!cartItems.value.length) {
-    window.alert('장바구니가 비어 있어요. 상품을 담고 다시 시도해 주세요.')
-    router.push({ name: 'home' })
-    return
+    window.alert('장바구니가 비어 있어요. 상품을 담고 다시 시도해 주세요.');
+    router.push({ name: 'home' });
+    return;
   }
-  completePayment()
-  router.push({ name: 'order-complete' })
-}
+  completePayment();
+  router.push({ name: 'order-complete' });
+};
 
 const navigateToProduct = (productId) => {
-  router.push({ name: 'product-detail', params: { id: productId } })
-}
+  if (!productId) return;
+  router.push({ name: 'product-detail', params: { id: productId } });
+};
 
 onMounted(() => {
-  resetOrderStatus()
-})
+  resetOrderStatus();
+  loadCart({ force: true }).catch((error) => console.error(error));
+  loadAddresses().catch((error) => {
+    console.error(error);
+  });
+});
 </script>

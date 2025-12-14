@@ -50,10 +50,19 @@ export function useChangePhone() {
 
     try {
       const normalized = sanitizePhoneDigits(phone.value);
-      const profile = await updateUserPhone(normalized);
+      const formatted = formatPhoneNumber(normalized);
+      const response = await updateUserPhone(normalized);
+      const profile = response?.profile ?? response ?? null;
+      const messageFromApi = response?.message ?? '';
+      const message = messageFromApi
+        ? messageFromApi.includes(normalized)
+          ? messageFromApi.replace(normalized, formatted)
+          : messageFromApi
+        : `${formatted}으로 저장했어요.`;
       hydrateProfile(profile);
       setInitialValue(profile?.phone ?? normalized);
-      successMessage.value = '연락처를 새로 저장했어요.';
+      successMessage.value = message;
+
       return profile;
     } catch (errorResponse) {
       serverError.value = errorResponse?.message ?? '연락처를 바꾸지 못했어요.';
@@ -72,6 +81,13 @@ export function useChangePhone() {
 
   const formatPhone = (value) => formatPhoneNumber(value);
 
+  const clear = () => {
+    phone.value = '';
+    error.value = '';
+    serverError.value = '';
+    successMessage.value = '';
+  };
+
   return {
     phone,
     error,
@@ -83,5 +99,6 @@ export function useChangePhone() {
     submit,
     reset,
     formatPhone,
+    clear,
   };
 }
