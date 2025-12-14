@@ -3,6 +3,11 @@ import HomePage from "@/views/HomePage.vue"
 import ProductDetailPage from "@/views/ProductDetailPage.vue"
 import CartPage from "@/views/CartPage.vue"
 import MyPage from "@/views/MyPage.vue"
+import MyProfilePage from "@/views/mypage/MyProfilePage.vue"
+import MyOrdersPage from "@/views/mypage/MyOrdersPage.vue"
+import MyAddressesPage from "@/views/mypage/MyAddressesPage.vue"
+import MyAddressCreatePage from "@/views/mypage/MyAddressCreatePage.vue"
+import MyAddressEditPage from "@/views/mypage/MyAddressEditPage.vue"
 import UserEditPage from "@/views/UserEditPage.vue"
 import ChangeNamePage from "@/views/account/ChangeNamePage.vue"
 import ChangePhonePage from "@/views/account/ChangePhonePage.vue"
@@ -69,6 +74,34 @@ const router = createRouter({
       path: "/mypage",
       name: "my-page",
       component: MyPage,
+      redirect: { name: "my-page-profile" },
+      children: [
+        {
+          path: "profile",
+          name: "my-page-profile",
+          component: MyProfilePage,
+        },
+        {
+          path: "orders",
+          name: "my-page-orders",
+          component: MyOrdersPage,
+        },
+        {
+          path: "addresses",
+          name: "my-page-addresses",
+          component: MyAddressesPage,
+        },
+        {
+          path: "addresses/new",
+          name: "my-page-addresses-new",
+          component: MyAddressCreatePage,
+        },
+        {
+          path: "addresses/:id/edit",
+          name: "my-page-addresses-edit",
+          component: MyAddressEditPage,
+        },
+      ],
     },
     {
       path: "/mypage/edit",

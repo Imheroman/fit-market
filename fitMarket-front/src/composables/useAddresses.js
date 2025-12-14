@@ -1,89 +1,220 @@
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue';
+import { fetchAddresses, createAddress, updateAddress, deleteAddress, setMainAddress } from '@/api/addressApi';
+import { sanitizePhoneDigits } from '@/utils/phone';
 
-const savedAddresses = ref([
-  {
-    id: 1,
-    label: '집',
-    recipient: '김영웅',
-    phone: '010-1234-5678',
-    addressLine: '서울 강남구 테헤란로 123',
-    detailAddress: '101동 1203호',
-    instructions: '문 앞에 두고 초인종은 누르지 말아주세요.',
-    isDefault: true,
-  },
-  {
-    id: 2,
-    label: '회사',
-    recipient: '김영웅',
-    phone: '010-1234-5678',
-    addressLine: '서울 송파구 중대로 55',
-    detailAddress: '15층 피트마켓 팀',
-    instructions: '리셉션에 맡겨주세요.',
-    isDefault: false,
-  },
-  {
-    id: 3,
-    label: '부모님 댁',
-    recipient: '김영웅 부모님',
-    phone: '031-123-4567',
-    addressLine: '경기 성남시 분당구 정자일로 88',
-    detailAddress: '101동 902호',
-    instructions: '관리실에 보관 후 연락 부탁드려요.',
-    isDefault: false,
-  },
-  {
-    id: 4,
-    label: '헬스장',
-    recipient: '김영웅',
-    phone: '010-9876-5432',
-    addressLine: '서울 마포구 양화로 188',
-    detailAddress: '지하 2층 PT데스크',
-    instructions: '데스크 직원에게 전달 후 문자 부탁드려요.',
-    isDefault: false,
-  },
-])
+const savedAddresses = ref([]);
+const selectedAddressId = ref(null);
+const isLoading = ref(false);
+const isMutating = ref(false);
+const errorMessage = ref('');
+const hasLoaded = ref(false);
 
-const selectedAddressId = ref(savedAddresses.value.find((addr) => addr.isDefault)?.id ?? null)
+const buildAddressPayload = (payload) => {
+  const phoneDigits = sanitizePhoneDigits(payload?.phone ?? '').slice(0, 11);
+  const body = {
+    name: (payload?.name ?? '').trim(),
+    recipient: (payload?.recipient ?? '').trim(),
+    phone: phoneDigits,
+    memo: (payload?.memo ?? '').trim(),
+    postalCode: (payload?.postalCode ?? '').trim(),
+    addressLine: (payload?.addressLine ?? '').trim(),
+    addressLineDetail: (payload?.addressLineDetail ?? '').trim(),
+    main: Boolean(payload?.main),
+  };
+
+  return body;
+};
+
+const normalizeAddress = (address) => ({
+  id: address?.id,
+  name: address?.name ?? '',
+  recipient: address?.recipient ?? '',
+  phone: sanitizePhoneDigits(address?.phone ?? ''),
+  memo: address?.memo ?? '',
+  postalCode: address?.postalCode ?? '',
+  addressLine: address?.addressLine ?? '',
+  addressLineDetail: address?.addressLineDetail ?? '',
+  main: Boolean(address?.main ?? false),
+  createdDate: address?.createdDate ?? null,
+  modifiedDate: address?.modifiedDate ?? null,
+  deletedDate: address?.deletedDate ?? null,
+});
+
+const findMainId = (list) => list.find((addr) => addr.main)?.id ?? null;
+
+const markMain = (list, mainId) => {
+  if (!mainId) return list;
+  return list.map((addr) => ({
+    ...addr,
+    main: addr.id === mainId,
+  }));
+};
+
+const syncSelection = () => {
+  const mainId = findMainId(savedAddresses.value);
+  if (mainId) {
+    selectedAddressId.value = mainId;
+    return;
+  }
+
+  const fallbackId = savedAddresses.value[0]?.id ?? null;
+  selectedAddressId.value = fallbackId;
+};
+
+const loadAddresses = async () => {
+  if (isLoading.value) return;
+
+  isLoading.value = true;
+  errorMessage.value = '';
+
+  try {
+    const response = await fetchAddresses();
+    const normalized = response.map((item) => normalizeAddress(item));
+    console.log("normalized addresses:", normalized);
+    const mainId = findMainId(normalized) ?? normalized[0]?.id ?? null;
+    savedAddresses.value = markMain(normalized, mainId);
+    syncSelection();
+    hasLoaded.value = true;
+  } catch (error) {
+    console.error(error);
+    errorMessage.value = error?.message ?? '배송지를 불러오지 못했어요.';
+    savedAddresses.value = [];
+    selectedAddressId.value = null;
+    throw error;
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const ensureLoaded = () => {
+  if (!hasLoaded.value && !isLoading.value) {
+    loadAddresses();
+  }
+};
+
+const addAddress = async (payload) => {
+  isMutating.value = true;
+  errorMessage.value = '';
+
+  try {
+    const requestBody = buildAddressPayload(payload);
+    const created = await createAddress(requestBody);
+    const normalized = created && created.id ? normalizeAddress(created) : null;
+
+    if (!normalized) {
+      await loadAddresses();
+      return savedAddresses.value.find((addr) => addr.main) ?? savedAddresses.value[0] ?? null;
+    }
+
+    const nextMainId = normalized.main
+      ? normalized.id
+      : findMainId(savedAddresses.value) ?? normalized.id;
+
+    const nextList = markMain([...savedAddresses.value, normalized], nextMainId);
+    savedAddresses.value = nextList;
+    syncSelection();
+    return normalized;
+  } catch (error) {
+    console.error(error);
+    errorMessage.value = error?.message ?? '배송지 추가에 실패했어요.';
+    throw error;
+  } finally {
+    isMutating.value = false;
+  }
+};
+
+const editAddress = async (addressId, payload) => {
+  if (!addressId) return null;
+
+  isMutating.value = true;
+  errorMessage.value = '';
+
+  try {
+    const requestBody = buildAddressPayload(payload);
+    const updated = await updateAddress(addressId, requestBody);
+    const normalized = normalizeAddress(updated);
+    const nextList = savedAddresses.value.map((addr) => (addr.id === addressId ? normalized : addr));
+    const nextMainId = normalized.main
+      ? normalized.id
+      : findMainId(nextList) ?? nextList[0]?.id ?? null;
+
+    savedAddresses.value = markMain(nextList, nextMainId);
+    syncSelection();
+    return normalized;
+  } catch (error) {
+    console.error(error);
+    errorMessage.value = error?.message ?? '배송지 수정에 실패했어요.';
+    throw error;
+  } finally {
+    isMutating.value = false;
+  }
+};
+
+const setDefaultAddress = async (addressId) => {
+  if (!addressId) return;
+
+  const targetExists = savedAddresses.value.some((addr) => addr.id === addressId);
+  if (!targetExists) {
+    throw new Error('선택한 배송지를 찾지 못했어요.');
+  }
+
+  isMutating.value = true;
+  errorMessage.value = '';
+
+  try {
+    await setMainAddress(addressId);
+    savedAddresses.value = markMain(savedAddresses.value, addressId);
+    syncSelection();
+    return savedAddresses.value.find((addr) => addr.id === addressId) ?? null;
+  } catch (error) {
+    console.error(error);
+    errorMessage.value = error?.message ?? '기본 배송지 설정에 실패했어요.';
+    throw error;
+  } finally {
+    isMutating.value = false;
+  }
+};
+
+const removeAddress = async (addressId) => {
+  if (!addressId) return;
+
+  isMutating.value = true;
+  errorMessage.value = '';
+
+  try {
+    await deleteAddress(addressId);
+    const nextList = savedAddresses.value.filter((addr) => addr.id !== addressId);
+    const nextMainId = findMainId(nextList) ?? nextList[0]?.id ?? null;
+
+    savedAddresses.value = markMain(nextList, nextMainId);
+    syncSelection();
+  } catch (error) {
+    console.error(error);
+    errorMessage.value = error?.message ?? '배송지 삭제에 실패했어요.';
+    throw error;
+  } finally {
+    isMutating.value = false;
+  }
+};
 
 export function useAddresses() {
-  const addresses = computed(() => savedAddresses.value)
+  ensureLoaded();
 
-  const defaultAddress = computed(() => {
-    return savedAddresses.value.find((addr) => addr.isDefault) ?? savedAddresses.value[0] ?? null
-  })
+  const addresses = computed(() => savedAddresses.value);
+
+  const defaultAddress = computed(() => savedAddresses.value.find((addr) => addr.main) ?? null);
 
   const selectedAddress = computed(() => {
-    const target = savedAddresses.value.find((addr) => addr.id === selectedAddressId.value)
-    return target ?? defaultAddress.value
-  })
+    const target = savedAddresses.value.find((addr) => addr.id === selectedAddressId.value);
+    return target ?? defaultAddress.value ?? savedAddresses.value[0] ?? null;
+  });
 
   const selectAddress = (addressId) => {
-    const exists = savedAddresses.value.some((addr) => addr.id === addressId)
+    const exists = savedAddresses.value.some((addr) => addr.id === addressId);
     if (exists) {
-      selectedAddressId.value = addressId
+      selectedAddressId.value = addressId;
     }
-  }
-
-  const setDefaultAddress = (addressId) => {
-    const target = savedAddresses.value.find((addr) => addr.id === addressId)
-    if (!target) return
-
-    savedAddresses.value = savedAddresses.value.map((addr) => ({
-      ...addr,
-      isDefault: addr.id === addressId,
-    }))
-
-    selectedAddressId.value = addressId
-  }
-
-  const removeAddress = (addressId) => {
-    if (savedAddresses.value.length <= 1) return
-    savedAddresses.value = savedAddresses.value.filter((addr) => addr.id !== addressId)
-    if (selectedAddressId.value === addressId) {
-      const nextDefault = savedAddresses.value.find((addr) => addr.isDefault) ?? savedAddresses.value[0] ?? null
-      selectedAddressId.value = nextDefault?.id ?? null
-    }
-  }
+  };
 
   return {
     addresses,
@@ -91,7 +222,13 @@ export function useAddresses() {
     selectedAddress,
     selectedAddressId,
     selectAddress,
+    loadAddresses,
+    addAddress,
+    editAddress,
     setDefaultAddress,
     removeAddress,
-  }
+    isLoading,
+    isMutating,
+    errorMessage,
+  };
 }

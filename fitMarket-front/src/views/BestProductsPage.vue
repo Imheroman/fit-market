@@ -40,36 +40,41 @@
 </template>
 
 <script setup>
-import { Star } from 'lucide-vue-next'
-import AppHeader from '@/components/AppHeader.vue'
-import AppFooter from '@/components/AppFooter.vue'
-import ProductCard from '@/components/ProductCard.vue'
-import { useCart } from '@/composables/useCart'
-import { useBestProducts } from '@/composables/useBestProducts'
+import { Star } from 'lucide-vue-next';
+import AppHeader from '@/components/AppHeader.vue';
+import AppFooter from '@/components/AppFooter.vue';
+import ProductCard from '@/components/ProductCard.vue';
+import { useCart } from '@/composables/useCart';
+import { useBestProducts } from '@/composables/useBestProducts';
 
-const { products, isLoading, errorMessage, toggleFavorite } = useBestProducts()
-const { addToCart } = useCart()
+const { products, isLoading, errorMessage, toggleFavorite } = useBestProducts();
+const { addToCart } = useCart();
 
-const sortedProducts = products
+const sortedProducts = products;
 
-const handleAddToCart = (productId) => {
-  const product = sortedProducts.value.find((p) => p.id === productId)
-  if (!product) return
+const handleAddToCart = async (productId) => {
+  const product = sortedProducts.value.find((p) => p.id === productId);
+  if (!product) return;
 
   const priceNumber = typeof product.price === 'number'
     ? product.price
-    : parseInt(String(product.price).replace(/[^0-9]/g, ''), 10)
+    : parseInt(String(product.price).replace(/[^0-9]/g, ''), 10);
 
-  addToCart({
-    id: product.id,
-    name: product.name,
-    category: product.category,
-    price: priceNumber,
-    image: product.image,
-    calories: product.calories,
-    protein: product.protein,
-    carbs: product.carbs,
-    fat: product.fat,
-  })
-}
+  try {
+    await addToCart({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      price: priceNumber,
+      image: product.image,
+      calories: product.calories,
+      protein: product.protein,
+      carbs: product.carbs,
+      fat: product.fat,
+    });
+    window.alert('장바구니에 담겼어요! 결제 전에 언제든 수정할 수 있어요.');
+  } catch (error) {
+    window.alert(error?.message ?? '장바구니에 담지 못했어요. 다시 시도해 주세요.');
+  }
+};
 </script>

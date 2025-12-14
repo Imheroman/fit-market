@@ -780,3 +780,12 @@ gradle-app.setting
 
 .idea
 *.jar
+
+**/ai_request.md
+**/ai_response.md
+**/cli_rules.md
+**/cli_request.md
+**/work_summary
+**/summary
+
+/fitmarket_be/**/application-prod.yaml

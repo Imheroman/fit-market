@@ -109,11 +109,28 @@
           <!-- Quantity & Add to Cart -->
           <div class="flex gap-4 mb-8">
             <div class="flex items-center border border-green-200 rounded-lg">
-              <button @click="quantity > 1 && quantity--" class="px-4 py-3 hover:bg-green-50 transition-colors">
+              <button
+                class="px-4 py-3 hover:bg-green-50 transition-colors disabled:opacity-50"
+                :disabled="isDecreaseDisabled"
+                @click="adjustQuantity(-1)"
+              >
                 <Minus class="w-5 h-5" />
               </button>
-              <div class="px-6 py-3 font-semibold min-w-[60px] text-center">{{ quantity }}</div>
-              <button @click="quantity++" class="px-4 py-3 hover:bg-green-50 transition-colors">
+              <input
+                type="number"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                min="1"
+                max="100"
+                :value="quantity"
+                class="w-20 px-3 py-3 font-semibold text-center focus:outline-none"
+                @input="handleQuantityInput"
+              />
+              <button
+                class="px-4 py-3 hover:bg-green-50 transition-colors disabled:opacity-50"
+                :disabled="isIncreaseDisabled"
+                @click="adjustQuantity(1)"
+              >
                 <Plus class="w-5 h-5" />
               </button>
             </div>
@@ -163,7 +180,9 @@ const router = useRouter()
 const route = useRoute()
 const { addToCart } = useCart()
 
-const quantity = ref(1)
+const MIN_QUANTITY = 1
+const MAX_QUANTITY = 100
+const quantity = ref(MIN_QUANTITY)
 
 const defaultProduct = {
   id: 0,
@@ -210,12 +229,48 @@ const normalizedProduct = computed(() => ({
   fat: nutrition.value.fat,
 }))
 
-const handleAddToCart = () => {
-  addToCart(normalizedProduct.value, quantity.value)
+const clampQuantity = (value) => {
+  const parsed = Math.floor(Number(value) || 0)
+  if (Number.isNaN(parsed)) return MIN_QUANTITY
+  if (parsed < MIN_QUANTITY) return MIN_QUANTITY
+  if (parsed > MAX_QUANTITY) return MAX_QUANTITY
+  return parsed
 }
 
-const handleBuyNow = () => {
-  handleAddToCart()
-  router.push({ name: 'order-checkout' })
+const adjustQuantity = (delta) => {
+  quantity.value = clampQuantity(quantity.value + delta)
+}
+
+const handleQuantityInput = (event) => {
+  const nextValue = event?.target?.value ?? MIN_QUANTITY
+  const normalizedValue = clampQuantity(nextValue)
+  quantity.value = normalizedValue
+
+  if (event?.target) {
+    event.target.value = normalizedValue
+  }
+}
+
+const isDecreaseDisabled = computed(() => quantity.value <= MIN_QUANTITY)
+const isIncreaseDisabled = computed(() => quantity.value >= MAX_QUANTITY)
+
+const handleAddToCart = async () => {
+  try {
+    const safeQuantity = clampQuantity(quantity.value)
+    quantity.value = safeQuantity
+    await addToCart(normalizedProduct.value, safeQuantity)
+    window.alert('장바구니에 담겼어요! 결제 전에 언제든 수정할 수 있어요.')
+    return true
+  } catch (error) {
+    window.alert(error?.message ?? '장바구니에 담지 못했어요. 다시 시도해 주세요.')
+    return false
+  }
+}
+
+const handleBuyNow = async () => {
+  const added = await handleAddToCart()
+  if (added) {
+    router.push({ name: 'order-checkout' })
+  }
 }
 </script>
