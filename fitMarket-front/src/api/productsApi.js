@@ -19,6 +19,7 @@ export async function createProduct(productData) {
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'include',
     body: JSON.stringify(productData),
   })
 
@@ -46,6 +47,7 @@ export async function updateProduct(productId, productData) {
     headers: {
       'Content-Type': 'application/json',
     },
+    credentials: 'include',
     body: JSON.stringify(productData),
   })
 
@@ -60,6 +62,7 @@ export async function updateProduct(productId, productData) {
 export async function deleteProduct(productId) {
   const response = await fetch(`${BASE_URL}/${productId}`, {
     method: 'DELETE',
+    credentials: 'include',
   })
 
   if (!response.ok) {
