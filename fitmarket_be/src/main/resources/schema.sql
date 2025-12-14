@@ -143,7 +143,7 @@ CREATE TABLE `products` (
     `description` VARCHAR(255) NULL,
     `price` BIGINT NOT NULL,
     `stock` INT NOT NULL,
-    `image_url` VARCHAR(50) NULL,
+    `image_url` VARCHAR(255) NULL,
     `rating` DOUBLE NOT NULL DEFAULT 0,
     `review_count` INT NOT NULL DEFAULT 0,
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -249,7 +249,7 @@ INSERT INTO `products` (
     `user_id`, `product_category_id`, `name`, `description`, `price`, `stock`, `image_url`, `food_id`
 ) VALUES (
     1, 1, '그린 샐러드 도시락', '신선한 채소와 닭가슴살을 담은 샐러드 도시락',
-    8500, 50, '/fresh-green-salad-bowl.png', 1
+    8500, 50, '/uploads/fresh-green-salad-bowl.png', 1
 );
 
 SELECT 'FitMarket 데이터베이스 초기화 완료 (Strict Mode)!' AS message;
