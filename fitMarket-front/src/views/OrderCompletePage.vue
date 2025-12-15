@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gradient-to-b from-green-50 to-white">
-    <AppHeader />
+    <AppHeader/>
 
     <div class="container mx-auto px-4 py-10">
       <div class="max-w-5xl mx-auto space-y-8">
@@ -8,10 +8,10 @@
           <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div>
               <p
-                class="text-sm font-semibold mb-2 flex items-center gap-2"
-                :class="isCancelled ? 'text-red-600' : 'text-green-600'"
+                  class="text-sm font-semibold mb-2 flex items-center gap-2"
+                  :class="isCancelled ? 'text-red-600' : 'text-green-600'"
               >
-                <component :is="isCancelled ? AlertTriangle : CheckCircle" class="w-4 h-4" />
+                <component :is="isCancelled ? AlertTriangle : CheckCircle" class="w-4 h-4"/>
                 {{ isCancelled ? '주문이 취소되었어요' : '결제가 끝났어요' }}
               </p>
               <h1 class="text-3xl font-bold mb-2">
@@ -21,6 +21,18 @@
                 주문번호 {{ orderNumber }} ·
                 <span v-if="isCancelled">취소 완료</span>
                 <span v-else>총 {{ cartItems.length }}개 상품</span>
+              </p>
+              <p
+                  v-if="isConfirming"
+                  class="text-sm text-blue-600 mt-2"
+              >
+                결제 승인 정보를 확인하고 있어요. 잠시만 기다려 주세요.
+              </p>
+              <p
+                  v-else-if="confirmErrorMessage"
+                  class="text-sm text-red-600 mt-2"
+              >
+                {{ confirmErrorMessage }}
               </p>
             </div>
             <div class="text-right">
@@ -45,24 +57,24 @@
                 </p>
               </div>
               <span
-                class="inline-flex items-center gap-2 text-sm px-3 py-1 rounded-full"
-                :class="canEditAddress ? 'text-green-600 bg-green-50' : 'text-gray-500 bg-gray-100'"
+                  class="inline-flex items-center gap-2 text-sm px-3 py-1 rounded-full"
+                  :class="canEditAddress ? 'text-green-600 bg-green-50' : 'text-gray-500 bg-gray-100'"
               >
-                <MapPin class="w-4 h-4" />
+                <MapPin class="w-4 h-4"/>
                 {{ formattedSelectedAddress?.name || formattedSelectedAddress?.recipient || '배송지' }}
                 {{ canEditAddress ? '수정 가능' : isCancelled ? '배송 중단' : '수정 잠금' }}
               </span>
             </div>
 
             <p
-              v-if="isAddressLoading"
-              class="text-sm text-gray-600 bg-green-50 border border-green-100 rounded-lg px-3 py-2 mb-4"
+                v-if="isAddressLoading"
+                class="text-sm text-gray-600 bg-green-50 border border-green-100 rounded-lg px-3 py-2 mb-4"
             >
               배송지 정보를 불러오는 중이에요.
             </p>
             <p
-              v-else-if="addressErrorMessage"
-              class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4"
+                v-else-if="addressErrorMessage"
+                class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4"
             >
               {{ addressErrorMessage }}
             </p>
@@ -70,10 +82,12 @@
             <div class="border border-green-100 rounded-2xl p-5 bg-gradient-to-br from-green-50/60 to-white">
               <div class="flex flex-col gap-2">
                 <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">받는 분</p>
-                <p class="text-lg font-bold">{{ formattedSelectedAddress?.recipient }} · {{ formattedSelectedAddress?.phone }}</p>
+                <p class="text-lg font-bold">{{ formattedSelectedAddress?.recipient }} ·
+                  {{ formattedSelectedAddress?.phone }}</p>
                 <p class="text-gray-700">
                   {{ formattedSelectedAddress?.addressLine }} {{ formattedSelectedAddress?.addressLineDetail }}
-                  <span v-if="formattedSelectedAddress?.postalCode" class="text-gray-400">({{ formattedSelectedAddress?.postalCode }})</span>
+                  <span v-if="formattedSelectedAddress?.postalCode"
+                        class="text-gray-400">({{ formattedSelectedAddress?.postalCode }})</span>
                 </p>
                 <p class="text-sm text-gray-500">배송 메모: {{ formattedSelectedAddress?.memo || '입력된 메모가 없어요.' }}</p>
               </div>
@@ -81,20 +95,22 @@
 
             <div class="mt-5 space-y-3">
               <div class="flex items-start gap-3 text-sm">
-                <AlertTriangle class="w-4 h-4 mt-0.5" :class="canEditAddress ? 'text-green-600' : 'text-gray-400'" />
+                <AlertTriangle class="w-4 h-4 mt-0.5" :class="canEditAddress ? 'text-green-600' : 'text-gray-400'"/>
                 <p class="text-gray-600">
-                  {{ canEditAddress
-                    ? '상품 준비가 시작되기 전까지 배송지 변경이 가능해요. 필요하면 아래 버튼을 눌러 요청해 주세요.'
-                    : '배송이 준비 중이거나 주문이 취소되어 배송지를 바꿀 수 없어요.' }}
+                  {{
+                    canEditAddress
+                        ? '상품 준비가 시작되기 전까지 배송지 변경이 가능해요. 필요하면 아래 버튼을 눌러 요청해 주세요.'
+                        : '배송이 준비 중이거나 주문이 취소되어 배송지를 바꿀 수 없어요.'
+                  }}
                 </p>
               </div>
               <button
-                class="w-full md:w-auto px-5 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
-                :class="canEditAddress ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed'"
-                :disabled="!canEditAddress"
-                @click="handleEditAddress"
+                  class="w-full md:w-auto px-5 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+                  :class="canEditAddress ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed'"
+                  :disabled="!canEditAddress"
+                  @click="handleEditAddress"
               >
-                <Edit3 class="w-4 h-4" />
+                <Edit3 class="w-4 h-4"/>
                 배송지 변경 요청하기
               </button>
             </div>
@@ -109,23 +125,23 @@
                 </p>
               </div>
               <span
-                class="inline-flex items-center gap-2 text-sm px-3 py-1 rounded-full"
-                :class="isCancelled ? 'text-red-600 bg-red-50' : 'text-blue-600 bg-blue-50'"
+                  class="inline-flex items-center gap-2 text-sm px-3 py-1 rounded-full"
+                  :class="isCancelled ? 'text-red-600 bg-red-50' : 'text-blue-600 bg-blue-50'"
               >
-                <ShieldCheck class="w-4 h-4" />
+                <ShieldCheck class="w-4 h-4"/>
                 {{ isCancelled ? '취소 완료' : '안전결제 보장' }}
               </span>
             </div>
 
             <div class="space-y-4">
               <div
-                class="border rounded-xl p-4"
-                :class="isCancelled ? 'border-red-200 bg-red-50/80' : 'border-green-500 bg-green-50/70'"
+                  class="border rounded-xl p-4"
+                  :class="isCancelled ? 'border-red-200 bg-red-50/80' : 'border-green-500 bg-green-50/70'"
               >
                 <div class="flex items-center gap-2 mb-2">
                   <BadgeCheck
-                    class="w-5 h-5"
-                    :class="isCancelled ? 'text-red-500' : 'text-green-600'"
+                      class="w-5 h-5"
+                      :class="isCancelled ? 'text-red-500' : 'text-green-600'"
                   />
                   <p class="font-semibold">{{ isCancelled ? '결제 취소 완료' : '결제 완료' }}</p>
                   <span class="text-xs" :class="isCancelled ? 'text-red-600' : 'text-green-600'">
@@ -136,18 +152,29 @@
                   {{ isCancelled ? '취소 접수가 끝났어요. 영업일 기준 3일 내로 환불해 드릴게요.' : '필요하면 지금 바로 무료로 취소할 수 있어요.' }}
                 </p>
                 <button
-                  v-if="!isCancelled"
-                  class="mt-3 text-sm text-green-700 font-semibold hover:underline"
-                  @click="handleCancelRequest"
+                    v-if="!isCancelled"
+                    class="mt-3 text-sm text-green-700 font-semibold hover:underline"
+                    @click="handleCancelRequest"
                 >
                   결제 취소 요청하기
                 </button>
                 <p v-else class="mt-3 text-xs text-gray-500">환불 상태는 알림으로 다시 알려드릴게요.</p>
               </div>
 
+              <div v-if="paymentResult" class="border rounded-xl p-4 border-blue-200 bg-blue-50/60">
+                <p class="font-semibold text-blue-700 mb-1">승인된 결제 정보</p>
+                <p class="text-sm text-gray-700">
+                  결제수단: {{ paymentResult.method || '선택된 결제수단' }}
+                </p>
+                <p class="text-sm text-gray-700">
+                  승인 금액: {{ (paymentResult.totalAmount ?? paymentResult.amount ?? totalPayment).toLocaleString() }}원
+                </p>
+                <p class="text-xs text-gray-500 mt-1">결제 키: {{ paymentResult.paymentKey }}</p>
+              </div>
+
               <div v-if="!isCancelled" class="border rounded-xl p-4 border-yellow-200 bg-yellow-50/70">
                 <div class="flex items-center gap-2 mb-2">
-                  <PackageCheck class="w-5 h-5 text-yellow-600" />
+                  <PackageCheck class="w-5 h-5 text-yellow-600"/>
                   <p class="font-semibold">주문 접수 · 상품 준비</p>
                 </div>
                 <p class="text-sm text-gray-600">상품 준비가 시작되면 취소 시 수수료가 발생해요.</p>
@@ -172,12 +199,12 @@
           <div v-else-if="!cartItems.length" class="py-6 text-center text-gray-500">결제된 상품이 없어요.</div>
           <div v-else class="divide-y divide-green-100">
             <div
-              v-for="item in cartItems"
-              :key="item.cartItemId || item.productId"
-              class="py-4 flex items-center gap-4 cursor-pointer transition-colors hover:bg-green-50/70 px-2 rounded-xl"
-              @click="navigateToProduct(item.productId || item.id)"
+                v-for="item in cartItems"
+                :key="item.cartItemId || item.productId"
+                class="py-4 flex items-center gap-4 cursor-pointer transition-colors hover:bg-green-50/70 px-2 rounded-xl"
+                @click="navigateToProduct(item.productId || item.id)"
             >
-              <img :src="item.image" :alt="item.name" class="w-20 h-20 rounded-xl object-cover bg-green-50" />
+              <img :src="item.image" :alt="item.name" class="w-20 h-20 rounded-xl object-cover bg-green-50"/>
               <div class="flex-1">
                 <p class="font-semibold">{{ item.name }}</p>
                 <p class="text-sm text-gray-500">{{ item.category }} · {{ item.calories * item.quantity }}kcal</p>
@@ -207,25 +234,38 @@
       </div>
     </div>
 
-    <AppFooter />
+    <AppFooter/>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { CheckCircle, MapPin, ShieldCheck, BadgeCheck, PackageCheck, AlertTriangle, Edit3 } from 'lucide-vue-next';
+import {computed, onMounted, ref} from 'vue';
+import {useRoute, useRouter} from 'vue-router';
+import {CheckCircle, MapPin, ShieldCheck, BadgeCheck, PackageCheck, AlertTriangle, Edit3} from 'lucide-vue-next';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
-import { useCart } from '@/composables/useCart';
-import { useAddresses } from '@/composables/useAddresses';
-import { useOrderStatus } from '@/composables/useOrderStatus';
-import { formatPhoneNumber } from '@/utils/phone';
+import {useCart} from '@/composables/useCart';
+import {useAddresses} from '@/composables/useAddresses';
+import {useOrderStatus} from '@/composables/useOrderStatus';
+import {usePaymentCallbacks} from '@/composables/usePaymentCallbacks';
+import {formatPhoneNumber} from '@/utils/phone';
 
 const router = useRouter();
-const { cartItems, totalPrice, isLoading: isCartLoading, loadCart } = useCart();
-const { selectedAddress, loadAddresses, isLoading: isAddressLoading, errorMessage: addressErrorMessage } = useAddresses();
-const { orderNumber, shippingFee, isCancelled, cancellationFee, canFreeCancel, cancelOrder } = useOrderStatus();
+const route = useRoute();
+const {cartItems, totalPrice, isLoading: isCartLoading, loadCart} = useCart();
+const {selectedAddress, loadAddresses, isLoading: isAddressLoading, errorMessage: addressErrorMessage} = useAddresses();
+const {
+  orderNumber,
+  shippingFee,
+  isCancelled,
+  cancellationFee,
+  canFreeCancel,
+  cancelOrder,
+  completePayment,
+  setOrderNumber,
+} = useOrderStatus();
+const {confirmPaymentFromQuery, confirmErrorMessage, isConfirming} = usePaymentCallbacks();
+const paymentResult = ref(null);
 
 const totalPayment = computed(() => totalPrice.value + shippingFee);
 
@@ -237,7 +277,7 @@ const formattedSelectedAddress = computed(() => {
     ...selectedAddress.value,
     name: selectedAddress.value.name ?? selectedAddress.value.label ?? '',
     addressLineDetail:
-      selectedAddress.value.addressLineDetail ?? selectedAddress.value.detailAddress ?? '',
+        selectedAddress.value.addressLineDetail ?? selectedAddress.value.detailAddress ?? '',
     memo: selectedAddress.value.memo ?? selectedAddress.value.instructions ?? '',
     postalCode: selectedAddress.value.postalCode ?? '',
     phone: formatPhoneNumber(selectedAddress.value.phone),
@@ -259,13 +299,68 @@ const handleCancelRequest = () => {
 
 const navigateToProduct = (productId) => {
   if (!productId) return;
-  router.push({ name: 'product-detail', params: { id: productId } });
+  router.push({name: 'product-detail', params: {id: productId}});
+};
+
+const processPaymentResult = async () => {
+  // [수정 전]
+  // const orderIdFromQuery = route.query.orderId ? String(route.query.orderId) : '';
+  const rawOrderId = route.query.orderId;
+  const orderIdFromQuery = Array.isArray(rawOrderId) ? rawOrderId[0] : (rawOrderId || '');
+
+  const paymentStatusFromQuery = route.query.paymentStatus;
+  const hasSuccessParams = Boolean(route.query.paymentKey && route.query.amount !== undefined && orderIdFromQuery);
+
+  console.log("only route query:", route.query.orderId);
+  console.log("order id from query:", orderIdFromQuery);
+
+  if (paymentStatusFromQuery === 'fail') {
+    await router.replace({
+      name: 'order-checkout',
+      query: {paymentStatus: 'fail', orderId: orderIdFromQuery},
+    });
+    return false;
+  }
+
+  if (!hasSuccessParams) {
+    if (paymentStatusFromQuery === 'success') {
+      confirmErrorMessage.value = '결제 정보를 찾지 못했어요. 다시 결제를 시작해 주세요.';
+      await router.replace({
+        name: 'order-checkout',
+        query: {paymentStatus: 'fail', orderId: orderIdFromQuery},
+      });
+      return false;
+    }
+    if (orderIdFromQuery) {
+      setOrderNumber(orderIdFromQuery);
+    }
+    return true;
+  }
+
+  try {
+    const result = await confirmPaymentFromQuery(route.query);
+    paymentResult.value = result;
+    completePayment(result?.orderId ?? orderIdFromQuery);
+    return true;
+  } catch (error) {
+    console.error(error);
+    await router.replace({
+      name: 'order-checkout',
+      query: {paymentStatus: 'fail', orderId: orderIdFromQuery},
+    });
+    return false;
+  }
 };
 
 onMounted(() => {
-  loadCart({ force: true }).catch((error) => console.error(error));
-  loadAddresses().catch((error) => {
-    console.error(error);
-  });
+  processPaymentResult()
+      .then((isReady) => {
+        if (!isReady) return;
+        loadCart({force: true}).catch((error) => console.error(error));
+        loadAddresses().catch((error) => {
+          console.error(error);
+        });
+      })
+      .catch((error) => console.error(error));
 });
 </script>
