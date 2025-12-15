@@ -17,7 +17,7 @@ spring:
 
 logging:
   level:
-    com.ssafy.fitmarket_be: trace
+    com.ssafy.fitmarket_be: info
 
 mybatis:
   type-aliases-package: com.ssafy.fitmarket_be
