@@ -13,7 +13,7 @@ USE fitmarket;
 -- ============================================
 -- 기존 테이블 삭제
 -- ============================================
-DROP TABLE IF EXISTS `seller_applications`; -- [NEW]
+DROP TABLE IF EXISTS `sellers`; -- [RENAMED]
 DROP TABLE IF EXISTS `order_products`;
 DROP TABLE IF EXISTS `orders`;
 DROP TABLE IF EXISTS `shopping_cart_products`;
@@ -48,16 +48,18 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 2. 판매자 신청 및 정보 테이블 (정보의 유일한 원천)
-CREATE TABLE `seller_applications` (
+CREATE TABLE `sellers` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `user_id` BIGINT NOT NULL,
     `business_name` VARCHAR(100) NOT NULL,
     `business_number` VARCHAR(50) NOT NULL,
-
+    `business_type` VARCHAR(20) NOT NULL DEFAULT 'individual',
+    `contact_phone` VARCHAR(30) NOT NULL,
+    `business_address` VARCHAR(255) NOT NULL,
+    `introduction` VARCHAR(500) NOT NULL,
     `status` VARCHAR(20) NOT NULL DEFAULT 'pending', -- pending, approved, rejected
     `review_note` VARCHAR(255) NULL,     -- 거절/승인 사유
     `reviewed_by` BIGINT NULL,           -- 처리한 관리자
-
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `deleted_date` TIMESTAMP NULL,
@@ -244,6 +246,19 @@ INSERT INTO `food` (
     '450', '8', '6', '2.5', '0', '120'
 );
 
+-- 추가 표준 식품 (샘플)
+INSERT INTO `food` (
+    `id`, `code`, `name`, `calories`, `protein`, `carbs`, `fat`,
+    `sodium`, `sugars`, `fiber`, `saturated_fat`, `trans_fat`, `calcium`
+) VALUES
+(2, 'FD-002', '그린 스무디', '210', '10', '28', '6', '90', '12', '4', '1', '0', '80'),
+(3, 'FD-003', '연어 샐러드', '340', '22', '20', '15', '520', '6', '5', '3', '0', '140'),
+(4, 'FD-004', '퀴노아 치킨 볼', '420', '30', '40', '12', '610', '5', '6', '2', '0', '160'),
+(5, 'FD-005', '쉬림프 아보카도 볼', '380', '26', '32', '14', '540', '4', '5', '2', '0', '150'),
+(6, 'FD-006', '지중해 샐러드', '310', '16', '25', '14', '430', '6', '5', '3', '0', '130'),
+(7, 'FD-007', '채소 패턴 샐러드', '290', '12', '30', '10', '360', '7', '4', '2', '0', '110'),
+(8, 'FD-008', '헬시 치킨 밀프렙', '450', '32', '42', '15', '680', '5', '6', '3', '0', '170');
+
 -- 샘플 상품
 INSERT INTO `products` (
     `user_id`, `product_category_id`, `name`, `description`, `price`, `stock`, `image_url`, `food_id`
@@ -251,5 +266,16 @@ INSERT INTO `products` (
     1, 1, '그린 샐러드 도시락', '신선한 채소와 닭가슴살을 담은 샐러드 도시락',
     8500, 50, '/uploads/fresh-green-salad-bowl.png', 1
 );
+
+-- 추가 샘플 상품 (업로드된 이미지 기준)
+INSERT INTO `products` (
+    `user_id`, `product_category_id`, `name`, `description`, `price`, `stock`, `image_url`, `food_id`
+) VALUES
+(1, 1, '그린 스무디', '신선한 채소와 과일을 담은 클렌즈 스무디', 5900, 80, '/uploads/green-berry-smoothie.png', 2),
+(1, 1, '연어 샐러드', '훈제 연어와 아보카도를 곁들인 영양 샐러드', 9800, 60, '/uploads/fresh-vegetables-pattern.png', 3),
+(1, 2, '퀴노아 치킨 볼', '퀴노아와 치킨을 듬뿍 넣은 포만감 있는 밀프렙', 10200, 70, '/uploads/quinoa-chicken-bowl-healthy.png', 4),
+(1, 2, '쉬림프 아보카도 볼', '통새우와 아보카도가 어우러진 고단백 한 그릇', 11200, 55, '/uploads/shrimp-avocado-bowl.png', 5),
+(1, 1, '지중해 샐러드', '페타치즈와 올리브가 들어간 지중해풍 샐러드', 9200, 65, '/uploads/mediterranean-salad.png', 6),
+(1, 2, '헬시 치킨 밀프렙', '닭가슴살과 구운 채소로 준비한 밀프렙 세트', 10500, 75, '/uploads/healthy-chicken-meal-prep.png', 8);
 
 SELECT 'FitMarket 데이터베이스 초기화 완료 (Strict Mode)!' AS message;
