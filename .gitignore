@@ -785,7 +785,11 @@ gradle-app.setting
 **/ai_response.md
 **/cli_rules.md
 **/cli_request.md
-**/work_summary
-**/summary
 
 /fitmarket_be/**/application-prod.yaml
+
+# 김영웅 개발 관련 문서 ignore
+**/work_summary
+**/summary
+**/docs_desc.md
+
