@@ -19,4 +19,6 @@ public interface UserRepository {
   int update(@Param("id") Long id,
       @Param("column") String column,
       @Param("value") String value);
+
+  int updateRole(@Param("id") Long id, @Param("role") String role);
 }
