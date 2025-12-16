@@ -793,3 +793,7 @@ gradle-app.setting
 **/summary
 **/docs_desc.md
 
+
+# Backend specific
+fitmarket_be/uploads/
+fitmarket_be/src/main/generated/

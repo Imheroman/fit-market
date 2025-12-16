@@ -1,41 +1,14 @@
 import { ref, computed, reactive } from 'vue'
 import { formatPhoneNumber, sanitizePhoneDigits } from '@/utils/phone'
+import {
+  applySeller,
+  fetchMySellerApplication,
+  fetchSellerApplicationsByStatus,
+  reviewSellerApplication,
+} from '@/api/sellerApi'
 
-// Mock 판매자 신청 데이터
-const applications = ref([
-  {
-    id: 1,
-    userId: 2,
-    userName: '이상인',
-    email: 'lee.sangin@example.com',
-    businessName: '건강한 밥상',
-    businessNumber: '123-45-67890',
-    businessType: 'individual',
-    contactPhone: '010-2345-6789',
-    businessAddress: '서울시 마포구 성미산로 123',
-    introduction: '신선한 재료로 건강한 도시락을 만듭니다.',
-    status: 'pending',
-    appliedAt: '2025-01-20T10:30:00+09:00',
-    reviewedAt: null,
-    reviewNote: '',
-  },
-  {
-    id: 2,
-    userId: 3,
-    userName: '박건강',
-    email: 'park.health@example.com',
-    businessName: '파워밀 키친',
-    businessNumber: '234-56-78901',
-    businessType: 'corporation',
-    contactPhone: '010-3456-7890',
-    businessAddress: '경기도 성남시 분당구 판교역로 234',
-    introduction: '고단백 저칼로리 식단 전문 업체입니다.',
-    status: 'approved',
-    appliedAt: '2025-01-15T14:20:00+09:00',
-    reviewedAt: '2025-01-16T09:15:00+09:00',
-    reviewNote: '검토 완료, 승인되었습니다.',
-  },
-])
+const applications = ref([])
+const myApplication = ref(null)
 
 const createDefaultForm = () => ({
   businessName: '',
@@ -125,30 +98,51 @@ export function useSellerApplication() {
     successMessage.value = ''
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500))
-
-      const newApplication = {
-        id: applications.value.length + 1,
-        userId: 1,
-        userName: '김영웅',
-        email: 'kim.youngwoong@example.com',
-        ...form,
-        status: 'pending',
-        appliedAt: new Date().toISOString(),
-        reviewedAt: null,
-        reviewNote: '',
+      const payload = {
+        businessName: form.businessName,
+        businessNumber: form.businessNumber,
+        businessType: form.businessType,
+        contactPhone: sanitizePhoneDigits(form.contactPhone),
+        businessAddress: form.businessAddress,
+        introduction: form.introduction,
       }
-
-      applications.value.unshift(newApplication)
+      const response = await applySeller(payload)
+      applications.value.unshift({
+        ...response,
+        appliedAt: response.createdDate,
+      })
       successMessage.value = '판매자 신청이 완료되었습니다. 검토까지 1-2일 소요됩니다.'
       Object.assign(form, createDefaultForm())
       return true
     } catch (error) {
       console.error(error)
-      errorMessage.value = '신청 중 오류가 발생했습니다. 다시 시도해주세요.'
+      errorMessage.value = error.message || '신청 중 오류가 발생했습니다. 다시 시도해주세요.'
       return false
     } finally {
       isSubmitting.value = false
+    }
+  }
+
+  const loadMyApplication = async () => {
+    try {
+      const response = await fetchMySellerApplication()
+      myApplication.value = {
+        ...response,
+        appliedAt: response.createdDate,
+      }
+      // 거절된 경우 재신청 폼에 기존 데이터를 채움
+      if (myApplication.value?.status === 'rejected') {
+        form.businessName = myApplication.value.businessName || ''
+        form.businessNumber = myApplication.value.businessNumber || ''
+        form.businessType = myApplication.value.businessType || 'individual'
+        form.contactPhone = formatPhoneNumber(myApplication.value.contactPhone || '')
+        form.businessAddress = myApplication.value.businessAddress || ''
+        form.introduction = myApplication.value.introduction || ''
+      }
+    } catch (error) {
+      // 신청 내역이 없으면 404가 될 수 있으므로 무시
+      console.debug('No seller application found for current user')
+      myApplication.value = null
     }
   }
 
@@ -167,53 +161,46 @@ export function useSellerApplication() {
     errorMessage,
     handleContactPhoneInput,
     submitApplication,
+    loadMyApplication,
+    myApplication,
+    fetchMyApplication: fetchMySellerApplication,
     resetForm,
   }
 }
 
 export function useSellerApplicationsAdmin() {
-  const pendingApplications = computed(() => {
-    return applications.value.filter((app) => app.status === 'pending')
-  })
+  const pendingApplications = computed(() =>
+    applications.value.filter((app) => app.status === 'pending')
+  )
+  const approvedApplications = computed(() =>
+    applications.value.filter((app) => app.status === 'approved')
+  )
+  const rejectedApplications = computed(() =>
+    applications.value.filter((app) => app.status === 'rejected')
+  )
 
-  const approvedApplications = computed(() => {
-    return applications.value.filter((app) => app.status === 'approved')
-  })
-
-  const rejectedApplications = computed(() => {
-    return applications.value.filter((app) => app.status === 'rejected')
-  })
+  const loadApplications = async () => {
+    const pending = await fetchSellerApplicationsByStatus('pending')
+    const approved = await fetchSellerApplicationsByStatus('approved')
+    const rejected = await fetchSellerApplicationsByStatus('rejected')
+    const normalize = (list) =>
+      list.map((item) => ({
+        ...item,
+        appliedAt: item.createdDate,
+      }))
+    applications.value = [...normalize(pending), ...normalize(approved), ...normalize(rejected)]
+  }
 
   const approveApplication = async (applicationId, note = '') => {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 300))
-      const app = applications.value.find((a) => a.id === applicationId)
-      if (app) {
-        app.status = 'approved'
-        app.reviewedAt = new Date().toISOString()
-        app.reviewNote = note || '검토 완료, 승인되었습니다.'
-      }
-      return true
-    } catch (error) {
-      console.error(error)
-      return false
-    }
+    await reviewSellerApplication(applicationId, 'approved', note)
+    await loadApplications()
+    return true
   }
 
   const rejectApplication = async (applicationId, note = '') => {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 300))
-      const app = applications.value.find((a) => a.id === applicationId)
-      if (app) {
-        app.status = 'rejected'
-        app.reviewedAt = new Date().toISOString()
-        app.reviewNote = note || '승인 거부되었습니다.'
-      }
-      return true
-    } catch (error) {
-      console.error(error)
-      return false
-    }
+    await reviewSellerApplication(applicationId, 'rejected', note)
+    await loadApplications()
+    return true
   }
 
   return {
@@ -221,6 +208,7 @@ export function useSellerApplicationsAdmin() {
     pendingApplications,
     approvedApplications,
     rejectedApplications,
+    loadApplications,
     approveApplication,
     rejectApplication,
   }
