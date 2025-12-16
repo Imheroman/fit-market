@@ -44,24 +44,6 @@ public final class Nutrition {
         }
     }
 
-    // ========== Getter (ProductResponse 변환용) ==========
-
-    public int getCalories() {
-        return calories;
-    }
-
-    public int getProtein() {
-        return protein;
-    }
-
-    public int getCarbs() {
-        return carbs;
-    }
-
-    public int getFat() {
-        return fat;
-    }
-
     // ========== 비즈니스 로직 ==========
 
     /**

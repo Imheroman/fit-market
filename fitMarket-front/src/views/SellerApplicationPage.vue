@@ -23,6 +23,46 @@
             <span>{{ successMessage }}</span>
           </div>
 
+          <!-- 내 신청 상태 -->
+          <div v-if="hasExistingApplication" class="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 space-y-3">
+            <div class="flex items-center gap-3">
+              <span
+                class="px-3 py-1 rounded-full text-xs font-semibold"
+                :class="{
+                  'bg-yellow-100 text-yellow-700': isPending,
+                  'bg-green-100 text-green-700': isApproved,
+                  'bg-red-100 text-red-700': isRejected,
+                }"
+              >
+                {{ isPending ? '대기중' : isApproved ? '승인됨' : '거절됨' }}
+              </span>
+              <span class="text-sm text-gray-600">
+                신청일:
+                <strong>{{ myApplication?.appliedAt ? new Date(myApplication.appliedAt).toLocaleString() : '-' }}</strong>
+              </span>
+            </div>
+            <div class="text-sm text-gray-700">
+              <p class="font-semibold">{{ myApplication?.businessName }}</p>
+              <p class="text-gray-500">사업자등록번호: {{ myApplication?.businessNumber }}</p>
+            </div>
+            <div v-if="isRejected && myApplication?.reviewNote" class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+              거절 사유: {{ myApplication.reviewNote }}
+            </div>
+            <div v-if="isApproved" class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+              판매자 신청이 승인되었습니다.
+            </div>
+            <p v-if="isPending" class="text-sm text-gray-500">심사 중입니다. 결과는 이메일로 안내드릴게요.</p>
+            <div v-if="isRejected" class="flex justify-end">
+              <button
+                type="button"
+                @click="showEditForm = true"
+                class="px-4 py-2 text-sm font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+              >
+                재신청하기
+              </button>
+            </div>
+          </div>
+
           <!-- 에러 메시지 -->
           <div
             v-if="errorMessage"
@@ -33,7 +73,11 @@
           </div>
 
           <!-- 신청 폼 -->
-          <form @submit.prevent="handleSubmit" class="bg-white shadow-lg rounded-2xl p-6 md:p-8 border border-gray-200">
+          <form
+            v-if="!hasExistingApplication || (isRejected && showEditForm)"
+            @submit.prevent="handleSubmit"
+            class="bg-white shadow-lg rounded-2xl p-6 md:p-8 border border-gray-200"
+          >
             <div class="space-y-6">
               <h2 class="text-xl font-semibold text-gray-900 pb-3 border-b border-gray-200">
                 사업자 정보
@@ -171,10 +215,12 @@
                 <button
                   type="submit"
                   class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  :disabled="isSubmitting"
+                  :disabled="isSubmitting || (hasExistingApplication && !isRejected)"
                 >
                   <Loader2 v-if="isSubmitting" class="w-5 h-5 animate-spin" />
-                  <span>{{ isSubmitting ? '신청 중...' : '판매자 신청하기' }}</span>
+                  <span>
+                    {{ isSubmitting ? '신청 중...' : hasExistingApplication && !isRejected ? '신청 내역이 존재합니다' : '판매자 신청하기' }}
+                  </span>
                 </button>
               </div>
 
@@ -183,6 +229,13 @@
               </p>
             </div>
           </form>
+          <div
+            v-else
+            class="bg-white shadow-lg rounded-2xl p-6 md:p-8 border border-gray-200 text-center text-gray-600"
+          >
+            <p class="font-semibold text-gray-800 mb-2">이미 신청 내역이 있습니다.</p>
+            <p class="text-sm">심사 결과를 기다려 주세요.</p>
+          </div>
         </div>
       </div>
     </main>
@@ -192,6 +245,7 @@
 </template>
 
 <script setup>
+import { onMounted, computed, ref } from 'vue'
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
@@ -208,11 +262,21 @@ const {
   handleContactPhoneInput,
   submitApplication,
   resetForm,
+  loadMyApplication,
+  myApplication,
 } = useSellerApplication()
+
+const showEditForm = ref(false)
+
+const hasExistingApplication = computed(() => !!myApplication.value)
+const isPending = computed(() => myApplication.value?.status === 'pending')
+const isApproved = computed(() => myApplication.value?.status === 'approved')
+const isRejected = computed(() => myApplication.value?.status === 'rejected')
 
 const handleSubmit = async () => {
   const success = await submitApplication()
   if (success) {
+    await loadMyApplication()
     setTimeout(() => {
       router.push('/mypage')
     }, 2000)
@@ -228,4 +292,8 @@ const handleReset = () => {
 const onContactPhoneInput = (event) => {
   handleContactPhoneInput(event.target.value)
 }
+
+onMounted(() => {
+  loadMyApplication()
+})
 </script>

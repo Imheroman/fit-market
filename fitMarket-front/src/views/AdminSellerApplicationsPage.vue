@@ -108,7 +108,10 @@
                       }}
                     </span>
                   </div>
-                  <p class="text-sm text-gray-500 mt-1">신청자: {{ app.userName }} ({{ app.email }})</p>
+                  <p class="text-sm text-gray-500 mt-1">
+                    신청자: {{ app.userName }}
+                    <span v-if="app.userEmail">({{ app.userEmail }})</span>
+                  </p>
                 </div>
                 <div class="text-right text-sm text-gray-500">
                   <p>신청일: {{ formatDate(app.appliedAt) }}</p>
@@ -264,6 +267,7 @@ import {
 } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
+import { onMounted } from 'vue'
 import { useSellerApplicationsAdmin } from '@/composables/useSellerApplication'
 import { formatPhoneNumber } from '@/utils/phone'
 
@@ -278,6 +282,7 @@ const {
   pendingApplications,
   approvedApplications,
   rejectedApplications,
+  loadApplications,
   approveApplication,
   rejectApplication,
 } = useSellerApplicationsAdmin()
@@ -327,4 +332,8 @@ const formatDate = (dateString) => {
     minute: '2-digit',
   })
 }
+
+onMounted(() => {
+  loadApplications()
+})
 </script>

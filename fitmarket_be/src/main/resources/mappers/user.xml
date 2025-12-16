@@ -50,6 +50,13 @@
     </where>
   </update>
 
+  <update id="updateRole">
+    UPDATE users
+    SET role = #{role}
+    WHERE id = #{id}
+      AND deleted_date IS NULL
+  </update>
+
   <resultMap id="userMap" type="Users">
     <id property="id" column="id"/>
 
