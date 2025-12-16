@@ -5,6 +5,7 @@ import {
   updateProduct as updateProductApi,
   deleteProduct as deleteProductApi,
 } from '@/api/productsApi'
+import { uploadImage } from '@/api/uploadApi'
 
 export const PRODUCT_CATEGORIES = [
   { value: 'lunchbox', label: '도시락', categoryId: 1 },
@@ -121,9 +122,16 @@ export function useSellerProducts() {
         throw new Error('올바른 카테고리를 선택해주세요.')
       }
 
-      // TODO: 실제로는 이미지 파일을 먼저 업로드하고 URL을 받아야 함
-      // 현재는 임시로 이미지 파일명을 imageUrl로 사용
-      const imageUrl = form.imageFile ? form.imageFile.name : '/default-product.png'
+      // 1. 이미지 파일 업로드
+      let imageUrl = '/default-product.png'
+      if (form.imageFile) {
+        try {
+          imageUrl = await uploadImage(form.imageFile)
+        } catch (uploadError) {
+          console.error('이미지 업로드 실패:', uploadError)
+          throw new Error(uploadError.message || '이미지 업로드에 실패했습니다.')
+        }
+      }
 
       // 백엔드 API 호출
       const productData = {
@@ -149,7 +157,7 @@ export function useSellerProducts() {
         category: form.category,
         price: response.price,
         description: form.description,
-        image: response.imageUrl,
+        image: response.imageUrl ? `http://localhost:8080/api${response.imageUrl}` : response.imageUrl,
         weight: Number(form.weight),
         stock: createdStock,
         calories: response.calories,
@@ -245,7 +253,17 @@ export function useSellerProducts() {
 
       // 기존 상품 찾기
       const existingProduct = sellerProducts.value.find((p) => p.id === editingProductId.value)
-      const imageUrl = form.imageFile ? form.imageFile.name : existingProduct.image
+
+      // 이미지 업로드
+      let imageUrl = existingProduct.image?.replace('http://localhost:8080/api', '') || existingProduct.image
+      if (form.imageFile) {
+        try {
+          imageUrl = await uploadImage(form.imageFile)
+        } catch (uploadError) {
+          console.error('이미지 업로드 실패:', uploadError)
+          throw new Error(uploadError.message || '이미지 업로드에 실패했습니다.')
+        }
+      }
 
       const productData = {
         name: form.name,
@@ -269,7 +287,7 @@ export function useSellerProducts() {
           category: form.category,
           price: response?.price ?? Number(form.price),
           description: form.description,
-          image: response?.imageUrl ?? sellerProducts.value[productIndex].image,
+          image: response?.imageUrl ? `http://localhost:8080/api${response.imageUrl}` : sellerProducts.value[productIndex].image,
           weight: Number(form.weight),
           stock: updatedStock,
           calories: response?.calories ?? sellerProducts.value[productIndex].calories,
@@ -317,7 +335,7 @@ export function useSellerProducts() {
           category: categoryObj?.value || 'lunchbox',
           price: p.price,
           description: p.description ?? '',
-          image: p.imageUrl,
+          image: p.imageUrl ? `http://localhost:8080/api${p.imageUrl}` : p.imageUrl,
           weight: 0, // 백엔드 응답에 weight 없음
           stock: p.stock ?? 0,
           calories: p.calories,
