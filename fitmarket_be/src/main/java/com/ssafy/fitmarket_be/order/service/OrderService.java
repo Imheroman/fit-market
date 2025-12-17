@@ -12,6 +12,7 @@ import com.ssafy.fitmarket_be.order.domain.OrderAddressSnapshot;
 import com.ssafy.fitmarket_be.order.domain.OrderApprovalStatus;
 import com.ssafy.fitmarket_be.order.domain.OrderMode;
 import com.ssafy.fitmarket_be.order.domain.OrderProductEntity;
+import com.ssafy.fitmarket_be.order.domain.OrderSearchPeriod;
 import com.ssafy.fitmarket_be.order.domain.OrderView;
 import com.ssafy.fitmarket_be.order.dto.OrderAddressUpdateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderCreateRequest;
@@ -57,19 +58,6 @@ public class OrderService {
   private final AddressRepository addressRepository;
   private final PaymentRepository paymentRepository;
   private final ObjectMapper objectMapper;
-
-  /**
-   * 장바구니 혹은 바로구매 요청을 받아 주문을 생성한다.
-   *
-   * @param userId  주문자 식별자
-   * @param request 주문 생성 요청
-   * @return 주문 번호 및 금액 정보
-   * <p>결제 위젯에 전달할 주문 번호를 프런트에서 생성했다면 {@code orderNumber} 필드로 함께 전달한다.</p>
-   */
-  @Transactional
-  public OrderCreateResponse createOrder(Long userId, OrderCreateRequest request) {
-    return createOrderInternal(userId, request, null);
-  }
 
   /**
    * 선결제 후 주문 생성 플로우를 위해, 프런트에서 전달한 주문 번호를 그대로 사용해 주문을 생성한다.
@@ -164,11 +152,13 @@ public class OrderService {
    * 사용자 주문 목록을 반환한다.
    *
    * @param userId 사용자 식별자
+   * @param period 조회 기간
    * @return 주문 요약 목록
    */
   @Transactional(readOnly = true)
-  public List<OrderSummaryResponse> getOrders(Long userId) {
-    List<OrderView> orders = orderRepository.findOrdersByUserId(userId);
+  public List<OrderSummaryResponse> getOrders(Long userId, OrderSearchPeriod period) {
+    LocalDateTime startDate = period.resolveStartDate(LocalDateTime.now());
+    List<OrderView> orders = orderRepository.findOrdersByUserIdAndStartDate(userId, startDate);
     if (orders.isEmpty()) {
       return List.of();
     }

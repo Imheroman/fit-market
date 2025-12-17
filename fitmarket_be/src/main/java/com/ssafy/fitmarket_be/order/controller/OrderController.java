@@ -1,12 +1,11 @@
 package com.ssafy.fitmarket_be.order.controller;
 
-import com.ssafy.fitmarket_be.order.dto.OrderCreateRequest;
-import com.ssafy.fitmarket_be.order.dto.OrderCreateResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderAddressUpdateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderDetailResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderRefundRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderStatusUpdateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderSummaryResponse;
+import com.ssafy.fitmarket_be.order.domain.OrderSearchPeriod;
 import com.ssafy.fitmarket_be.order.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -37,14 +37,17 @@ public class OrderController {
    * 사용자의 주문 목록을 조회한다.
    *
    * @param userId 인증된 사용자 식별자
+   * @param period 조회 기간 (ALL, 1M, 3M, 6M, 1Y)
    * @return 주문 목록
    */
   @GetMapping
   public ResponseEntity<List<OrderSummaryResponse>> getOrders(
-      @AuthenticationPrincipal(expression = "id") Long userId
+      @AuthenticationPrincipal(expression = "id") Long userId,
+      @RequestParam(name = "period", required = false) String period
   ) {
-    List<OrderSummaryResponse> responses = orderService.getOrders(userId);
-    return ResponseEntity.ok(responses);
+    OrderSearchPeriod searchPeriod = OrderSearchPeriod.from(period);
+    List<OrderSummaryResponse> responses = orderService.getOrders(userId, searchPeriod);
+    return ResponseEntity.status(HttpStatus.OK).body(responses);
   }
 
   /**
@@ -60,7 +63,7 @@ public class OrderController {
       @PathVariable String orderNumber
   ) {
     OrderDetailResponse response = orderService.getOrderDetail(userId, orderNumber);
-    return ResponseEntity.ok(response);
+    return ResponseEntity.status(HttpStatus.OK).body(response);
   }
 
 //  /**
@@ -94,7 +97,7 @@ public class OrderController {
       @Valid @RequestBody OrderAddressUpdateRequest request
   ) {
     orderService.updateOrderAddress(userId, orderNumber, request);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.status(HttpStatus.OK).build();
   }
 
   /**
@@ -112,7 +115,7 @@ public class OrderController {
       @Valid @RequestBody OrderStatusUpdateRequest request
   ) {
     orderService.updateApprovalStatus(userId, orderNumber, request);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.status(HttpStatus.OK).build();
   }
 
   /**
@@ -130,7 +133,7 @@ public class OrderController {
       @RequestBody(required = false) OrderRefundRequest request
   ) {
     orderService.refundOrder(userId, orderNumber, request == null ? new OrderRefundRequest(null) : request);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.status(HttpStatus.OK).build();
   }
 
   /**
@@ -146,6 +149,6 @@ public class OrderController {
       @PathVariable String orderNumber
   ) {
     orderService.deleteOrder(userId, orderNumber);
-    return ResponseEntity.noContent().build();
+    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 }

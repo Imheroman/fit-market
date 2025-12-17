@@ -148,7 +148,20 @@
       AND is_current = 1
   </update>
 
-  <select id="findOrdersByUserId" resultMap="OrderViewMap">
+  <select id="findOrdersPkByUserIdAndStartDate" resultMap="OrderViewMap">
+    SELECT
+    o.id
+    FROM orders o
+    JOIN order_approval_status s ON o.order_approval_status_id = s.id
+    WHERE o.user_id = #{userId}
+    AND o.deleted_date IS NULL
+    <if test="startDate != null">
+      AND o.order_date <![CDATA[>=]]> #{startDate}
+    </if>
+    ORDER BY o.order_date DESC
+  </select>
+
+  <select id="findOrdersByUserIdAndStartDate" resultMap="OrderViewMap">
     SELECT
       o.id,
       o.order_number,
@@ -170,6 +183,9 @@
            JOIN order_approval_status s ON o.order_approval_status_id = s.id
     WHERE o.user_id = #{userId}
       AND o.deleted_date IS NULL
+      <if test="startDate != null">
+        AND o.order_date <![CDATA[>=]]> #{startDate}
+      </if>
     ORDER BY o.order_date DESC
   </select>
 
