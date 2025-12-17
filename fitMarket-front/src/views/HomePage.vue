@@ -81,22 +81,36 @@
 
     <!-- Products Grid -->
     <section class="container mx-auto px-4 py-8">
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex flex-col gap-4 mb-6">
         <h2 class="text-2xl font-bold">인기 상품</h2>
-        <select class="px-4 py-2 rounded-lg border border-green-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-          <option>최신순</option>
-          <option>인기순</option>
-          <option>낮은 가격순</option>
-          <option>높은 가격순</option>
-          <option>칼로리 낮은순</option>
-        </select>
+
+        <!-- Sort Buttons -->
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="sort in sortOptions"
+            :key="sort.key"
+            @click="toggleSort(sort.key)"
+            :class="[
+              'px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2',
+              currentSort === sort.key
+                ? 'bg-green-600 text-white shadow-md'
+                : 'bg-white border border-green-200 text-gray-700 hover:bg-green-50 hover:border-green-400'
+            ]"
+          >
+            {{ sort.label }}
+            <component
+              :is="getSortIcon(sort.key)"
+              class="w-4 h-4"
+            />
+          </button>
+        </div>
       </div>
 
       <div v-if="isLoading" class="text-center text-gray-500 py-12">상품을 불러오는 중이에요...</div>
       <div v-else-if="errorMessage" class="text-center text-red-600 py-12">{{ errorMessage }}</div>
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <ProductCard
-          v-for="product in products"
+          v-for="product in sortedProducts"
           :key="product.id"
           :product="product"
           @toggle-favorite="toggleFavorite"
@@ -146,8 +160,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { Search, Flame, Leaf, ShoppingCart, ArrowRight } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
+import { Search, Flame, Leaf, ShoppingCart, ArrowRight, ArrowUp, ArrowDown } from 'lucide-vue-next';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
 import ProductCard from '@/components/ProductCard.vue';
@@ -166,6 +180,92 @@ const categories = [
   { name: '단백질 보충식', count: 24 },
   { name: '스무디', count: 18 },
 ]
+
+// Sort options
+const sortOptions = [
+  { key: 'date', label: '최신순' },
+  { key: 'popularity', label: '인기순' },
+  { key: 'price', label: '가격' },
+  { key: 'calories', label: '칼로리' },
+  { key: 'carbs', label: '탄수화물' },
+  { key: 'protein', label: '단백질' },
+  { key: 'fat', label: '지방' },
+]
+
+const currentSort = ref('date')
+const sortDirections = ref({
+  date: 'desc',      // 최신순 (desc) ↔ 오래된순 (asc)
+  popularity: 'desc', // 인기순 (desc) ↔ 비인기순 (asc)
+  price: 'asc',      // 낮은 (asc) ↔ 높은 (desc)
+  calories: 'asc',   // 낮은 (asc) ↔ 높은 (desc)
+  carbs: 'asc',      // 낮은 (asc) ↔ 높은 (desc)
+  protein: 'asc',    // 낮은 (asc) ↔ 높은 (desc)
+  fat: 'asc',        // 낮은 (asc) ↔ 높은 (desc)
+})
+
+const toggleSort = (key) => {
+  if (currentSort.value === key) {
+    // 같은 정렬을 다시 클릭하면 방향 토글
+    sortDirections.value[key] = sortDirections.value[key] === 'asc' ? 'desc' : 'asc'
+  } else {
+    // 다른 정렬을 클릭하면 해당 정렬로 변경
+    currentSort.value = key
+  }
+}
+
+const getSortIcon = (key) => {
+  if (currentSort.value !== key) return ArrowDown
+  return sortDirections.value[key] === 'asc' ? ArrowUp : ArrowDown
+}
+
+const sortedProducts = computed(() => {
+  const sorted = [...products.value]
+  const direction = sortDirections.value[currentSort.value]
+  const multiplier = direction === 'asc' ? 1 : -1
+
+  sorted.sort((a, b) => {
+    let aVal, bVal
+
+    switch (currentSort.value) {
+      case 'date':
+        // id가 클수록 최신 (가정)
+        aVal = a.id
+        bVal = b.id
+        break
+      case 'popularity':
+        // rating과 reviews를 조합하여 인기도 계산
+        aVal = (a.rating || 0) * 100 + (a.reviews || 0)
+        bVal = (b.rating || 0) * 100 + (b.reviews || 0)
+        break
+      case 'price':
+        aVal = a.price || 0
+        bVal = b.price || 0
+        break
+      case 'calories':
+        aVal = a.calories || 0
+        bVal = b.calories || 0
+        break
+      case 'carbs':
+        aVal = a.carbs || 0
+        bVal = b.carbs || 0
+        break
+      case 'protein':
+        aVal = a.protein || 0
+        bVal = b.protein || 0
+        break
+      case 'fat':
+        aVal = a.fat || 0
+        bVal = b.fat || 0
+        break
+      default:
+        return 0
+    }
+
+    return (aVal - bVal) * multiplier
+  })
+
+  return sorted
+})
 
 const handleAddToCart = async (productId) => {
   const product = products.value.find((p) => p.id === productId);
