@@ -46,64 +46,207 @@
       <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
         <button
           v-for="category in categories"
-          :key="category.name"
-          class="whitespace-nowrap px-4 py-2 border border-green-200 hover:bg-green-50 hover:border-green-400 hover:text-green-700 bg-transparent rounded-lg transition-colors"
+          :key="category.id"
+          @click="filterByCategory(category.id)"
+          :class="[
+            'whitespace-nowrap px-4 py-2 border rounded-lg transition-colors',
+            selectedCategoryId === category.id
+              ? 'bg-green-600 border-green-600 text-white'
+              : 'border-green-200 hover:bg-green-50 hover:border-green-400 hover:text-green-700 bg-transparent'
+          ]"
         >
           {{ category.name }}
-          <span class="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
+          <span :class="[
+            'ml-2 px-2 py-0.5 text-xs rounded-full',
+            selectedCategoryId === category.id
+              ? 'bg-green-500 text-white'
+              : 'bg-green-100 text-green-700'
+          ]">
             {{ category.count }}
           </span>
         </button>
       </div>
     </section>
 
-    <!-- Filters -->
+    <!-- Filters & Sort -->
     <section class="container mx-auto px-4 py-4">
-      <div class="border border-green-100 bg-gradient-to-r from-green-50 to-white rounded-xl p-4">
-        <div class="flex flex-wrap items-center gap-4">
-          <span class="text-sm font-medium">영양 기반 검색:</span>
-          <button class="px-4 py-2 border border-green-200 hover:bg-green-50 bg-transparent rounded-lg text-sm flex items-center gap-2 transition-colors">
-            <Flame class="w-4 h-4 text-orange-500" />
-            칼로리 300-500
+      <div class="grid grid-cols-1 lg:grid-cols-[70%,30%] gap-3">
+        <!-- 왼쪽: 영양 기반 검색 (70%) -->
+        <div class="border border-green-100 bg-gradient-to-r from-green-50 to-white rounded-xl overflow-hidden">
+          <button
+            @click="isFilterOpen = !isFilterOpen"
+            class="w-full px-6 py-4 flex items-center justify-between hover:bg-green-50/50 transition-colors"
+          >
+            <div class="flex items-center gap-2">
+              <Flame class="w-5 h-5 text-orange-500" />
+              <h3 class="text-base font-semibold">영양 기반 검색</h3>
+              <span v-if="hasActiveFilters" class="px-2 py-0.5 bg-green-500 text-white text-xs rounded-full">
+                {{ activeFilterCount }}
+              </span>
+            </div>
+            <component
+              :is="isFilterOpen ? ChevronUp : ChevronDown"
+              class="w-5 h-5 text-gray-600 transition-transform"
+            />
           </button>
-          <button class="px-4 py-2 border border-green-200 hover:bg-green-50 bg-transparent rounded-lg text-sm transition-colors">
-            단백질 20g 이상
-          </button>
-          <button class="px-4 py-2 border border-green-200 hover:bg-green-50 bg-transparent rounded-lg text-sm transition-colors">
-            탄수화물 50g 이하
-          </button>
-          <button class="text-green-600 hover:text-green-700 hover:bg-green-50 px-4 py-2 rounded-lg text-sm ml-auto transition-colors">
-            필터 초기화
-          </button>
+
+          <!-- 필터 내용 (토글) -->
+          <div v-show="isFilterOpen" class="px-6 pb-6 space-y-4">
+            <div class="grid md:grid-cols-2 gap-4">
+              <!-- 칼로리 필터 -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-medium text-gray-700">칼로리 (kcal)</label>
+                  <span class="text-xs text-green-600 font-semibold">
+                    {{ nutritionFilters.calories.min }}-{{ nutritionFilters.calories.max }}
+                  </span>
+                </div>
+                <div class="flex gap-2">
+                  <input
+                    v-model.number="nutritionFilters.calories.min"
+                    type="number"
+                    placeholder="최소"
+                    class="w-20 px-2 py-1.5 border border-green-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500"
+                  />
+                  <div class="flex-1 flex items-center">
+                    <div class="w-full h-0.5 bg-green-200 rounded-full"></div>
+                  </div>
+                  <input
+                    v-model.number="nutritionFilters.calories.max"
+                    type="number"
+                    placeholder="최대"
+                    class="w-20 px-2 py-1.5 border border-green-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500"
+                  />
+                </div>
+              </div>
+
+              <!-- 단백질 필터 -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-medium text-gray-700">단백질 (g)</label>
+                  <span class="text-xs text-green-600 font-semibold">
+                    {{ nutritionFilters.protein.min }}-{{ nutritionFilters.protein.max }}
+                  </span>
+                </div>
+                <div class="flex gap-2">
+                  <input
+                    v-model.number="nutritionFilters.protein.min"
+                    type="number"
+                    placeholder="최소"
+                    class="w-20 px-2 py-1.5 border border-green-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500"
+                  />
+                  <div class="flex-1 flex items-center">
+                    <div class="w-full h-0.5 bg-green-200 rounded-full"></div>
+                  </div>
+                  <input
+                    v-model.number="nutritionFilters.protein.max"
+                    type="number"
+                    placeholder="최대"
+                    class="w-20 px-2 py-1.5 border border-green-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500"
+                  />
+                </div>
+              </div>
+
+              <!-- 탄수화물 필터 -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-medium text-gray-700">탄수화물 (g)</label>
+                  <span class="text-xs text-green-600 font-semibold">
+                    {{ nutritionFilters.carbs.min }}-{{ nutritionFilters.carbs.max }}
+                  </span>
+                </div>
+                <div class="flex gap-2">
+                  <input
+                    v-model.number="nutritionFilters.carbs.min"
+                    type="number"
+                    placeholder="최소"
+                    class="w-20 px-2 py-1.5 border border-green-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500"
+                  />
+                  <div class="flex-1 flex items-center">
+                    <div class="w-full h-0.5 bg-green-200 rounded-full"></div>
+                  </div>
+                  <input
+                    v-model.number="nutritionFilters.carbs.max"
+                    type="number"
+                    placeholder="최대"
+                    class="w-20 px-2 py-1.5 border border-green-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500"
+                  />
+                </div>
+              </div>
+
+              <!-- 지방 필터 -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-medium text-gray-700">지방 (g)</label>
+                  <span class="text-xs text-green-600 font-semibold">
+                    {{ nutritionFilters.fat.min }}-{{ nutritionFilters.fat.max }}
+                  </span>
+                </div>
+                <div class="flex gap-2">
+                  <input
+                    v-model.number="nutritionFilters.fat.min"
+                    type="number"
+                    placeholder="최소"
+                    class="w-20 px-2 py-1.5 border border-green-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500"
+                  />
+                  <div class="flex-1 flex items-center">
+                    <div class="w-full h-0.5 bg-green-200 rounded-full"></div>
+                  </div>
+                  <input
+                    v-model.number="nutritionFilters.fat.max"
+                    type="number"
+                    placeholder="최대"
+                    class="w-20 px-2 py-1.5 border border-green-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- 초기화 버튼 -->
+            <div class="flex justify-end pt-2">
+              <button
+                @click="resetFilters"
+                class="text-green-600 hover:text-green-700 hover:bg-green-50 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+              >
+                초기화
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 오른쪽: 정렬 (30%, 가로 스크롤) -->
+        <div class="border border-green-100 bg-white rounded-xl px-3 py-3">
+          <div class="text-xs font-medium text-gray-500 mb-2">정렬</div>
+          <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-transparent">
+            <button
+              v-for="sort in sortOptions"
+              :key="sort.key"
+              @click="toggleSort(sort.key)"
+              :class="[
+                'px-2.5 py-1.5 rounded text-xs font-medium transition-all flex items-center gap-1 whitespace-nowrap flex-shrink-0',
+                currentSort === sort.key
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-50 text-gray-600 hover:bg-green-50 hover:text-green-700'
+              ]"
+            >
+              <span>{{ sort.label }}</span>
+              <component
+                :is="getSortIcon(sort.key)"
+                class="w-3 h-3"
+              />
+            </button>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Products Grid -->
     <section class="container mx-auto px-4 py-8">
-      <div class="flex flex-col gap-4 mb-6">
-        <h2 class="text-2xl font-bold">인기 상품</h2>
-
-        <!-- Sort Buttons -->
-        <div class="flex flex-wrap gap-2">
-          <button
-            v-for="sort in sortOptions"
-            :key="sort.key"
-            @click="toggleSort(sort.key)"
-            :class="[
-              'px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2',
-              currentSort === sort.key
-                ? 'bg-green-600 text-white shadow-md'
-                : 'bg-white border border-green-200 text-gray-700 hover:bg-green-50 hover:border-green-400'
-            ]"
-          >
-            {{ sort.label }}
-            <component
-              :is="getSortIcon(sort.key)"
-              class="w-4 h-4"
-            />
-          </button>
-        </div>
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold">
+          {{ hasActiveFilters ? '필터링된 상품' : '인기 상품' }}
+          <span class="text-lg text-gray-500 ml-2">({{ sortedProducts.length }})</span>
+        </h2>
       </div>
 
       <div v-if="isLoading" class="text-center text-gray-500 py-12">상품을 불러오는 중이에요...</div>
@@ -160,26 +303,89 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { Search, Flame, Leaf, ShoppingCart, ArrowRight, ArrowUp, ArrowDown } from 'lucide-vue-next';
+import { ref, computed, onMounted } from 'vue';
+import { Search, Flame, Leaf, ShoppingCart, ArrowRight, ArrowUp, ArrowDown, ChevronUp, ChevronDown } from 'lucide-vue-next';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
 import ProductCard from '@/components/ProductCard.vue';
 import { useProducts } from '@/composables/useProducts';
 import { useCart } from '@/composables/useCart';
+import { fetchCategories } from '@/api/categoriesApi';
+import { fetchProducts } from '@/api/productsApi';
 
 const { products, isLoading, errorMessage, toggleFavorite, loadProducts } = useProducts();
 const { addToCart } = useCart();
 
 const searchQuery = ref('');
+const isFilterOpen = ref(false);
+const categories = ref([]);
+const selectedCategoryId = ref(null);
 
-const categories = [
-  { name: '도시락', count: 45 },
-  { name: '밀키트', count: 32 },
-  { name: '샐러드', count: 28 },
-  { name: '단백질 보충식', count: 24 },
-  { name: '스무디', count: 18 },
-]
+// Load categories from API
+const loadCategories = async () => {
+  try {
+    const data = await fetchCategories();
+    categories.value = data.map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      count: cat.productCount || 0
+    }));
+  } catch (error) {
+    console.error('카테고리 로딩 실패:', error);
+  }
+};
+
+// Filter products by category
+const filterByCategory = async (categoryId) => {
+  if (selectedCategoryId.value === categoryId) {
+    // 같은 카테고리를 다시 클릭하면 필터 해제
+    selectedCategoryId.value = null;
+    await loadProducts();
+  } else {
+    selectedCategoryId.value = categoryId;
+    await loadProducts({ categoryId });
+  }
+};
+
+onMounted(() => {
+  loadCategories();
+  loadProducts();
+});
+
+// Nutrition filters
+const nutritionFilters = ref({
+  calories: { min: 0, max: 2000 },
+  protein: { min: 0, max: 200 },
+  carbs: { min: 0, max: 200 },
+  fat: { min: 0, max: 100 },
+})
+
+const resetFilters = () => {
+  nutritionFilters.value = {
+    calories: { min: 0, max: 2000 },
+    protein: { min: 0, max: 200 },
+    carbs: { min: 0, max: 200 },
+    fat: { min: 0, max: 100 },
+  }
+}
+
+const hasActiveFilters = computed(() => {
+  return (
+    nutritionFilters.value.calories.min > 0 || nutritionFilters.value.calories.max < 2000 ||
+    nutritionFilters.value.protein.min > 0 || nutritionFilters.value.protein.max < 200 ||
+    nutritionFilters.value.carbs.min > 0 || nutritionFilters.value.carbs.max < 200 ||
+    nutritionFilters.value.fat.min > 0 || nutritionFilters.value.fat.max < 100
+  )
+})
+
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (nutritionFilters.value.calories.min > 0 || nutritionFilters.value.calories.max < 2000) count++
+  if (nutritionFilters.value.protein.min > 0 || nutritionFilters.value.protein.max < 200) count++
+  if (nutritionFilters.value.carbs.min > 0 || nutritionFilters.value.carbs.max < 200) count++
+  if (nutritionFilters.value.fat.min > 0 || nutritionFilters.value.fat.max < 100) count++
+  return count
+})
 
 // Sort options
 const sortOptions = [
@@ -219,7 +425,27 @@ const getSortIcon = (key) => {
 }
 
 const sortedProducts = computed(() => {
-  const sorted = [...products.value]
+  // 1. 영양소 필터링
+  let filtered = products.value.filter((product) => {
+    const calories = product.calories || 0
+    const protein = product.protein || 0
+    const carbs = product.carbs || 0
+    const fat = product.fat || 0
+
+    return (
+      calories >= nutritionFilters.value.calories.min &&
+      calories <= nutritionFilters.value.calories.max &&
+      protein >= nutritionFilters.value.protein.min &&
+      protein <= nutritionFilters.value.protein.max &&
+      carbs >= nutritionFilters.value.carbs.min &&
+      carbs <= nutritionFilters.value.carbs.max &&
+      fat >= nutritionFilters.value.fat.min &&
+      fat <= nutritionFilters.value.fat.max
+    )
+  })
+
+  // 2. 정렬
+  const sorted = [...filtered]
   const direction = sortDirections.value[currentSort.value]
   const multiplier = direction === 'asc' ? 1 : -1
 
