@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.fitmarket_be.order.repository.OrderRepository">
+
+  <resultMap id="OrderViewMap" type="com.ssafy.fitmarket_be.order.domain.OrderView">
+    <id property="id" column="id"/>
+    <result property="orderNumber" column="order_number"/>
+    <result property="orderMode" column="order_mode"
+            javaType="com.ssafy.fitmarket_be.order.domain.OrderMode"
+            typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+    <result property="approvalStatus" column="approval_status"/>
+    <result property="addressId" column="address_id"/>
+    <result property="addressSnapshot" column="address_snapshot"/>
+    <result property="userId" column="user_id"/>
+    <result property="orderDate" column="order_date"/>
+    <result property="shipDate" column="ship_date"/>
+    <result property="dueDate" column="due_date"/>
+    <result property="merchandiseAmount" column="merchandise_amount"/>
+    <result property="shippingFee" column="shipping_fee"/>
+    <result property="discountAmount" column="discount_amount"/>
+    <result property="totalAmount" column="total_amount"/>
+    <result property="paymentStatus" column="payment_status"
+            javaType="com.ssafy.fitmarket_be.payment.domain.PaymentStatus"
+            typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+    <result property="comment" column="comment"/>
+  </resultMap>
+
+  <resultMap id="OrderProductMap" type="com.ssafy.fitmarket_be.order.domain.OrderProductEntity">
+    <id property="id" column="id"/>
+    <result property="orderId" column="order_id"/>
+    <result property="productId" column="product_id"/>
+    <result property="cartItemId" column="cart_item_id"/>
+    <result property="productName" column="product_name"/>
+    <result property="quantity" column="quantity"/>
+    <result property="unitPrice" column="unit_price"/>
+    <result property="totalPrice" column="total_price"/>
+    <result property="optionInfo" column="option_info"/>
+  </resultMap>
+
+  <resultMap id="OrderPaymentContextMap" type="com.ssafy.fitmarket_be.order.domain.OrderPaymentContext">
+    <constructor>
+      <idArg column="id" javaType="long"/>
+      <arg column="user_id" javaType="long"/>
+      <arg column="order_number" javaType="string"/>
+      <arg column="total_amount" javaType="long"/>
+      <arg column="payment_status"
+           javaType="com.ssafy.fitmarket_be.payment.domain.PaymentStatus"
+           typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+      <arg column="order_mode"
+           javaType="com.ssafy.fitmarket_be.order.domain.OrderMode"
+           typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+      <arg column="items_snapshot" javaType="string"/>
+    </constructor>
+  </resultMap>
+
+  <insert id="insertOrder" parameterType="com.ssafy.fitmarket_be.entity.Order"
+          useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO orders (
+      order_number,
+      order_mode,
+      order_approval_status_id,
+      address_id,
+      address_snapshot,
+      user_id,
+      order_date,
+      ship_date,
+      due_date,
+      merchandise_amount,
+      shipping_fee,
+      discount_amount,
+      total_amount,
+      payment_status,
+      comment,
+      items_snapshot
+    ) VALUES (
+      #{orderNumber},
+      #{orderMode, javaType=com.ssafy.fitmarket_be.order.domain.OrderMode, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+      COALESCE(#{orderApprovalStatusId},
+        (SELECT id FROM order_approval_status WHERE name = 'pending_approval' LIMIT 1)),
+      #{addressId},
+      #{addressSnapshot},
+      #{userId},
+      COALESCE(#{orderDate}, CURRENT_TIMESTAMP),
+      #{shipDate},
+      #{dueDate},
+      #{merchandiseAmount},
+      #{shippingFee},
+      #{discountAmount},
+      #{totalAmount},
+      #{paymentStatus, javaType=com.ssafy.fitmarket_be.payment.domain.PaymentStatus, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+      #{comment},
+      #{itemsSnapshot}
+    )
+  </insert>
+
+  <insert id="insertOrderProducts">
+    INSERT INTO order_products (
+      order_id,
+      product_id,
+      cart_item_id,
+      product_name,
+      quantity,
+      unit_price,
+      total_price,
+      option_info
+    ) VALUES
+    <foreach collection="items" item="item" separator=",">
+      (
+        #{orderId},
+        #{item.productId},
+        #{item.cartItemId},
+        #{item.productName},
+        #{item.quantity},
+        #{item.unitPrice},
+        #{item.totalPrice},
+        #{item.optionInfo}
+      )
+    </foreach>
+  </insert>
+
+  <insert id="insertOrderAddress">
+    INSERT INTO order_addresses (
+      order_id,
+      recipient,
+      phone,
+      postal_code,
+      address_line,
+      address_line_detail,
+      memo,
+      is_current
+    ) VALUES (
+      #{orderId},
+      #{address.recipient},
+      #{address.phone},
+      #{address.postalCode},
+      #{address.addressLine},
+      #{address.addressLineDetail},
+      #{address.memo},
+      #{address.current}
+    )
+  </insert>
+
+  <update id="deactivateOrderAddresses">
+    UPDATE order_addresses
+    SET is_current = 0
+    WHERE order_id = #{orderId}
+      AND is_current = 1
+  </update>
+
+  <select id="findOrdersByUserId" resultMap="OrderViewMap">
+    SELECT
+      o.id,
+      o.order_number,
+      o.order_mode,
+      s.name AS approval_status,
+      o.address_id,
+      o.address_snapshot,
+      o.user_id,
+      o.order_date,
+      o.ship_date,
+      o.due_date,
+      o.merchandise_amount,
+      o.shipping_fee,
+      o.discount_amount,
+      o.total_amount,
+      o.payment_status,
+      o.comment
+    FROM orders o
+           JOIN order_approval_status s ON o.order_approval_status_id = s.id
+    WHERE o.user_id = #{userId}
+      AND o.deleted_date IS NULL
+    ORDER BY o.order_date DESC
+  </select>
+
+  <select id="findOrderByNumberAndUserId" resultMap="OrderViewMap">
+    SELECT
+      o.id,
+      o.order_number,
+      o.order_mode,
+      s.name AS approval_status,
+      o.address_id,
+      o.address_snapshot,
+      o.user_id,
+      o.order_date,
+      o.ship_date,
+      o.due_date,
+      o.merchandise_amount,
+      o.shipping_fee,
+      o.discount_amount,
+      o.total_amount,
+      o.payment_status,
+      o.comment
+    FROM orders o
+           JOIN order_approval_status s ON o.order_approval_status_id = s.id
+    WHERE o.order_number = #{orderNumber}
+      AND o.user_id = #{userId}
+      AND o.deleted_date IS NULL
+    LIMIT 1
+  </select>
+
+  <select id="findOrderProductsByOrderIds" resultMap="OrderProductMap">
+    SELECT
+      id,
+      order_id,
+      product_id,
+      cart_item_id,
+      product_name,
+      quantity,
+      unit_price,
+      total_price,
+      option_info
+    FROM order_products
+    WHERE deleted_date IS NULL
+      AND order_id IN
+      <foreach collection="orderIds" item="orderId" open="(" separator="," close=")">
+        #{orderId}
+      </foreach>
+  </select>
+
+  <select id="findPaymentContextByOrderNumber" resultMap="OrderPaymentContextMap">
+    SELECT
+      o.id,
+      o.user_id,
+      o.order_number,
+      o.total_amount,
+      o.payment_status,
+      o.order_mode,
+      o.items_snapshot
+    FROM orders o
+    WHERE o.order_number = #{orderNumber}
+      AND o.deleted_date IS NULL
+    LIMIT 1
+  </select>
+
+  <select id="countOrderProducts" resultType="int">
+    SELECT COUNT(*)
+    FROM order_products
+    WHERE order_id = #{orderId}
+      AND deleted_date IS NULL
+  </select>
+
+  <select id="findCartItemIdsByOrderId" resultType="long">
+    SELECT cart_item_id
+    FROM order_products
+    WHERE order_id = #{orderId}
+      AND deleted_date IS NULL
+      AND cart_item_id IS NOT NULL
+  </select>
+
+  <update id="updatePaymentStatus">
+    UPDATE orders
+    SET payment_status = #{paymentStatus, javaType=com.ssafy.fitmarket_be.payment.domain.PaymentStatus, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+        modified_date = CURRENT_TIMESTAMP
+    WHERE id = #{orderId}
+      AND deleted_date IS NULL
+  </update>
+
+  <update id="updateApprovalStatus">
+    UPDATE orders o
+    JOIN order_approval_status s ON s.name = #{approvalStatusName}
+    SET o.order_approval_status_id = s.id,
+        o.modified_date = CURRENT_TIMESTAMP
+    WHERE o.id = #{orderId}
+      AND o.deleted_date IS NULL
+  </update>
+
+  <update id="updateOrderAddress">
+    UPDATE orders
+    SET address_id = #{addressId},
+        address_snapshot = #{addressSnapshot},
+        modified_date = CURRENT_TIMESTAMP
+    WHERE id = #{orderId}
+      AND user_id = #{userId}
+      AND deleted_date IS NULL
+  </update>
+
+  <update id="softDeleteOrder">
+    UPDATE orders
+    SET deleted_date = CURRENT_TIMESTAMP,
+        modified_date = CURRENT_TIMESTAMP
+    WHERE id = #{orderId}
+      AND user_id = #{userId}
+      AND deleted_date IS NULL
+  </update>
+
+  <update id="softDeleteOrderProducts">
+    UPDATE order_products
+    SET deleted_date = CURRENT_TIMESTAMP,
+        modified_date = CURRENT_TIMESTAMP
+    WHERE order_id = #{orderId}
+      AND deleted_date IS NULL
+  </update>
+
+  <update id="clearItemsSnapshot">
+    UPDATE orders
+    SET items_snapshot = NULL,
+        modified_date = CURRENT_TIMESTAMP
+    WHERE id = #{orderId}
+      AND deleted_date IS NULL
+  </update>
+</mapper>

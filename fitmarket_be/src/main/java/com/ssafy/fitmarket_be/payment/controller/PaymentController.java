@@ -7,6 +7,7 @@ import com.ssafy.fitmarket_be.payment.service.TossPaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,14 +29,16 @@ public class PaymentController {
   /**
    * 결제 승인 콜백을 처리하고 승인 결과를 반환한다.
    *
+   * @param userId  인증된 사용자 식별자
    * @param request 토스페이먼츠 결제 승인 요청 본문
    * @return 승인 완료된 결제 응답
    */
   @PostMapping("/success")
   public ResponseEntity<TossPaymentResponse> paymentSuccess(
+      @AuthenticationPrincipal(expression = "id") Long userId,
       @Valid @RequestBody TossPaymentRequest request
   ) {
-    TossPaymentResponse response = paymentService.confirmPayment(request);
+    TossPaymentResponse response = paymentService.confirmPayment(userId, request);
     return ResponseEntity.ok(response);
   }
 
