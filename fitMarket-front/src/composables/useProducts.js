@@ -1,4 +1,4 @@
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { fetchProducts } from '@/api/productsApi'
 
 const products = ref([])
@@ -22,11 +22,11 @@ const mapProduct = (item) => ({
 })
 
 export function useProducts() {
-  const loadProducts = async ({ keyword } = {}) => {
+  const loadProducts = async ({ categoryId, keyword } = {}) => {
     isLoading.value = true
     errorMessage.value = ''
     try {
-      const response = await fetchProducts({ page: 1, size: 20, keyword })
+      const response = await fetchProducts({ page: 1, size: 20, categoryId, keyword })
       products.value = (response.content ?? []).map(mapProduct)
     } catch (error) {
       console.error(error)
@@ -50,11 +50,6 @@ export function useProducts() {
   const searchProducts = async (keyword) => {
     return loadProducts({ keyword })
   }
-
-  onMounted(() => {
-    // 홈 진입 시마다 최신 목록을 불러온다
-    loadProducts()
-  })
 
   return {
     products,
