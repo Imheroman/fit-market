@@ -21,18 +21,23 @@ public class ProductService {
     /**
      * 상품 목록 조회 (페이징).
      */
-    public PageResponse<ProductListResponse> getProducts(Integer page, Integer size) {
+    public PageResponse<ProductListResponse> getProducts(Integer page, Integer size, String keyword) {
         int safePage = (page == null || page < 1) ? 1 : page;
         int safeSize = (size == null || size < 1) ? 20 : size;
 
         int offset = (safePage - 1) * safeSize;
 
-        List<Product> products = productMapper.selectProducts(safeSize, offset);
+        String normalizedKeyword = normalizeKeyword(keyword);
+        List<Product> products = normalizedKeyword == null
+            ? productMapper.selectProducts(safeSize, offset)
+            : productMapper.selectProductsByKeyword(normalizedKeyword, safeSize, offset);
         List<ProductListResponse> content = products.stream()
             .map(ProductListResponse::from)
             .toList();
 
-        long totalElements = productMapper.countProducts();
+        long totalElements = normalizedKeyword == null
+            ? productMapper.countProducts()
+            : productMapper.countProductsByKeyword(normalizedKeyword);
         int totalPages = (int) Math.ceil((double) totalElements / safeSize);
         boolean hasNext = safePage < totalPages;
         boolean hasPrevious = safePage > 1;
@@ -46,6 +51,14 @@ public class ProductService {
             hasNext,
             hasPrevious
         );
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null) {
+            return null;
+        }
+        String trimmed = keyword.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     /**

@@ -18,9 +18,23 @@ public interface ProductMapper {
     );
 
     /**
+     * 상품 검색 (페이징).
+     */
+    List<Product> selectProductsByKeyword(
+        @Param("keyword") String keyword,
+        @Param("size") Integer size,
+        @Param("offset") Integer offset
+    );
+
+    /**
      * 전체 상품 개수 조회.
      */
     Long countProducts();
+
+    /**
+     * 검색 결과 개수 조회.
+     */
+    Long countProductsByKeyword(@Param("keyword") String keyword);
 
     /**
      * 상품 ID로 조회.

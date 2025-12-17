@@ -24,9 +24,10 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<PageResponse<ProductListResponse>> getProducts(
         @RequestParam(defaultValue = "1") Integer page,
-        @RequestParam(defaultValue = "20") Integer size
+        @RequestParam(defaultValue = "20") Integer size,
+        @RequestParam(required = false) String keyword
     ) {
-        PageResponse<ProductListResponse> response = productService.getProducts(page, size);
+        PageResponse<ProductListResponse> response = productService.getProducts(page, size, keyword);
         return ResponseEntity.ok(response);
     }
 
