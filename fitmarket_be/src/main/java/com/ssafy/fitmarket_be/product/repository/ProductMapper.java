@@ -10,31 +10,29 @@ import java.util.List;
 public interface ProductMapper {
 
     /**
-     * 상품 목록 조회 (페이징).
+     * 상품 목록 조회 (필터링, 페이징).
+     * categoryId와 keyword를 동적으로 적용합니다.
      */
-    List<Product> selectProducts(
-        @Param("size") Integer size,
-        @Param("offset") Integer offset
-    );
-
-    /**
-     * 상품 검색 (페이징).
-     */
-    List<Product> selectProductsByKeyword(
+    List<Product> selectProductsWithFilters(
+        @Param("categoryId") Long categoryId,
         @Param("keyword") String keyword,
         @Param("size") Integer size,
         @Param("offset") Integer offset
     );
 
     /**
+     * 상품 개수 조회 (필터링).
+     * categoryId와 keyword를 동적으로 적용합니다.
+     */
+    Long countProductsWithFilters(
+        @Param("categoryId") Long categoryId,
+        @Param("keyword") String keyword
+    );
+
+    /**
      * 전체 상품 개수 조회.
      */
     Long countProducts();
-
-    /**
-     * 검색 결과 개수 조회.
-     */
-    Long countProductsByKeyword(@Param("keyword") String keyword);
 
     /**
      * 상품 ID로 조회.
