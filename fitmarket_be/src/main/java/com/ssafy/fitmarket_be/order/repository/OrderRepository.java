@@ -6,6 +6,7 @@ import com.ssafy.fitmarket_be.order.domain.OrderProductEntity;
 import com.ssafy.fitmarket_be.order.domain.OrderView;
 import com.ssafy.fitmarket_be.order.domain.OrderAddress;
 import com.ssafy.fitmarket_be.payment.domain.PaymentStatus;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.apache.ibatis.annotations.Mapper;
@@ -16,6 +17,18 @@ import org.apache.ibatis.annotations.Param;
  */
 @Mapper
 public interface OrderRepository {
+
+  /**
+   * 사용자 주문 목록 아이디를 조회한다.
+   *
+   * @param userId    사용자 식별자
+   * @param startDate 조회 시작 시점
+   * @return 주문 뷰 목록
+   */
+  List<Long> findOrdersPkByUserIdAndStartDate(
+      @Param("userId") Long userId,
+      @Param("startDate") LocalDateTime startDate
+  );
 
   /**
    * 주문을 생성한다.
@@ -57,12 +70,16 @@ public interface OrderRepository {
   int deactivateOrderAddresses(@Param("orderId") Long orderId);
 
   /**
-   * 사용자별 주문 목록을 조회한다.
+   * 사용자 주문 목록을 조회한다.
    *
-   * @param userId 사용자 식별자
+   * @param userId    사용자 식별자
+   * @param startDate 조회 시작 시점
    * @return 주문 뷰 목록
    */
-  List<OrderView> findOrdersByUserId(@Param("userId") Long userId);
+  List<OrderView> findOrdersByUserIdAndStartDate(
+      @Param("userId") Long userId,
+      @Param("startDate") LocalDateTime startDate
+  );
 
   /**
    * 주문 번호로 단일 주문을 조회한다.
