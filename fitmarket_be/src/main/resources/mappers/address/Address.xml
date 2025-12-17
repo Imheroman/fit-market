@@ -37,6 +37,10 @@
   <select id="findByIdAndUserId" resultMap="AddressResultMap">
     SELECT
       a.id,
+      a.name,
+      a.recipient,
+      a.phone,
+      a.memo,
       a.postal_code,
       a.address_line,
       a.address_line_detail,
