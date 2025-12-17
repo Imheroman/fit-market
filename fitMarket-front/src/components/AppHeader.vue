@@ -2,17 +2,17 @@
   <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-green-100">
     <div class="container mx-auto px-4">
       <div class="flex items-center justify-between h-16">
-        <RouterLink to="/" class="flex items-center gap-2">
+        <a @click="handleHomeClick" class="flex items-center gap-2 cursor-pointer">
           <div class="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl">
             <Leaf class="w-6 h-6 text-white" />
           </div>
           <span class="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
             초록초록
           </span>
-        </RouterLink>
+        </a>
 
         <nav class="hidden md:flex items-center gap-8">
-          <RouterLink to="/" class="text-sm font-medium hover:text-green-600 transition-colors">전체상품</RouterLink>
+          <a @click="handleHomeClick" class="text-sm font-medium hover:text-green-600 transition-colors cursor-pointer">전체상품</a>
           <RouterLink to="/products/best" class="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors">베스트</RouterLink>
           <RouterLink to="/products/new" class="text-sm font-medium text-gray-600 hover:text-green-600 transition-colors">신상품</RouterLink>
           <RouterLink
@@ -85,6 +85,16 @@ const handleLogin = () => {
 const handleLogout = () => {
   logout();
   resetCart();
+};
+
+const handleHomeClick = () => {
+  if (router.currentRoute.value.path === '/') {
+    // 이미 홈 경로에 있으면 페이지 새로고침
+    window.location.reload();
+  } else {
+    // 다른 경로에 있으면 홈으로 이동
+    router.push('/');
+  }
 };
 
 const tryLoadCart = (force = false) => {

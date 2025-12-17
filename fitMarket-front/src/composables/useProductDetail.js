@@ -6,7 +6,7 @@ const mapProductDetail = (item) => ({
   name: item.name,
   category: item.categoryName ?? '기타',
   price: item.price,
-  image: item.imageUrl,
+  image: item.imageUrl ? `http://localhost:8080/api${item.imageUrl}` : item.imageUrl,
   rating: item.rating ?? 0,
   reviews: item.reviewCount ?? 0,
   description: item.description ?? '',

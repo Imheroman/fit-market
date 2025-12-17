@@ -10,10 +10,9 @@ import { uploadImage } from '@/api/uploadApi'
 export const PRODUCT_CATEGORIES = [
   { value: 'lunchbox', label: '도시락', categoryId: 1 },
   { value: 'mealkit', label: '밀키트', categoryId: 2 },
-  { value: 'salad', label: '샐러드', categoryId: 1 },
-  { value: 'smoothie', label: '스무디', categoryId: 2 },
-  { value: 'protein', label: '단백질 보충식', categoryId: 1 },
-  { value: 'snack', label: '건강 간식', categoryId: 2 },
+  { value: 'salad', label: '샐러드', categoryId: 3 },
+  { value: 'protein', label: '단백질 보충식', categoryId: 4 },
+  { value: 'smoothie', label: '스무디', categoryId: 5 },
 ]
 
 const sellerProducts = ref([])

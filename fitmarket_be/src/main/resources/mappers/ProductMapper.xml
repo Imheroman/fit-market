@@ -22,8 +22,8 @@
         </constructor>
     </resultMap>
 
-    <!-- 상품 목록 조회 (페이징, 최신순 정렬) -->
-    <select id="selectProducts" resultMap="ProductResultMap">
+    <!-- 상품 목록 조회 (필터링, 페이징, 최신순 정렬) -->
+    <select id="selectProductsWithFilters" resultMap="ProductResultMap">
         SELECT
             p.id,
             p.name,
@@ -43,8 +43,47 @@
         LEFT JOIN product_categories pc ON p.product_category_id = pc.id
         LEFT JOIN food f ON p.food_id = f.id
         WHERE p.deleted_date IS NULL
+        <if test="categoryId != null">
+          AND p.product_category_id = #{categoryId}
+        </if>
+        <if test="keyword != null and keyword != ''">
+          AND (
+            p.name LIKE CONCAT('%', #{keyword}, '%')
+            OR p.description LIKE CONCAT('%', #{keyword}, '%')
+            OR pc.name LIKE CONCAT('%', #{keyword}, '%')
+            OR f.name LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(f.calories AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(f.protein AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(f.carbs AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(f.fat AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+          )
+        </if>
         ORDER BY p.created_date DESC
         LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <!-- 상품 개수 조회 (필터링) -->
+    <select id="countProductsWithFilters" resultType="Long">
+        SELECT COUNT(*)
+        FROM products p
+        LEFT JOIN product_categories pc ON p.product_category_id = pc.id
+        LEFT JOIN food f ON p.food_id = f.id
+        WHERE p.deleted_date IS NULL
+        <if test="categoryId != null">
+          AND p.product_category_id = #{categoryId}
+        </if>
+        <if test="keyword != null and keyword != ''">
+          AND (
+            p.name LIKE CONCAT('%', #{keyword}, '%')
+            OR p.description LIKE CONCAT('%', #{keyword}, '%')
+            OR pc.name LIKE CONCAT('%', #{keyword}, '%')
+            OR f.name LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(f.calories AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(f.protein AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(f.carbs AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(f.fat AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+          )
+        </if>
     </select>
 
     <!-- 전체 상품 개수 조회 (삭제되지 않은 상품만) -->
