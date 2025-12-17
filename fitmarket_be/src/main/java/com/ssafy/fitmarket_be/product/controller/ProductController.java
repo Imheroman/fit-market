@@ -19,14 +19,17 @@ public class ProductController {
     private final ProductService productService;
 
     /**
-     * 상품 목록 조회 (페이징).
+     * 상품 목록 조회 (페이징, 필터링).
+     * categoryId와 keyword를 동시에 사용 가능합니다.
      */
     @GetMapping
     public ResponseEntity<PageResponse<ProductListResponse>> getProducts(
         @RequestParam(defaultValue = "1") Integer page,
-        @RequestParam(defaultValue = "20") Integer size
+        @RequestParam(defaultValue = "20") Integer size,
+        @RequestParam(required = false) Long categoryId,
+        @RequestParam(required = false) String keyword
     ) {
-        PageResponse<ProductListResponse> response = productService.getProducts(page, size);
+        PageResponse<ProductListResponse> response = productService.getProducts(page, size, categoryId, keyword);
         return ResponseEntity.ok(response);
     }
 

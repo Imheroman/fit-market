@@ -311,7 +311,10 @@ VALUES (1, '김영웅', 'seller@example.com', '{noop}password123', '010-1234-567
 -- 샘플 카테고리
 INSERT INTO `product_categories` (`id`, `name`) VALUES
 (1, '도시락'),
-(2, '밀키트');
+(2, '밀키트'),
+(3, '샐러드'),
+(4, '단백질 보충식'),
+(5, '스무디');
 
 -- 샘플 식품 정보 (영양소)
 INSERT INTO `food` (
@@ -349,10 +352,10 @@ INSERT INTO `products` (
     `user_id`, `product_category_id`, `name`, `description`, `price`, `stock`, `image_url`, `food_id`
 ) VALUES
 (1, 1, '그린 스무디', '신선한 채소와 과일을 담은 클렌즈 스무디', 5900, 80, '/uploads/green-berry-smoothie.png', 2),
-(1, 1, '연어 샐러드', '훈제 연어와 아보카도를 곁들인 영양 샐러드', 9800, 60, '/uploads/fresh-vegetables-pattern.png', 3),
+(1, 3, '연어 샐러드', '훈제 연어와 아보카도를 곁들인 영양 샐러드', 9800, 60, '/uploads/fresh-vegetables-pattern.png', 3),
 (1, 2, '퀴노아 치킨 볼', '퀴노아와 치킨을 듬뿍 넣은 포만감 있는 밀프렙', 10200, 70, '/uploads/quinoa-chicken-bowl-healthy.png', 4),
-(1, 2, '쉬림프 아보카도 볼', '통새우와 아보카도가 어우러진 고단백 한 그릇', 11200, 55, '/uploads/shrimp-avocado-bowl.png', 5),
-(1, 1, '지중해 샐러드', '페타치즈와 올리브가 들어간 지중해풍 샐러드', 9200, 65, '/uploads/mediterranean-salad.png', 6),
+(1, 4, '쉬림프 아보카도 볼', '통새우와 아보카도가 어우러진 고단백 한 그릇', 11200, 55, '/uploads/shrimp-avocado-bowl.png', 5),
+(1, 3, '지중해 샐러드', '페타치즈와 올리브가 들어간 지중해풍 샐러드', 9200, 65, '/uploads/mediterranean-salad.png', 6),
 (1, 2, '헬시 치킨 밀프렙', '닭가슴살과 구운 채소로 준비한 밀프렙 세트', 10500, 75, '/uploads/healthy-chicken-meal-prep.png', 8);
 
 SELECT 'FitMarket 데이터베이스 초기화 완료 (Strict Mode)!' AS message;
