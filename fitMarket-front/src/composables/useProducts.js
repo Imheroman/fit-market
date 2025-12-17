@@ -22,11 +22,11 @@ const mapProduct = (item) => ({
 })
 
 export function useProducts() {
-  const loadProducts = async () => {
+  const loadProducts = async ({ keyword } = {}) => {
     isLoading.value = true
     errorMessage.value = ''
     try {
-      const response = await fetchProducts({ page: 1, size: 20 })
+      const response = await fetchProducts({ page: 1, size: 20, keyword })
       products.value = (response.content ?? []).map(mapProduct)
     } catch (error) {
       console.error(error)
@@ -47,6 +47,10 @@ export function useProducts() {
     return products.value.find(p => p.id === id)
   }
 
+  const searchProducts = async (keyword) => {
+    return loadProducts({ keyword })
+  }
+
   onMounted(() => {
     // 홈 진입 시마다 최신 목록을 불러온다
     loadProducts()
@@ -58,6 +62,7 @@ export function useProducts() {
     errorMessage,
     toggleFavorite,
     getProductById,
+    searchProducts,
     loadProducts,
   }
 }
