@@ -48,6 +48,37 @@
     ORDER BY scp.created_date DESC
   </select>
 
+  <select id="findByIds" resultMap="ShoppingCartProductResultMap">
+    SELECT
+      scp.id,
+      scp.user_id,
+      scp.product_id,
+      scp.quantity,
+      scp.created_date,
+      scp.modified_date,
+      p.name AS product_name,
+      p.product_category_id AS category_id,
+      pc.name AS category_name,
+      p.price,
+      p.image_url,
+      COALESCE(CAST(f.calories AS SIGNED), 0) AS calories,
+      COALESCE(CAST(f.protein AS SIGNED), 0) AS protein,
+      COALESCE(CAST(f.carbs AS SIGNED), 0) AS carbs,
+      COALESCE(CAST(f.fat AS SIGNED), 0) AS fat
+    FROM shopping_cart_products scp
+      JOIN products p ON scp.product_id = p.id
+      LEFT JOIN product_categories pc ON p.product_category_id = pc.id
+      LEFT JOIN food f ON p.food_id = f.id
+    WHERE scp.user_id = #{userId}
+      AND scp.deleted_date IS NULL
+      AND p.deleted_date IS NULL
+      AND scp.id IN
+      <foreach item="cartItemId" collection="cartItemIds" open="(" separator="," close=")">
+        #{cartItemId}
+      </foreach>
+    ORDER BY scp.created_date DESC
+  </select>
+
   <select id="countCartItems" resultType="int">
     SELECT
       COUNT(*)
@@ -88,5 +119,17 @@
     WHERE id = #{cartItemId}
       AND user_id = #{userId}
       AND deleted_date IS NULL
+  </update>
+
+  <update id="softDeleteByIds">
+    UPDATE shopping_cart_products
+    SET deleted_date = CURRENT_TIMESTAMP,
+        modified_date = CURRENT_TIMESTAMP
+    WHERE user_id = #{userId}
+      AND deleted_date IS NULL
+      AND id IN
+      <foreach item="cartItemId" collection="cartItemIds" open="(" separator="," close=")">
+        #{cartItemId}
+      </foreach>
   </update>
 </mapper>
