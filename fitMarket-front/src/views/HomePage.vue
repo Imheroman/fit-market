@@ -26,9 +26,13 @@
                 type="text"
                 placeholder="칼로리, 단백질, 상품명으로 검색..."
                 class="w-full pl-12 h-12 bg-white text-gray-900 rounded-lg border-0 shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                @keyup.enter="handleSearch"
               />
             </div>
-            <button class="h-12 px-6 bg-white text-green-600 hover:bg-green-50 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors">
+            <button
+              class="h-12 px-6 bg-white text-green-600 hover:bg-green-50 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+              @click="handleSearch"
+            >
               검색하기
               <ArrowRight class="w-5 h-5" />
             </button>
@@ -150,7 +154,7 @@ import ProductCard from '@/components/ProductCard.vue';
 import { useProducts } from '@/composables/useProducts';
 import { useCart } from '@/composables/useCart';
 
-const { products, isLoading, errorMessage, toggleFavorite } = useProducts();
+const { products, isLoading, errorMessage, toggleFavorite, loadProducts } = useProducts();
 const { addToCart } = useCart();
 
 const searchQuery = ref('');
@@ -187,5 +191,14 @@ const handleAddToCart = async (productId) => {
   } catch (error) {
     window.alert(error?.message ?? '장바구니에 담지 못했어요. 다시 시도해 주세요.');
   }
+};
+
+const handleSearch = async () => {
+  const keyword = searchQuery.value.trim();
+  if (!keyword) {
+    await loadProducts();
+    return;
+  }
+  await loadProducts({ keyword });
 };
 </script>
