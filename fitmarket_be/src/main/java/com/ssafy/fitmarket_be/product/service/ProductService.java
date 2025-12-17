@@ -19,20 +19,24 @@ public class ProductService {
     private final ProductMapper productMapper;
 
     /**
-     * 상품 목록 조회 (페이징).
+     * 상품 목록 조회 (페이징, 필터링).
+     * categoryId와 keyword를 동시에 적용 가능합니다.
      */
-    public PageResponse<ProductListResponse> getProducts(Integer page, Integer size) {
+    public PageResponse<ProductListResponse> getProducts(Integer page, Integer size, Long categoryId, String keyword) {
         int safePage = (page == null || page < 1) ? 1 : page;
         int safeSize = (size == null || size < 1) ? 20 : size;
 
         int offset = (safePage - 1) * safeSize;
 
-        List<Product> products = productMapper.selectProducts(safeSize, offset);
+        String normalizedKeyword = normalizeKeyword(keyword);
+
+        // 카테고리와 키워드 조합에 따라 다른 쿼리 실행
+        List<Product> products = productMapper.selectProductsWithFilters(categoryId, normalizedKeyword, safeSize, offset);
         List<ProductListResponse> content = products.stream()
             .map(ProductListResponse::from)
             .toList();
 
-        long totalElements = productMapper.countProducts();
+        long totalElements = productMapper.countProductsWithFilters(categoryId, normalizedKeyword);
         int totalPages = (int) Math.ceil((double) totalElements / safeSize);
         boolean hasNext = safePage < totalPages;
         boolean hasPrevious = safePage > 1;
@@ -46,6 +50,14 @@ public class ProductService {
             hasNext,
             hasPrevious
         );
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null) {
+            return null;
+        }
+        String trimmed = keyword.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     /**
