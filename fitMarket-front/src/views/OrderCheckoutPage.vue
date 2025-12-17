@@ -284,12 +284,9 @@ const buildOrderRequest = () => {
 
   const comment = (selectedAddress.value?.memo ?? '').trim();
   return {
-    orderNumber: orderNumber.value,
-    mode: 'cart',
+    orderMode: 'CART',
     cartItemIds,
     addressId,
-    shippingFee,
-    discountAmount: 0,
     ...(comment ? { comment } : {}),
   };
 };
