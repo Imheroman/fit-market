@@ -9,7 +9,7 @@ const buildError = (error, fallback) => {
   return wrapped;
 };
 
-export async function confirmPayment({ paymentKey, orderId, amount }) {
+export async function confirmPayment({ paymentKey, orderId, amount, orderRequest }) {
   if (!paymentKey || !orderId || amount === undefined || amount === null) {
     throw new Error('결제 정보를 다시 불러오지 못했어요.');
   }
@@ -20,11 +20,13 @@ export async function confirmPayment({ paymentKey, orderId, amount }) {
   }
 
   try {
-    const response = await fitmarket.post(
-      '/payments/success',
-      { paymentKey, orderId, amount: normalizedAmount },
-      { withCredentials: true },
-    );
+    const requestBody = {
+      paymentKey,
+      orderId,
+      amount: normalizedAmount,
+      ...(orderRequest ? { orderRequest } : {}),
+    };
+    const response = await fitmarket.post('/payments/success', requestBody, { withCredentials: true });
     return unwrap(response);
   } catch (error) {
     throw buildError(error, '결제 확인에 실패했어요. 결제 상태를 다시 확인해 주세요.');
