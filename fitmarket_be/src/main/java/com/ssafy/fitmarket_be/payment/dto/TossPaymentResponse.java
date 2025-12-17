@@ -4,6 +4,7 @@ public record TossPaymentResponse(
     String paymentKey,
     String orderId,
     String status,
+    String approvedAt,
     Long totalAmount,
     String method
 
