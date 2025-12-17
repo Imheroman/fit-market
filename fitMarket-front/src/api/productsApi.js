@@ -1,10 +1,16 @@
 const BASE_URL = '/api/products'
 
-export async function fetchProducts({ page = 1, size = 20 } = {}) {
+export async function fetchProducts({ page = 1, size = 20, categoryId, keyword } = {}) {
   const params = new URLSearchParams({
     page: String(page),
     size: String(size),
   })
+  if (categoryId) {
+    params.set('categoryId', String(categoryId))
+  }
+  if (keyword && keyword.trim()) {
+    params.set('keyword', keyword.trim())
+  }
 
   const response = await fetch(`${BASE_URL}?${params.toString()}`)
   if (!response.ok) {

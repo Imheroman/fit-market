@@ -17,7 +17,10 @@ public record ProductListResponse(
     String imageUrl,
     double rating,
     int reviewCount,
-    int calories
+    int calories,
+    int protein,
+    int carbs,
+    int fat
 ) {
     /**
      * Domain 객체를 목록용 DTO로 변환합니다.
@@ -34,7 +37,10 @@ public record ProductListResponse(
             product.getImageUrl(),
             product.getRating(),
             product.getReviewCount(),
-            product.getNutrition().getCalories()
+            product.getNutrition().getCalories(),
+            product.getNutrition().getProtein(),
+            product.getNutrition().getCarbs(),
+            product.getNutrition().getFat()
         );
     }
 }
