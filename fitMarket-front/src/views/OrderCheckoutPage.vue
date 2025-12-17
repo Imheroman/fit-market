@@ -234,6 +234,7 @@ import { useOrderStatus } from '@/composables/useOrderStatus';
 import { useTossPayments } from '@/composables/useTossPayments';
 import { usePaymentCallbacks } from '@/composables/usePaymentCallbacks';
 import { formatPhoneNumber, sanitizePhoneDigits } from '@/utils/phone';
+import { savePendingOrderRequest } from '@/utils/paymentRequestStorage';
 
 const router = useRouter();
 const route = useRoute();
@@ -268,6 +269,36 @@ const {
 
 const showAllAddresses = ref(false);
 const paymentFailureFallback = ref('');
+
+const toNumberSafe = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const buildOrderRequest = () => {
+  const addressId = toNumberSafe(selectedAddress.value?.id);
+  const cartItemIds = cartItems.value
+    .map((item) => toNumberSafe(item?.cartItemId))
+    .filter((id) => id !== null);
+  if (!addressId || !cartItemIds.length) return null;
+
+  const comment = (selectedAddress.value?.memo ?? '').trim();
+  return {
+    orderNumber: orderNumber.value,
+    mode: 'cart',
+    cartItemIds,
+    addressId,
+    shippingFee,
+    discountAmount: 0,
+    ...(comment ? { comment } : {}),
+  };
+};
+
+const persistOrderRequest = () => {
+  const orderRequest = buildOrderRequest();
+  if (!orderRequest) return;
+  savePendingOrderRequest({ orderId: orderNumber.value, orderRequest });
+};
 
 const addressListOverflow = computed(() => addresses.value.length > MAX_VISIBLE_ADDRESSES);
 const displayedAddresses = computed(() => {
@@ -370,6 +401,7 @@ const handlePayment = async () => {
   }
 
   try {
+    persistOrderRequest();
     await requestCardPayment({
       amount: {
         currency: 'KRW',

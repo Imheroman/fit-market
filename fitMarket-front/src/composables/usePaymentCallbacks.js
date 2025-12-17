@@ -21,7 +21,7 @@ export function usePaymentCallbacks() {
   const failureErrorMessage = ref('');
   const failureGuide = ref(null);
 
-  const confirmPaymentFromQuery = async (query) => {
+  const confirmPaymentFromQuery = async (query, options = {}) => {
     const paymentKey = toStringSafe(query?.paymentKey);
     const orderId = toStringSafe(query?.orderId);
     const amount = toNumberSafe(query?.amount);
@@ -34,7 +34,12 @@ export function usePaymentCallbacks() {
     confirmErrorMessage.value = '';
 
     try {
-      const payload = await confirmPayment({ paymentKey, orderId, amount });
+      const payload = await confirmPayment({
+        paymentKey,
+        orderId,
+        amount,
+        orderRequest: options.orderRequest,
+      });
       return payload;
     } catch (error) {
       confirmErrorMessage.value =

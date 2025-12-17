@@ -249,6 +249,7 @@ import {useAddresses} from '@/composables/useAddresses';
 import {useOrderStatus} from '@/composables/useOrderStatus';
 import {usePaymentCallbacks} from '@/composables/usePaymentCallbacks';
 import {formatPhoneNumber} from '@/utils/phone';
+import {clearPendingOrderRequest, readPendingOrderRequest} from '@/utils/paymentRequestStorage';
 
 const router = useRouter();
 const route = useRoute();
@@ -270,6 +271,13 @@ const paymentResult = ref(null);
 const totalPayment = computed(() => totalPrice.value + shippingFee);
 
 const canEditAddress = computed(() => canFreeCancel.value && !isCancelled.value);
+
+const getStoredOrderRequest = (orderId) => {
+  if (!orderId) return null;
+  const stored = readPendingOrderRequest();
+  if (!stored || stored.orderId !== orderId) return null;
+  return stored.orderRequest ?? null;
+};
 
 const formattedSelectedAddress = computed(() => {
   if (!selectedAddress.value) return null;
@@ -338,9 +346,11 @@ const processPaymentResult = async () => {
   }
 
   try {
-    const result = await confirmPaymentFromQuery(route.query);
+    const orderRequest = getStoredOrderRequest(orderIdFromQuery);
+    const result = await confirmPaymentFromQuery(route.query, {orderRequest});
     paymentResult.value = result;
     completePayment(result?.orderId ?? orderIdFromQuery);
+    clearPendingOrderRequest();
     return true;
   } catch (error) {
     console.error(error);
