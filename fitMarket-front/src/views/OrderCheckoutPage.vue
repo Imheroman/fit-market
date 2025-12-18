@@ -21,6 +21,32 @@
           </div>
         </section>
 
+        <div
+          v-if="paymentFailureNotice"
+          class="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3"
+        >
+          <AlertTriangle class="w-5 h-5 text-red-600 mt-0.5" />
+          <div class="flex-1">
+            <p class="font-semibold text-red-700">{{ paymentFailureNotice.title }}</p>
+            <p class="text-sm text-red-600 mt-1">{{ paymentFailureNotice.message }}</p>
+            <p v-if="paymentFailureNotice.guide" class="text-xs text-red-500 mt-1">
+              {{ paymentFailureNotice.guide }}
+            </p>
+            <p v-if="paymentFailureNotice.orderId" class="text-[11px] text-red-400 mt-1">
+              주문번호 {{ paymentFailureNotice.orderId }}
+            </p>
+            <p v-if="isLoadingFailure" class="text-[11px] text-red-400 mt-1">
+              결제 실패 안내를 정리하는 중이에요.
+            </p>
+          </div>
+          <button
+            class="text-xs text-red-600 font-semibold hover:underline"
+            @click="dismissFailureNotice"
+          >
+            닫기
+          </button>
+        </div>
+
         <div class="grid gap-6 lg:grid-cols-2">
           <div class="bg-white border border-green-100 rounded-2xl p-6">
             <div class="flex items-center justify-between mb-6">
@@ -134,10 +160,15 @@
 
               <button
                 class="mt-6 w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-4 rounded-lg transition"
+                :class="isPaymentDisabled ? 'opacity-60 cursor-not-allowed' : ''"
+                :disabled="isPaymentDisabled"
                 @click="handlePayment"
               >
-                결제하기
+                {{ isPaymentRequesting ? '결제창을 여는 중이에요...' : '결제하기' }}
               </button>
+              <p v-if="paymentErrorMessage" class="mt-2 text-xs text-red-600 text-center">
+                {{ paymentErrorMessage }}
+              </p>
               <p class="mt-2 text-xs text-gray-500 text-center">결제하기를 누르면 결제가 즉시 진행돼요.</p>
             </div>
 
@@ -193,17 +224,23 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { MapPin, ShieldCheck, Gift, Wallet, CheckCircle } from 'lucide-vue-next';
+import { useRoute, useRouter } from 'vue-router';
+import { MapPin, ShieldCheck, Gift, Wallet, CheckCircle, AlertTriangle } from 'lucide-vue-next';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
 import { useCart } from '@/composables/useCart';
 import { useAddresses } from '@/composables/useAddresses';
 import { useOrderStatus } from '@/composables/useOrderStatus';
-import { formatPhoneNumber } from '@/utils/phone';
+import { useTossPayments } from '@/composables/useTossPayments';
+import { usePaymentCallbacks } from '@/composables/usePaymentCallbacks';
+import { formatPhoneNumber, sanitizePhoneDigits } from '@/utils/phone';
+import { savePendingOrderRequest } from '@/utils/paymentRequestStorage';
 
 const router = useRouter();
+const route = useRoute();
 const MAX_VISIBLE_ADDRESSES = 3;
+const TOSS_CLIENT_KEY = 'test_ck_6bJXmgo28eDWxw4yY4oyrLAnGKWx';
+const TOSS_CUSTOMER_KEY = 'A_I811IPruggOPKpP-5ee';
 
 const { cartItems, totalPrice, isLoading: isCartLoading, loadCart } = useCart();
 const {
@@ -215,9 +252,50 @@ const {
   isLoading: isAddressLoading,
   errorMessage: addressErrorMessage,
 } = useAddresses();
-const { shippingFee, resetOrderStatus, completePayment } = useOrderStatus();
+const { orderNumber, shippingFee, resetOrderStatus, setOrderNumber } = useOrderStatus();
+const {
+  requestCardPayment,
+  isRequesting: isPaymentRequesting,
+  errorMessage: paymentErrorMessage,
+  prepareSdk,
+} = useTossPayments(TOSS_CLIENT_KEY, TOSS_CUSTOMER_KEY);
+const {
+  loadFailureGuide,
+  hasFailureParams,
+  failureGuide,
+  failureErrorMessage,
+  isLoadingFailure,
+} = usePaymentCallbacks();
 
 const showAllAddresses = ref(false);
+const paymentFailureFallback = ref('');
+
+const toNumberSafe = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const buildOrderRequest = () => {
+  const addressId = toNumberSafe(selectedAddress.value?.id);
+  const cartItemIds = cartItems.value
+    .map((item) => toNumberSafe(item?.cartItemId))
+    .filter((id) => id !== null);
+  if (!addressId || !cartItemIds.length) return null;
+
+  const comment = (selectedAddress.value?.memo ?? '').trim();
+  return {
+    orderMode: 'CART',
+    cartItemIds,
+    addressId,
+    ...(comment ? { comment } : {}),
+  };
+};
+
+const persistOrderRequest = () => {
+  const orderRequest = buildOrderRequest();
+  if (!orderRequest) return;
+  savePendingOrderRequest({ orderId: orderNumber.value, orderRequest });
+};
 
 const addressListOverflow = computed(() => addresses.value.length > MAX_VISIBLE_ADDRESSES);
 const displayedAddresses = computed(() => {
@@ -230,6 +308,40 @@ const displayedAddresses = computed(() => {
 const remainingAddressCount = computed(() => Math.max(addresses.value.length - MAX_VISIBLE_ADDRESSES, 0));
 
 const totalPayment = computed(() => totalPrice.value + shippingFee);
+const orderName = computed(() => {
+  if (!cartItems.value.length) return '핏마켓 주문';
+  if (cartItems.value.length === 1) return cartItems.value[0].name;
+  return `${cartItems.value[0].name} 외 ${cartItems.value.length - 1}건`;
+});
+
+const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+const successUrl = computed(() => `${baseUrl}/order/complete?paymentStatus=success`);
+const failUrl = computed(() => `${baseUrl}/order/checkout?paymentStatus=fail`);
+const customerName = computed(() => selectedAddress.value?.recipient || selectedAddress.value?.name || '핏마켓 고객');
+const customerPhone = computed(() => sanitizePhoneDigits(selectedAddress.value?.phone));
+const isPaymentDisabled = computed(
+  () =>
+    isPaymentRequesting.value || isCartLoading.value || isAddressLoading.value || !cartItems.value.length,
+);
+const paymentFailureNotice = computed(() => {
+  if (failureGuide.value) {
+    return {
+      title: '결제가 중단되었어요.',
+      message: failureGuide.value.message || '결제가 정상적으로 완료되지 않았어요.',
+      guide: failureGuide.value.guide,
+      orderId: failureGuide.value.orderId,
+    };
+  }
+  if (paymentFailureFallback.value || failureErrorMessage.value) {
+    return {
+      title: '결제에 실패했어요.',
+      message: paymentFailureFallback.value || failureErrorMessage.value,
+      guide: '결제를 다시 시도해 주세요.',
+      orderId: route.query.orderId ? String(route.query.orderId) : '',
+    };
+  }
+  return null;
+});
 
 const handleAddressChange = (addressId) => {
   selectAddress(addressId);
@@ -239,14 +351,76 @@ const toggleAddressList = () => {
   showAllAddresses.value = !showAllAddresses.value;
 };
 
-const handlePayment = () => {
+const processPaymentFailure = async () => {
+  const query = route.query;
+  if (!hasFailureParams(query) && query.paymentStatus !== 'fail') return;
+
+  if (hasFailureParams(query)) {
+    try {
+      const guide = await loadFailureGuide(query);
+      if (guide?.orderId) {
+        setOrderNumber(String(guide.orderId));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  } else {
+    paymentFailureFallback.value = '결제가 완료되지 않았어요. 다시 시도해 주세요.';
+    if (query?.orderId) {
+      setOrderNumber(String(query.orderId));
+    }
+  }
+
+  router.replace({ name: 'order-checkout' });
+};
+
+const dismissFailureNotice = () => {
+  failureGuide.value = null;
+  failureErrorMessage.value = '';
+  paymentFailureFallback.value = '';
+};
+
+const handlePayment = async () => {
   if (!cartItems.value.length) {
     window.alert('장바구니가 비어 있어요. 상품을 담고 다시 시도해 주세요.');
     router.push({ name: 'home' });
     return;
   }
-  completePayment();
-  router.push({ name: 'order-complete' });
+  if (!selectedAddress.value) {
+    window.alert('배송지를 먼저 선택해 주세요.');
+    return;
+  }
+
+  const sdkReady = await prepareSdk();
+  if (!sdkReady) {
+    window.alert(paymentErrorMessage.value || '결제창을 준비하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    return;
+  }
+
+  try {
+    persistOrderRequest();
+    await requestCardPayment({
+      amount: {
+        currency: 'KRW',
+        value: totalPayment.value,
+      },
+      orderId: orderNumber.value,
+      orderName: orderName.value,
+      successUrl: successUrl.value,
+      failUrl: failUrl.value,
+      customerName: customerName.value,
+      customerMobilePhone: customerPhone.value || undefined,
+      card: {
+        useEscrow: false,
+        flowMode: 'DEFAULT',
+        useCardPoint: false,
+        useAppCardOnly: false,
+      },
+    });
+  } catch (error) {
+    const message = error?.message ?? '결제창을 열지 못했어요. 잠시 후 다시 시도해 주세요.';
+    window.alert(message);
+  }
 };
 
 const navigateToProduct = (productId) => {
@@ -260,5 +434,7 @@ onMounted(() => {
   loadAddresses().catch((error) => {
     console.error(error);
   });
+  processPaymentFailure().catch((error) => console.error(error));
+  prepareSdk().catch((error) => console.error(error));
 });
 </script>
