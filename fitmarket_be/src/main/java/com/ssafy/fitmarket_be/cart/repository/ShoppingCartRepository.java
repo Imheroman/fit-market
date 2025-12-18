@@ -27,6 +27,18 @@ public interface ShoppingCartRepository {
   List<ShoppingCartProduct> findActiveByUserId(@Param("userId") Long userId);
 
   /**
+   * 장바구니에서 특정 항목들을 조회한다.
+   *
+   * @param userId      사용자 식별자
+   * @param cartItemIds 조회할 장바구니 아이디 목록
+   * @return 장바구니 상품 목록
+   */
+  List<ShoppingCartProduct> findByIds(
+      @Param("userId") Long userId,
+      @Param("cartItemIds") List<Long> cartItemIds
+  );
+
+  /**
    * 장바구니에 동일 상품이 존재하면 수량을 증가시킨다.
    *
    * @param userId    사용자 식별자
@@ -77,6 +89,18 @@ public interface ShoppingCartRepository {
    */
   int softDelete(
       @Param("cartItemId") Long cartItemId,
+      @Param("userId") Long userId
+  );
+
+  /**
+   * 장바구니 다건을 소프트 삭제한다.
+   *
+   * @param cartItemIds 장바구니 아이템 식별자 목록
+   * @param userId      사용자 식별자
+   * @return 삭제된 행 수
+   */
+  int softDeleteByIds(
+      @Param("cartItemIds") List<Long> cartItemIds,
       @Param("userId") Long userId
   );
 }
