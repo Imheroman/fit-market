@@ -5,6 +5,8 @@ import com.ssafy.fitmarket_be.auth.filter.CustomAuthenticationFilter;
 import com.ssafy.fitmarket_be.auth.filter.CustomLoginFilter;
 import com.ssafy.fitmarket_be.auth.filter.CustomLogoutFilter;
 import com.ssafy.fitmarket_be.auth.filter.SecurityExceptionHandlingFilter;
+import com.ssafy.fitmarket_be.auth.handler.CustomAccessDeniedHandler;
+import com.ssafy.fitmarket_be.auth.handler.CustomAuthenticationEntryPoint;
 import com.ssafy.fitmarket_be.auth.handler.LoginSuccessHandler;
 
 import java.util.List;
@@ -51,8 +53,10 @@ public class SecurityConfig {
   public SecurityFilterChain filterChain(HttpSecurity http,
       SecurityExceptionHandlingFilter exceptionFilter,
       CustomAuthenticationFilter authenticationFilter,
+      CustomLogoutFilter logoutFilter,
       LoginSuccessHandler loginSuccessHandler,
-      CustomLogoutFilter logoutFilter) throws Exception {
+      CustomAccessDeniedHandler accessDeniedHandler,
+      CustomAuthenticationEntryPoint authenticationEntryPoint) throws Exception {
 
     // setting login filter
     AuthenticationManager authenticationManager = this.authenticationManager(
@@ -76,9 +80,15 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(HttpMethod.GET, "/products/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/products").permitAll()
+            .requestMatchers(HttpMethod.GET, "/categories").permitAll()
             .requestMatchers("/auth/login", "/logout", "/public/**", "/users/signup").permitAll()
             .anyRequest().authenticated()
         );
+
+    http.exceptionHandling(exception -> exception
+        .authenticationEntryPoint(authenticationEntryPoint) // 401 에러 핸들러
+        .accessDeniedHandler(accessDeniedHandler)           // 403 에러 핸들러
+    );
 
     return http.build();
   }
