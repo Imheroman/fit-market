@@ -449,6 +449,18 @@ const processPaymentFailure = async () => {
   router.replace({ name: 'order-checkout' });
 };
 
+const ensureAddressExists = async () => {
+  try {
+    await loadAddresses();
+  } catch (error) {
+    return;
+  }
+
+  if (addresses.value.length > 0) return;
+  window.alert('배송지가 아직 없어요. 먼저 추가해 주세요.');
+  router.replace({ name: 'my-page-addresses-new', query: { redirect: 'order-checkout' } });
+};
+
 const dismissFailureNotice = () => {
   failureGuide.value = null;
   failureErrorMessage.value = '';
@@ -522,9 +534,7 @@ onMounted(() => {
   if (!isDirectMode.value) {
     loadCart({ force: true }).catch((error) => console.error(error));
   }
-  loadAddresses().catch((error) => {
-    console.error(error);
-  });
+  ensureAddressExists().catch((error) => console.error(error));
   processPaymentFailure().catch((error) => console.error(error));
   prepareSdk().catch((error) => console.error(error));
 });
