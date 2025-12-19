@@ -82,9 +82,14 @@ const handleLogin = () => {
   router.push({ name: 'login' });
 };
 
-const handleLogout = () => {
-  logout();
-  resetCart();
+const handleLogout = async () => {
+  try {
+    await logout();
+  } catch (error) {
+    window.alert(error?.message ?? '로그아웃에 실패했어요. 잠시 후 다시 시도해 주세요.');
+  } finally {
+    resetCart();
+  }
 };
 
 const handleHomeClick = () => {

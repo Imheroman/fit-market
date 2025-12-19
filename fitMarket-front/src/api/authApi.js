@@ -1,10 +1,17 @@
 import { formatPhoneNumber, sanitizePhoneDigits } from '@/utils/phone';
+import { fitmarket } from '@/restapi';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const API_BASE_URL = 'http://localhost:8080/api'
 const jsonHeaders = {
   'Content-Type': 'application/json',
 }
+
+const buildErrorMessage = (error, fallback) => {
+  if (error?.response?.data?.message) return error.response.data.message;
+  if (error?.response?.data?.error) return error.response.data.error;
+  return fallback;
+};
 
 const parseResponseBody = async (response) => {
   try {
@@ -125,6 +132,18 @@ export async function registerUser(payload) {
     }
 
   return createdUser
+}
+
+export async function logoutUser() {
+  try {
+    const response = await fitmarket.post('/logout', null, { withCredentials: true });
+    return response?.data ?? { success: true };
+  } catch (error) {
+    const message = buildErrorMessage(error, '로그아웃에 실패했어요. 잠시 후 다시 시도해주세요.');
+    const wrappedError = new Error(message);
+    wrappedError.cause = error;
+    throw wrappedError;
+  }
 }
 
 export { formatPhoneNumber }
