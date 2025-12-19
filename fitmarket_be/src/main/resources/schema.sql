@@ -149,6 +149,7 @@ CREATE TABLE `products` (
     `price` BIGINT NOT NULL,
     `stock` INT NOT NULL,
     `image_url` VARCHAR(255) NULL,
+    `weight_g` INT NOT NULL DEFAULT 100,
     `rating` DOUBLE NOT NULL DEFAULT 0,
     `review_count` INT NOT NULL DEFAULT 0,
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
