@@ -80,6 +80,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
       // 그냥 로그만 찍고(선택사항) '넘어갑니다'.
       // 그러면 SecurityContext가 비어있는 상태로 다음으로 넘어가고,
       // permitAll 페이지면 통과, 아니면 403이 뜹니다.
+      SecurityContextHolder.clearContext();
       request.setAttribute("exception", e); // 필요 시 에러 저장
     }
 
