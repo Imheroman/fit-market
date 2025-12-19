@@ -6,13 +6,14 @@ import com.ssafy.fitmarket_be.auth.filter.CustomLoginFilter;
 import com.ssafy.fitmarket_be.auth.filter.CustomLogoutFilter;
 import com.ssafy.fitmarket_be.auth.filter.SecurityExceptionHandlingFilter;
 import com.ssafy.fitmarket_be.auth.handler.LoginSuccessHandler;
-import com.ssafy.fitmarket_be.auth.jwt.JwtUtil;
+
 import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -73,8 +74,9 @@ public class SecurityConfig {
 
     http
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/auth/login", "/logout", "/public/**", "/users/signup")
-            .permitAll()
+            .requestMatchers(HttpMethod.GET, "/products/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/products").permitAll()
+            .requestMatchers("/auth/login", "/logout", "/public/**", "/users/signup").permitAll()
             .anyRequest().authenticated()
         );
 
