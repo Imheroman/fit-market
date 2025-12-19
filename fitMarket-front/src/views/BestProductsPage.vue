@@ -46,6 +46,7 @@ import AppFooter from '@/components/AppFooter.vue';
 import ProductCard from '@/components/ProductCard.vue';
 import { useCart } from '@/composables/useCart';
 import { useBestProducts } from '@/composables/useBestProducts';
+import { shouldShowErrorAlert } from '@/utils/httpError';
 
 const { products, isLoading, errorMessage, toggleFavorite } = useBestProducts();
 const { addToCart } = useCart();
@@ -74,6 +75,7 @@ const handleAddToCart = async (productId) => {
     });
     window.alert('장바구니에 담겼어요! 결제 전에 언제든 수정할 수 있어요.');
   } catch (error) {
+    if (!shouldShowErrorAlert(error)) return;
     window.alert(error?.message ?? '장바구니에 담지 못했어요. 다시 시도해 주세요.');
   }
 };

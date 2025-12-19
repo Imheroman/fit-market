@@ -235,6 +235,7 @@ import { useTossPayments } from '@/composables/useTossPayments';
 import { usePaymentCallbacks } from '@/composables/usePaymentCallbacks';
 import { formatPhoneNumber, sanitizePhoneDigits } from '@/utils/phone';
 import { savePendingOrderRequest } from '@/utils/paymentRequestStorage';
+import { shouldShowErrorAlert } from '@/utils/httpError';
 
 const router = useRouter();
 const route = useRoute();
@@ -418,6 +419,7 @@ const handlePayment = async () => {
       },
     });
   } catch (error) {
+    if (!shouldShowErrorAlert(error)) return;
     const message = error?.message ?? '결제창을 열지 못했어요. 잠시 후 다시 시도해 주세요.';
     window.alert(message);
   }

@@ -58,6 +58,7 @@ import { Leaf } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { useCart } from '@/composables/useCart';
 import { useAuth } from '@/composables/useAuth';
+import { shouldShowErrorAlert } from '@/utils/httpError';
 import AppHeaderLoggedInActions from '@/components/header/AppHeaderLoggedInActions.vue';
 import AppHeaderLoggedOutActions from '@/components/header/AppHeaderLoggedOutActions.vue';
 
@@ -86,6 +87,7 @@ const handleLogout = async () => {
   try {
     await logout();
   } catch (error) {
+    if (!shouldShowErrorAlert(error)) return;
     window.alert(error?.message ?? '로그아웃에 실패했어요. 잠시 후 다시 시도해 주세요.');
   } finally {
     resetCart();

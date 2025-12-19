@@ -2,6 +2,7 @@ import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { fetchUserProfile, deleteUserAccount } from '@/api/userApi';
 import { logoutUser } from '@/api/authApi';
+import { clearAuthErrorState } from '@/restapi';
 import { useSessionStore, buildUserSession, ensureRoleArray } from '@/stores/sessionStore';
 
 export function useAuth() {
@@ -10,7 +11,10 @@ export function useAuth() {
   const isProfileLoading = ref(false);
   const profileError = ref('');
 
-  const login = (sessionPayload) => sessionStore.login(sessionPayload);
+  const login = (sessionPayload) => {
+    clearAuthErrorState();
+    return sessionStore.login(sessionPayload);
+  };
   const logout = async () => {
     let apiError = null;
     try {
