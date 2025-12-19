@@ -86,6 +86,7 @@ public class ProductService {
             request.name(),
             request.description(),
             request.price(),
+            request.weightG(),
             request.stock(),
             request.imageUrl(),
             foodId
@@ -110,6 +111,7 @@ public class ProductService {
             request.categoryId(),
             request.price(),
             request.description(),
+            request.weightG(),
             request.stock(),
             request.imageUrl()
         );
