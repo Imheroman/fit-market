@@ -56,6 +56,16 @@ public class JwtUtil {
   }
 
   /**
+   * 토큰에서 user name 추출
+   *
+   * @param token
+   * @return username
+   */
+  public String getUsername(String token) {
+    return parseClaims(token).get(USER_NAME, String.class);
+  }
+
+  /**
    * 토큰에서 user role 추출
    *
    * @param token
