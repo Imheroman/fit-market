@@ -2,6 +2,7 @@ package com.ssafy.fitmarket_be.user.service;
 
 import com.ssafy.fitmarket_be.entity.User;
 import com.ssafy.fitmarket_be.user.dto.UserDetailResponseDto;
+import com.ssafy.fitmarket_be.user.dto.UserPasswordUpdateRequestDto;
 import com.ssafy.fitmarket_be.user.dto.UserSignupRequestDto;
 import com.ssafy.fitmarket_be.user.dto.UserUpdateResponseDto;
 import com.ssafy.fitmarket_be.user.mapper.UserMapper;
@@ -84,19 +85,39 @@ public class UserService {
     return new UserUpdateResponseDto(phone);
   }
 
+  /**
+   * 사용자의 현재 비밀번호를 검증한 뒤 새로운 비밀번호로 변경한다.
+   *
+   * @param id 사용자 식별자
+   * @param request 비밀번호 변경 요청 DTO
+   * @return 업데이트 결과 DTO
+   * @throws RuntimeException 사용자를 찾지 못했거나 비밀번호 검증/변경에 실패한 경우
+   */
   @Transactional
-  public UserUpdateResponseDto updatePassword(Long id, String password) {
-    int result = this.update(id, "password", this.passwordEncoder.encode(password));
+  public UserUpdateResponseDto updatePassword(Long id, UserPasswordUpdateRequestDto request) {
+    User user = this.userRepository.findBy(id)
+        .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없어요. 다시 확인해 주세요."));
+
+    if (!this.passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+      throw new IllegalArgumentException("현재 비밀번호가 일치하지 않아요. 다시 확인해 주세요.");
+    }
+
+    if (this.passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+      throw new IllegalArgumentException("새 비밀번호는 현재 비밀번호와 달라야 해요.");
+    }
+
+    String encodedPassword = this.passwordEncoder.encode(request.getNewPassword());
+    int result = this.update(id, "password", encodedPassword);
 
     if (result <= 0) {
-      throw new RuntimeException("회원 이름 수정 실패 이메일: ".concat(id.toString()));
+      throw new RuntimeException("비밀번호 변경에 실패했어요. 잠시 후 다시 시도해 주세요.");
     }
 
     return new UserUpdateResponseDto("");
   }
 
   private int update(Long id, String column, String value) {
-    log.trace("update email: {}, column: {}, value: {}", id, column, value);
+    log.trace("update userId: {}, column: {}", id, column);
     return this.userRepository.update(id, column, value);
   }
 }

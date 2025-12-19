@@ -1,10 +1,12 @@
 package com.ssafy.fitmarket_be.user.controller;
 
 import com.ssafy.fitmarket_be.user.dto.UserDetailResponseDto;
+import com.ssafy.fitmarket_be.user.dto.UserPasswordUpdateRequestDto;
 import com.ssafy.fitmarket_be.user.dto.UserSignupRequestDto;
 import com.ssafy.fitmarket_be.user.dto.UserUpdateRequestDto;
 import com.ssafy.fitmarket_be.user.dto.UserUpdateResponseDto;
 import com.ssafy.fitmarket_be.user.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -64,9 +66,9 @@ public class UserController {
   @PatchMapping("/password")
   public ResponseEntity<UserUpdateResponseDto> updatePassword(
       @AuthenticationPrincipal(expression = "id") Long id,
-      @RequestBody UserUpdateRequestDto request) {
+      @Valid @RequestBody UserPasswordUpdateRequestDto request) {
     UserUpdateResponseDto profile = this.userService.updatePassword(id,
-        request.getValue());
+        request);
     return ResponseEntity.status(HttpStatus.OK).body(profile);
   }
 
