@@ -20,7 +20,7 @@
               <p class="text-gray-600">
                 주문번호 {{ orderNumber }} ·
                 <span v-if="isCancelled">취소 완료</span>
-                <span v-else>총 {{ cartItems.length }}개 상품</span>
+                <span v-else>총 {{ checkoutItems.length }}개 상품</span>
               </p>
               <p
                   v-if="isConfirming"
@@ -192,14 +192,16 @@
         <section class="bg-white border border-green-100 rounded-2xl p-6">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold">주문한 상품</h2>
-            <p class="text-sm text-gray-500">총 {{ cartItems.length }}건</p>
+            <p class="text-sm text-gray-500">총 {{ checkoutItems.length }}건</p>
           </div>
 
-          <div v-if="isCartLoading" class="py-6 text-center text-gray-500">장바구니를 불러오는 중이에요.</div>
-          <div v-else-if="!cartItems.length" class="py-6 text-center text-gray-500">결제된 상품이 없어요.</div>
+          <div v-if="isCheckoutLoading" class="py-6 text-center text-gray-500">결제 정보를 불러오는 중이에요.</div>
+          <div v-else-if="!checkoutItems.length" class="py-6 text-center text-gray-500">
+            {{ emptyItemsMessage }}
+          </div>
           <div v-else class="divide-y divide-green-100">
             <div
-                v-for="item in cartItems"
+                v-for="item in checkoutItems"
                 :key="item.cartItemId || item.productId"
                 class="py-4 flex items-center gap-4 cursor-pointer transition-colors hover:bg-green-50/70 px-2 rounded-xl"
                 @click="navigateToProduct(item.productId || item.id)"
@@ -219,7 +221,7 @@
           <div class="border-t border-green-100 mt-6 pt-6 space-y-2 text-sm">
             <div class="flex justify-between text-gray-600">
               <span>상품 금액</span>
-              <span>{{ totalPrice.toLocaleString() }}원</span>
+              <span>{{ displayTotalPrice.toLocaleString() }}원</span>
             </div>
             <div class="flex justify-between text-gray-600">
               <span>배송비</span>
@@ -248,6 +250,7 @@ import {useCart} from '@/composables/useCart';
 import {useAddresses} from '@/composables/useAddresses';
 import {useOrderStatus} from '@/composables/useOrderStatus';
 import {usePaymentCallbacks} from '@/composables/usePaymentCallbacks';
+import {useProductDetail} from '@/composables/useProductDetail';
 import {formatPhoneNumber} from '@/utils/phone';
 import {clearPendingOrderRequest, readPendingOrderRequest} from '@/utils/paymentRequestStorage';
 
@@ -267,8 +270,65 @@ const {
 } = useOrderStatus();
 const {confirmPaymentFromQuery, confirmErrorMessage, isConfirming} = usePaymentCallbacks();
 const paymentResult = ref(null);
+const pendingOrderRequest = ref(null);
+const orderMode = ref('cart');
 
-const totalPayment = computed(() => totalPrice.value + shippingFee);
+const normalizeOrderMode = (value) => {
+  const normalized = typeof value === 'string' ? value.toLowerCase() : '';
+  return normalized === 'direct' ? 'direct' : 'cart';
+};
+
+const toNumberSafe = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const normalizeQuantity = (value) => {
+  const parsed = Math.floor(Number(value) || 0);
+  if (!Number.isFinite(parsed) || parsed < 1) return 1;
+  if (parsed > 100) return 100;
+  return parsed;
+};
+
+const directProductId = computed(() => toNumberSafe(pendingOrderRequest.value?.productId));
+const directQuantity = computed(() => normalizeQuantity(pendingOrderRequest.value?.quantity));
+const {
+  product: directProduct,
+  isLoading: isDirectLoading,
+  errorMessage: directErrorMessage,
+} = useProductDetail(directProductId);
+
+const directItem = computed(() => {
+  if (!directProduct.value?.id) return null;
+  return {
+    productId: directProduct.value.id,
+    name: directProduct.value.name ?? '',
+    category: directProduct.value.category ?? '',
+    price: Number(directProduct.value.price) || 0,
+    quantity: directQuantity.value,
+    image: directProduct.value.image ?? '',
+    calories: Number(directProduct.value.nutrition?.calories) || 0,
+    protein: Number(directProduct.value.nutrition?.protein) || 0,
+    carbs: Number(directProduct.value.nutrition?.carbs) || 0,
+    fat: Number(directProduct.value.nutrition?.fat) || 0,
+  };
+});
+
+const checkoutItems = computed(() =>
+  orderMode.value === 'direct' ? (directItem.value ? [directItem.value] : []) : cartItems.value,
+);
+const displayTotalPrice = computed(() => {
+  if (orderMode.value !== 'direct') return totalPrice.value;
+  if (!directItem.value) return 0;
+  return (directItem.value.price ?? 0) * (directItem.value.quantity ?? 0);
+});
+const totalPayment = computed(() => displayTotalPrice.value + shippingFee);
+const isCheckoutLoading = computed(() => (orderMode.value === 'direct' ? isDirectLoading.value : isCartLoading.value));
+const emptyItemsMessage = computed(() =>
+  orderMode.value === 'direct'
+    ? directErrorMessage.value || '결제된 상품 정보를 찾지 못했어요.'
+    : '결제된 상품이 없어요.',
+);
 
 const canEditAddress = computed(() => canFreeCancel.value && !isCancelled.value);
 
@@ -347,6 +407,8 @@ const processPaymentResult = async () => {
 
   try {
     const orderRequest = getStoredOrderRequest(orderIdFromQuery);
+    pendingOrderRequest.value = orderRequest;
+    orderMode.value = normalizeOrderMode(orderRequest?.mode);
     const result = await confirmPaymentFromQuery(route.query, {orderRequest});
     paymentResult.value = result;
     completePayment(result?.orderId ?? orderIdFromQuery);
@@ -366,7 +428,9 @@ onMounted(() => {
   processPaymentResult()
       .then((isReady) => {
         if (!isReady) return;
-        loadCart({force: true}).catch((error) => console.error(error));
+        if (orderMode.value !== 'direct') {
+          loadCart({force: true}).catch((error) => console.error(error));
+        }
         loadAddresses().catch((error) => {
           console.error(error);
         });

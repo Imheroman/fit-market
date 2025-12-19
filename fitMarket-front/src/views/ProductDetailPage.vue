@@ -270,9 +270,16 @@ const handleAddToCart = async () => {
 }
 
 const handleBuyNow = async () => {
-  const added = await handleAddToCart()
-  if (added) {
-    router.push({ name: 'order-checkout' })
+  const safeQuantity = clampQuantity(quantity.value)
+  quantity.value = safeQuantity
+  const productId = normalizedProduct.value.id
+  if (!productId) {
+    window.alert('상품 정보를 찾지 못했어요. 다시 시도해 주세요.')
+    return
   }
-}
+  router.push({
+    name: 'order-checkout',
+    query: { mode: 'direct', productId, quantity: safeQuantity },
+  })
+};
 </script>
