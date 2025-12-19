@@ -145,6 +145,7 @@ import { useRouter } from 'vue-router';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
 import { useCart } from '@/composables/useCart';
+import { shouldShowErrorAlert } from '@/utils/httpError';
 
 const router = useRouter();
 const MIN_QUANTITY = 1;
@@ -171,6 +172,7 @@ const handleQuantityChange = async (item, delta) => {
   try {
     await updateQuantity(item.cartItemId, nextQuantity);
   } catch (error) {
+    if (!shouldShowErrorAlert(error)) return;
     window.alert(error?.message ?? '수량을 바꾸지 못했어요. 다시 시도해 주세요.');
   } finally {
     pendingItemId.value = null;
@@ -187,6 +189,7 @@ const handleRemoveItem = async (item) => {
   try {
     await removeItem(item.cartItemId);
   } catch (error) {
+    if (!shouldShowErrorAlert(error)) return;
     window.alert(error?.message ?? '상품을 삭제하지 못했어요. 다시 시도해 주세요.');
   } finally {
     pendingItemId.value = null;

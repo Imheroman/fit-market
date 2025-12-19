@@ -52,7 +52,14 @@ const addressSubmitError = ref('');
 
 onMounted(async () => {
   try {
-    await Promise.all([loadUserProfile(), loadAddresses()]);
+    await loadUserProfile();
+  } catch (error) {
+    console.error(error);
+    return;
+  }
+
+  try {
+    await loadAddresses();
     syncTargetAddress();
   } catch (error) {
     console.error(error);
