@@ -68,6 +68,9 @@ dependencies {
     // Spring AI
     implementation 'org.springframework.ai:spring-ai-openai'
     implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
+
+    // WebClient 사용을 위한 WebFlux 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 }
 
 tasks.withType(JavaCompile).configureEach {

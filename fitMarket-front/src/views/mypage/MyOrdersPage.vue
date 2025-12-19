@@ -5,8 +5,9 @@
       :selected-range="selectedRange"
       :filter-description="filterDescription"
       :orders="filteredOrders"
+      :is-loading="isLoading"
+      :error-message="errorMessage"
       @change-filter="setFilter"
-      @view-order="handleViewOrder"
     />
   </section>
 </template>
@@ -15,9 +16,5 @@
 import MyOrdersSection from '@/components/mypage/MyOrdersSection.vue';
 import { useOrderHistory } from '@/composables/useOrderHistory';
 
-const { filterOptions, selectedRange, filteredOrders, filterDescription, setFilter } = useOrderHistory();
-
-const handleViewOrder = (orderNumber) => {
-  window.alert(`주문번호 ${orderNumber} 상세 페이지는 준비 중이에요.`);
-};
+const { filterOptions, selectedRange, filteredOrders, filterDescription, setFilter, isLoading, errorMessage } = useOrderHistory();
 </script>

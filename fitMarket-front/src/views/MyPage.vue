@@ -40,7 +40,7 @@ const tabs = [
 
 const activeTab = computed(() => {
   if (!route.name) return 'my-page-profile';
-  if (route.name === 'my-page-orders') return 'my-page-orders';
+  if (route.name === 'my-page-orders' || route.name === 'my-page-order-detail') return 'my-page-orders';
   if (route.name === 'my-page-addresses' || route.name === 'my-page-addresses-new') return 'my-page-addresses';
   return 'my-page-profile';
 });

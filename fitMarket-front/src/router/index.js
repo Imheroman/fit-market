@@ -5,6 +5,7 @@ import CartPage from "@/views/CartPage.vue"
 import MyPage from "@/views/MyPage.vue"
 import MyProfilePage from "@/views/mypage/MyProfilePage.vue"
 import MyOrdersPage from "@/views/mypage/MyOrdersPage.vue"
+import MyOrderDetailPage from "@/views/mypage/MyOrderDetailPage.vue"
 import MyAddressesPage from "@/views/mypage/MyAddressesPage.vue"
 import MyAddressCreatePage from "@/views/mypage/MyAddressCreatePage.vue"
 import MyAddressEditPage from "@/views/mypage/MyAddressEditPage.vue"
@@ -85,6 +86,11 @@ const router = createRouter({
           path: "orders",
           name: "my-page-orders",
           component: MyOrdersPage,
+        },
+        {
+          path: "orders/:orderNumber",
+          name: "my-page-order-detail",
+          component: MyOrderDetailPage,
         },
         {
           path: "addresses",

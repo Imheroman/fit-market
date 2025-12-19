@@ -14,6 +14,9 @@ USE fitmarket;
 -- 기존 테이블 삭제
 -- ============================================
 DROP TABLE IF EXISTS `sellers`; -- [RENAMED]
+DROP TABLE IF EXISTS `payment_refunds`;
+DROP TABLE IF EXISTS `payments`;
+DROP TABLE IF EXISTS `order_addresses`;
 DROP TABLE IF EXISTS `order_products`;
 DROP TABLE IF EXISTS `orders`;
 DROP TABLE IF EXISTS `shopping_cart_products`;
@@ -82,7 +85,7 @@ CREATE TABLE `address` (
     `address_line_detail` VARCHAR(255) NOT NULL,
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `deleted_date` TIMESTAMP NOT NULL,
+    `deleted_date` TIMESTAMP NULL,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -175,28 +178,38 @@ CREATE TABLE `shopping_cart_products` (
 -- 9. 주문 승인 상태
 CREATE TABLE `order_approval_status` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
-    `name` VARCHAR(100) NOT NULL DEFAULT 'pending',
+    `name` VARCHAR(100) NOT NULL DEFAULT 'pending_approval',
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `deleted_date` TIMESTAMP NULL,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_order_approval_status_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 10. 주문
 CREATE TABLE `orders` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
-    `order_approval_status_id` BIGINT NOT NULL,
+    `order_number` VARCHAR(40) NOT NULL,
+    `order_mode` ENUM('CART', 'DIRECT') NOT NULL,
+    `order_approval_status_id` BIGINT NOT NULL DEFAULT 1,
     `address_id` BIGINT NOT NULL,
+    `address_snapshot` JSON NOT NULL,
+    `items_snapshot` JSON NULL,
     `user_id` BIGINT NOT NULL,
     `order_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `ship_date` TIMESTAMP NOT NULL,
-    `due_date` TIMESTAMP NOT NULL,
-    `price` BIGINT NOT NULL,
+    `ship_date` TIMESTAMP NULL,
+    `due_date` TIMESTAMP NULL,
+    `merchandise_amount` BIGINT NOT NULL,
+    `shipping_fee` BIGINT NOT NULL DEFAULT 0,
+    `discount_amount` BIGINT NOT NULL DEFAULT 0,
+    `total_amount` BIGINT NOT NULL,
+    `payment_status` ENUM('PENDING', 'PAID', 'REFUNDED', 'FAILED') NOT NULL DEFAULT 'PENDING',
     `comment` VARCHAR(255) NULL,
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `deleted_date` TIMESTAMP NULL,
     PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_orders_order_number` (`order_number`),
     CONSTRAINT `fk_orders_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_orders_address` FOREIGN KEY (`address_id`) REFERENCES `address` (`id`) ON DELETE RESTRICT,
     CONSTRAINT `fk_orders_status` FOREIGN KEY (`order_approval_status_id`) REFERENCES `order_approval_status` (`id`) ON DELETE RESTRICT
@@ -207,8 +220,12 @@ CREATE TABLE `order_products` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
     `order_id` BIGINT NOT NULL,
     `product_id` BIGINT NOT NULL,
+    `cart_item_id` BIGINT NULL,
+    `product_name` VARCHAR(255) NOT NULL,
     `quantity` INT NOT NULL,
-    `price` BIGINT NOT NULL,
+    `unit_price` BIGINT NOT NULL,
+    `total_price` BIGINT NOT NULL,
+    `option_info` JSON NULL,
     `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `deleted_date` TIMESTAMP NULL,
@@ -217,11 +234,71 @@ CREATE TABLE `order_products` (
     CONSTRAINT `fk_order_products_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 12. 결제
+CREATE TABLE `payments` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `order_id` BIGINT NOT NULL,
+    `payment_key` VARCHAR(120) NOT NULL,
+    `provider` VARCHAR(30) NOT NULL,
+    `method` VARCHAR(50) NULL,
+    `status` ENUM('PENDING', 'PAID', 'REFUNDED', 'FAILED') NOT NULL DEFAULT 'PENDING',
+    `amount` BIGINT NOT NULL,
+    `approved_at` TIMESTAMP NULL,
+    `failed_code` VARCHAR(50) NULL,
+    `failed_message` VARCHAR(255) NULL,
+    `raw_response` JSON NULL,
+    `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_date` TIMESTAMP NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_payments_order` (`order_id`),
+    UNIQUE KEY `uk_payments_payment_key` (`payment_key`),
+    CONSTRAINT `fk_payments_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 13. 결제 환불 이력
+CREATE TABLE `payment_refunds` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `payment_id` BIGINT NOT NULL,
+    `amount` BIGINT NOT NULL,
+    `reason` VARCHAR(255) NULL,
+    `processed_at` TIMESTAMP NULL,
+    `status` ENUM('pending', 'succeeded', 'failed') NOT NULL DEFAULT 'pending',
+    `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_date` TIMESTAMP NULL,
+    PRIMARY KEY (`id`),
+    CONSTRAINT `fk_payment_refunds_payment` FOREIGN KEY (`payment_id`) REFERENCES `payments` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 14. 주문 주소 이력 (옵션)
+CREATE TABLE `order_addresses` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `order_id` BIGINT NOT NULL,
+    `recipient` VARCHAR(100) NOT NULL,
+    `phone` VARCHAR(30) NOT NULL,
+    `postal_code` VARCHAR(15) NULL,
+    `address_line` VARCHAR(255) NOT NULL,
+    `address_line_detail` VARCHAR(255) NOT NULL,
+    `memo` VARCHAR(200) NULL,
+    `is_current` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_date` TIMESTAMP NULL,
+    PRIMARY KEY (`id`),
+    CONSTRAINT `fk_order_addresses_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ============================================
 -- 초기 데이터 삽입
 -- ============================================
 INSERT INTO `order_approval_status` (`name`) VALUES
-('pending'), ('confirmed'), ('shipping'), ('delivered'), ('cancelled');
+('pending_approval'),
+('approved'),
+('rejected'),
+('cancelled'),
+('shipping'),
+('delivered');
 
 -- ============================================
 -- 샘플 데이터 (개발/테스트용)

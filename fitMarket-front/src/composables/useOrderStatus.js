@@ -19,10 +19,10 @@ const orderStatus = ref('processing') // processing | preparing | cancelled
 const isCancelled = computed(() => orderStatus.value === 'cancelled')
 const canFreeCancel = computed(() => paymentStatus.value === 'paid' && !isCancelled.value)
 
-const completePayment = () => {
+const completePayment = (nextOrderNumber) => {
   paymentStatus.value = 'paid'
   orderStatus.value = 'processing'
-  orderNumber.value = generateOrderNumber()
+  orderNumber.value = nextOrderNumber || orderNumber.value || generateOrderNumber()
 }
 
 const cancelOrder = () => {
@@ -30,9 +30,14 @@ const cancelOrder = () => {
   orderStatus.value = 'cancelled'
 }
 
+const setOrderNumber = (value) => {
+  orderNumber.value = value || generateOrderNumber()
+}
+
 const resetOrderStatus = () => {
   paymentStatus.value = 'pending'
   orderStatus.value = 'processing'
+  setOrderNumber()
 }
 
 export function useOrderStatus() {
@@ -47,5 +52,6 @@ export function useOrderStatus() {
     completePayment,
     cancelOrder,
     resetOrderStatus,
+    setOrderNumber,
   }
 }
