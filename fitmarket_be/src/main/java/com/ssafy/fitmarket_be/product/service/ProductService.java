@@ -1,10 +1,13 @@
 package com.ssafy.fitmarket_be.product.service;
 
+import com.ssafy.fitmarket_be.ai.service.LLMService;
+import com.ssafy.fitmarket_be.food.domain.Food;
 import com.ssafy.fitmarket_be.global.dto.PageResponse;
 import com.ssafy.fitmarket_be.product.domain.Product;
 import com.ssafy.fitmarket_be.product.dto.*;
 import com.ssafy.fitmarket_be.product.repository.ProductMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -12,11 +15,14 @@ import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductService {
 
     private final ProductMapper productMapper;
+    private final LLMService llmService;
+    private final com.ssafy.fitmarket_be.ai.service.FoodVectorStoreService foodVectorStoreService;
 
     /**
      * 상품 목록 조회 (페이징, 필터링).
@@ -62,13 +68,16 @@ public class ProductService {
 
     /**
      * 상품 등록.
-     * TODO: AI 영양 정보 계산 기능 추가 예정
+     * RAG를 사용하여 상품명과 유사한 식품 후보를 찾고, LLM으로 최종 매칭합니다.
      */
     @Transactional
     public ProductCreateResponse createProduct(ProductCreateRequest request) {
-        // TODO: 나중에 AI로 상품명/설명 기반 식품 DB 매칭
-        // 현재는 고정값 사용 (food_id = 1)
-        Long foodId = 1L;
+        // RAG: 벡터 검색으로 상위 50개 유사 식품 추출 (토큰 대폭 절감!)
+        List<Food> similarFoods =
+            foodVectorStoreService.searchSimilarFoods(request.name(), 50);
+
+        // LLM으로 최종 매칭 (50개만 전달하므로 토큰 99% 절감)
+        Long foodId = llmService.findBestMatch(request.name(), similarFoods);
 
         // 상품 등록
         productMapper.insertProduct(
