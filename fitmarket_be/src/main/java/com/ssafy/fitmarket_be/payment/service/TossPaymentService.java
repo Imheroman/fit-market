@@ -37,7 +37,6 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 @Slf4j
 public class TossPaymentService {
-
   private static final String GENERIC_FAIL_GUIDE = "결제가 정상적으로 처리되지 않았어요. 잠시 후 다시 시도해 주세요.";
 
   private final WebClient tossWebClient;
@@ -181,7 +180,7 @@ public class TossPaymentService {
         throw new IllegalStateException("주문 결제 상태를 갱신하지 못했어요.");
       }
       int approvalUpdated = orderRepository.updateApprovalStatus(paymentContext.orderId(),
-          OrderApprovalStatus.PENDING_APPROVAL.dbValue());
+          OrderApprovalStatus.APPROVED.dbValue());
       if (approvalUpdated <= 0) {
         throw new IllegalStateException("주문 승인 상태를 갱신하지 못했어요.");
       }
