@@ -403,6 +403,12 @@ const navigateToProduct = (productId) => {
   router.push({name: 'product-detail', params: {id: productId}});
 };
 
+const redirectToOrderDetail = async (orderId) => {
+  if (!orderId) return false;
+  await router.replace({name: 'my-page-order-detail', params: {orderNumber: orderId}});
+  return true;
+};
+
 const processPaymentResult = async () => {
   // [수정 전]
   // const orderIdFromQuery = route.query.orderId ? String(route.query.orderId) : '';
@@ -411,9 +417,6 @@ const processPaymentResult = async () => {
 
   const paymentStatusFromQuery = route.query.paymentStatus;
   const hasSuccessParams = Boolean(route.query.paymentKey && route.query.amount !== undefined && orderIdFromQuery);
-
-  console.log("only route query:", route.query.orderId);
-  console.log("order id from query:", orderIdFromQuery);
 
   if (paymentStatusFromQuery === 'fail') {
     await router.replace({
@@ -446,8 +449,10 @@ const processPaymentResult = async () => {
     orderMode.value = normalizeOrderMode(orderRequest?.mode);
     const result = await confirmPaymentFromQuery(route.query, {orderRequest});
     paymentResult.value = result;
-    completePayment(result?.orderId ?? orderIdFromQuery);
+    const resolvedOrderId = result?.orderId ?? orderIdFromQuery;
+    completePayment(resolvedOrderId);
     clearPendingOrderRequest();
+    if (await redirectToOrderDetail(resolvedOrderId)) return false;
     return true;
   } catch (error) {
     console.error(error);
