@@ -53,10 +53,6 @@
             <dd class="font-semibold">{{ formatOrderDate(orderDetail.orderedAt) }}</dd>
           </div>
           <div>
-            <dt class="text-gray-500">주문 방식</dt>
-            <dd class="font-semibold">{{ getOrderModeLabel(orderDetail.orderMode) }}</dd>
-          </div>
-          <div>
             <dt class="text-gray-500">상품 수</dt>
             <dd class="font-semibold">{{ orderDetail.items.length }}건</dd>
           </div>
@@ -65,6 +61,23 @@
             <dd class="font-semibold">{{ orderDetail.comment || '요청사항이 없어요.' }}</dd>
           </div>
         </dl>
+
+        <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            class="px-4 py-2 rounded-lg text-sm font-semibold border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+            @click="handleRefundRequest"
+          >
+            환불 요청
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 rounded-lg text-sm font-semibold border border-green-200 text-green-700 hover:bg-green-50 transition-colors"
+            @click="handleChangeAddress"
+          >
+            배송지 변경
+          </button>
+        </div>
       </section>
 
       <section class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-4">
@@ -165,4 +178,12 @@ const formatOrderDate = (date) => {
 };
 
 const formatCurrency = (value) => `${Number(value ?? 0).toLocaleString()}원`;
+
+const handleRefundRequest = () => {
+  window.alert('환불 요청은 곧 연결할게요. 지금은 고객센터로 알려 주세요.');
+};
+
+const handleChangeAddress = () => {
+  window.alert('배송지 변경은 곧 연결할게요. 필요하면 고객센터로 요청해 주세요.');
+};
 </script>

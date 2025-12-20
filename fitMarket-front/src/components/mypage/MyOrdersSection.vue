@@ -59,23 +59,11 @@
             <dt class="text-gray-500">결제 금액</dt>
             <dd class="font-semibold">{{ formatCurrency(order.totalAmount) }}</dd>
           </div>
-          <div>
-            <dt class="text-gray-500">결제 상태</dt>
-            <dd class="font-semibold">{{ getPaymentStatusLabel(order.paymentStatus) }}</dd>
-          </div>
         </dl>
 
         <div class="mt-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <p class="text-xs text-gray-500">주문 같은 날 다른 상품이 있다면 묶음으로 확인할 수 있어요.</p>
           <div class="flex flex-wrap gap-2">
-            <button
-              class="px-3 py-2 rounded-lg text-sm font-semibold border transition-colors"
-              :class="isRefundRequested(order.orderNumber) || isRefunding(order.orderNumber) ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-green-200 text-green-700 hover:bg-green-50'"
-              :disabled="isRefundRequested(order.orderNumber) || isRefunding(order.orderNumber)"
-              @click.stop="emit('request-refund', order)"
-            >
-              {{ isRefundRequested(order.orderNumber) ? '환불 요청됨' : isRefunding(order.orderNumber) ? '요청 중...' : '환불 요청' }}
-            </button>
             <button
               class="px-3 py-2 rounded-lg text-sm font-semibold border transition-colors"
               :class="isDeleting(order.orderNumber) ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-red-200 text-red-600 hover:bg-red-50'"
@@ -121,25 +109,15 @@ const props = defineProps({
     type: String,
     default: '',
   },
-  refundingOrderNumbers: {
-    type: Array,
-    default: () => [],
-  },
   deletingOrderNumbers: {
-    type: Array,
-    default: () => [],
-  },
-  refundRequestedOrderNumbers: {
     type: Array,
     default: () => [],
   },
 });
 
-const emit = defineEmits(['change-filter', 'select-order', 'request-refund', 'delete-order']);
+const emit = defineEmits(['change-filter', 'select-order', 'delete-order']);
 
-const isRefunding = (orderNumber) => props.refundingOrderNumbers.includes(orderNumber);
 const isDeleting = (orderNumber) => props.deletingOrderNumbers.includes(orderNumber);
-const isRefundRequested = (orderNumber) => props.refundRequestedOrderNumbers.includes(orderNumber);
 
 const orderStatusMeta = {
   pending_approval: { label: '승인 대기', badgeClass: 'bg-yellow-100 text-yellow-700' },
