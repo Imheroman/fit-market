@@ -246,7 +246,7 @@ const MAX_QUANTITY = 100;
 const TOSS_CLIENT_KEY = 'test_ck_6bJXmgo28eDWxw4yY4oyrLAnGKWx';
 const TOSS_CUSTOMER_KEY = 'A_I811IPruggOPKpP-5ee';
 
-const { cartItems, totalPrice, isLoading: isCartLoading, loadCart } = useCart();
+const { cartItems, isLoading: isCartLoading, loadCart } = useCart();
 const {
   addresses,
   selectedAddress,
@@ -292,6 +292,18 @@ const normalizeQuantity = (value) => {
   return parsed;
 };
 
+const parseCartItemIds = (value) => {
+  if (!value) return [];
+  const rawValue = Array.isArray(value) ? value.join(',') : String(value);
+  return rawValue
+    .split(',')
+    .map((entry) => Number(entry))
+    .filter((entry) => Number.isFinite(entry) && entry > 0);
+};
+
+const sumItemsTotal = (items) =>
+  items.reduce((sum, item) => sum + (item.price ?? 0) * (item.quantity ?? 0), 0);
+
 const orderMode = computed(() => normalizeOrderMode(route.query?.mode));
 const isDirectMode = computed(() => orderMode.value === 'direct');
 const directProductId = computed(() => toNumberSafe(route.query?.productId));
@@ -318,12 +330,22 @@ const directItem = computed(() => {
   };
 });
 
-const checkoutItems = computed(() => (isDirectMode.value ? (directItem.value ? [directItem.value] : []) : cartItems.value));
+const selectedCartItemIds = computed(() => parseCartItemIds(route.query?.cartItemIds));
+const checkoutItems = computed(() => {
+  if (isDirectMode.value) {
+    return directItem.value ? [directItem.value] : [];
+  }
+  if (!selectedCartItemIds.value.length) {
+    return cartItems.value;
+  }
+  const selectedSet = new Set(selectedCartItemIds.value);
+  return cartItems.value.filter((item) => selectedSet.has(item.cartItemId));
+});
 
 const displayTotalPrice = computed(() => {
-  if (!isDirectMode.value) return totalPrice.value;
+  if (!isDirectMode.value) return sumItemsTotal(checkoutItems.value);
   if (!directItem.value) return 0;
-  return (directItem.value.price ?? 0) * (directItem.value.quantity ?? 0);
+  return sumItemsTotal([directItem.value]);
 });
 
 const buildOrderRequest = () => {
@@ -344,7 +366,7 @@ const buildOrderRequest = () => {
     };
   }
 
-  const cartItemIds = cartItems.value
+  const cartItemIds = checkoutItems.value
     .map((item) => toNumberSafe(item?.cartItemId))
     .filter((id) => id !== null);
   if (!cartItemIds.length) return null;
@@ -386,6 +408,7 @@ const customerName = computed(() => selectedAddress.value?.recipient || selected
 const customerPhone = computed(() => sanitizePhoneDigits(selectedAddress.value?.phone));
 const isCheckoutLoading = computed(() => (isDirectMode.value ? isDirectLoading.value : isCartLoading.value));
 const hasCheckoutItems = computed(() => checkoutItems.value.length > 0);
+const isFilteredSelection = computed(() => !isDirectMode.value && selectedCartItemIds.value.length > 0);
 const isPaymentDisabled = computed(
   () =>
     isPaymentRequesting.value ||
@@ -396,7 +419,9 @@ const isPaymentDisabled = computed(
 const emptyItemsMessage = computed(() =>
   isDirectMode.value
     ? directErrorMessage.value || '바로 구매할 상품을 찾지 못했어요. 다시 선택해 주세요.'
-    : '장바구니가 비어 있어요. 상품을 담고 다시 시도해 주세요.',
+    : isFilteredSelection.value
+      ? '선택한 상품이 없어요. 장바구니에서 다시 골라 주세요.'
+      : '장바구니가 비어 있어요. 상품을 담고 다시 시도해 주세요.',
 );
 const paymentFailureNotice = computed(() => {
   if (failureGuide.value) {
@@ -480,6 +505,8 @@ const handlePayment = async () => {
     window.alert(emptyItemsMessage.value);
     if (isDirectMode.value && directProductId.value) {
       router.push({ name: 'product-detail', params: { id: directProductId.value } });
+    } else if (isFilteredSelection.value) {
+      router.push({ name: 'cart' });
     } else {
       router.push({ name: 'home' });
     }
