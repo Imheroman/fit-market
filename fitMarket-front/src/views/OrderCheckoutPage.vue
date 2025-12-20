@@ -292,6 +292,20 @@ const normalizeQuantity = (value) => {
   return parsed;
 };
 
+const normalizeCheckoutItem = (item) => ({
+  cartItemId: item?.cartItemId ?? null,
+  productId: item?.productId ?? item?.id ?? null,
+  name: item?.name ?? '',
+  category: item?.category ?? '',
+  price: Number(item?.price ?? 0),
+  quantity: normalizeQuantity(item?.quantity),
+  image: item?.image ?? '',
+  calories: Number(item?.calories ?? 0),
+  protein: Number(item?.protein ?? 0),
+  carbs: Number(item?.carbs ?? 0),
+  fat: Number(item?.fat ?? 0),
+});
+
 const parseCartItemIds = (value) => {
   if (!value) return [];
   const rawValue = Array.isArray(value) ? value.join(',') : String(value);
@@ -381,7 +395,8 @@ const buildOrderRequest = () => {
 const persistOrderRequest = () => {
   const orderRequest = buildOrderRequest();
   if (!orderRequest) return;
-  savePendingOrderRequest({ orderId: orderNumber.value, orderRequest });
+  const checkoutSnapshot = checkoutItems.value.map((item) => normalizeCheckoutItem(item));
+  savePendingOrderRequest({ orderId: orderNumber.value, orderRequest, checkoutItems: checkoutSnapshot });
 };
 
 const addressListOverflow = computed(() => addresses.value.length > MAX_VISIBLE_ADDRESSES);

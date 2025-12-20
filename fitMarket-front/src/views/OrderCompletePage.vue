@@ -256,7 +256,7 @@ import {clearPendingOrderRequest, readPendingOrderRequest} from '@/utils/payment
 
 const router = useRouter();
 const route = useRoute();
-const {cartItems, totalPrice, isLoading: isCartLoading, loadCart} = useCart();
+const {cartItems, isLoading: isCartLoading, loadCart} = useCart();
 const {selectedAddress, loadAddresses, isLoading: isAddressLoading, errorMessage: addressErrorMessage} = useAddresses();
 const {
   orderNumber,
@@ -271,6 +271,7 @@ const {
 const {confirmPaymentFromQuery, confirmErrorMessage, isConfirming} = usePaymentCallbacks();
 const paymentResult = ref(null);
 const pendingOrderRequest = ref(null);
+const pendingCheckoutItems = ref([]);
 const orderMode = ref('cart');
 
 const normalizeOrderMode = (value) => {
@@ -289,6 +290,20 @@ const normalizeQuantity = (value) => {
   if (parsed > 100) return 100;
   return parsed;
 };
+
+const normalizeCheckoutItem = (item) => ({
+  cartItemId: item?.cartItemId ?? null,
+  productId: item?.productId ?? item?.id ?? null,
+  name: item?.name ?? '',
+  category: item?.category ?? '',
+  price: Number(item?.price ?? 0),
+  quantity: normalizeQuantity(item?.quantity),
+  image: item?.image ?? '',
+  calories: Number(item?.calories ?? 0),
+  protein: Number(item?.protein ?? 0),
+  carbs: Number(item?.carbs ?? 0),
+  fat: Number(item?.fat ?? 0),
+});
 
 const directProductId = computed(() => toNumberSafe(pendingOrderRequest.value?.productId));
 const directQuantity = computed(() => normalizeQuantity(pendingOrderRequest.value?.quantity));
@@ -314,13 +329,28 @@ const directItem = computed(() => {
   };
 });
 
+const storedCartItems = computed(() => pendingCheckoutItems.value.map((item) => normalizeCheckoutItem(item)));
+const requestedCartItemIds = computed(() => {
+  const ids = pendingOrderRequest.value?.cartItemIds;
+  return Array.isArray(ids) ? ids.filter((id) => Number.isFinite(Number(id))) : [];
+});
+const filteredCartItems = computed(() => {
+  if (!requestedCartItemIds.value.length) return cartItems.value;
+  const requestedSet = new Set(requestedCartItemIds.value.map((id) => Number(id)));
+  return cartItems.value.filter((item) => requestedSet.has(Number(item.cartItemId)));
+});
+const cartCheckoutItems = computed(() =>
+  storedCartItems.value.length ? storedCartItems.value : filteredCartItems.value,
+);
 const checkoutItems = computed(() =>
-  orderMode.value === 'direct' ? (directItem.value ? [directItem.value] : []) : cartItems.value,
+  orderMode.value === 'direct' ? (directItem.value ? [directItem.value] : []) : cartCheckoutItems.value,
 );
 const displayTotalPrice = computed(() => {
-  if (orderMode.value !== 'direct') return totalPrice.value;
-  if (!directItem.value) return 0;
-  return (directItem.value.price ?? 0) * (directItem.value.quantity ?? 0);
+  if (orderMode.value === 'direct') {
+    if (!directItem.value) return 0;
+    return (directItem.value.price ?? 0) * (directItem.value.quantity ?? 0);
+  }
+  return checkoutItems.value.reduce((sum, item) => sum + (item.price ?? 0) * (item.quantity ?? 0), 0);
 });
 const totalPayment = computed(() => displayTotalPrice.value + shippingFee);
 const isCheckoutLoading = computed(() => (orderMode.value === 'direct' ? isDirectLoading.value : isCartLoading.value));
@@ -332,11 +362,14 @@ const emptyItemsMessage = computed(() =>
 
 const canEditAddress = computed(() => canFreeCancel.value && !isCancelled.value);
 
-const getStoredOrderRequest = (orderId) => {
+const getStoredOrderPayload = (orderId) => {
   if (!orderId) return null;
   const stored = readPendingOrderRequest();
   if (!stored || stored.orderId !== orderId) return null;
-  return stored.orderRequest ?? null;
+  return {
+    orderRequest: stored.orderRequest ?? null,
+    checkoutItems: Array.isArray(stored.checkoutItems) ? stored.checkoutItems : [],
+  };
 };
 
 const formattedSelectedAddress = computed(() => {
@@ -406,8 +439,10 @@ const processPaymentResult = async () => {
   }
 
   try {
-    const orderRequest = getStoredOrderRequest(orderIdFromQuery);
+    const storedPayload = getStoredOrderPayload(orderIdFromQuery);
+    const orderRequest = storedPayload?.orderRequest ?? null;
     pendingOrderRequest.value = orderRequest;
+    pendingCheckoutItems.value = storedPayload?.checkoutItems ?? [];
     orderMode.value = normalizeOrderMode(orderRequest?.mode);
     const result = await confirmPaymentFromQuery(route.query, {orderRequest});
     paymentResult.value = result;
@@ -428,7 +463,7 @@ onMounted(() => {
   processPaymentResult()
       .then((isReady) => {
         if (!isReady) return;
-        if (orderMode.value !== 'direct') {
+        if (orderMode.value !== 'direct' && !pendingCheckoutItems.value.length) {
           loadCart({force: true}).catch((error) => console.error(error));
         }
         loadAddresses().catch((error) => {
