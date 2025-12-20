@@ -7,12 +7,9 @@
       :orders="filteredOrders"
       :is-loading="isLoading"
       :error-message="errorMessage"
-      :refunding-order-numbers="refundingOrderNumbers"
       :deleting-order-numbers="deletingOrderNumbers"
-      :refund-requested-order-numbers="refundRequestedOrderNumbers"
       @change-filter="setFilter"
       @select-order="handleSelectOrder"
-      @request-refund="handleRefundRequest"
       @delete-order="handleDeleteOrder"
     />
   </section>
@@ -23,7 +20,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import MyOrdersSection from '@/components/mypage/MyOrdersSection.vue';
 import { useOrderHistory } from '@/composables/useOrderHistory';
-import { deleteOrder, requestOrderRefund } from '@/api/ordersApi';
+import { deleteOrder } from '@/api/ordersApi';
 
 const router = useRouter();
 const {
@@ -37,9 +34,7 @@ const {
   removeOrderByNumber,
 } = useOrderHistory();
 
-const refundingOrderNumbers = ref([]);
 const deletingOrderNumbers = ref([]);
-const refundRequestedOrderNumbers = ref([]);
 
 const addOrderNumber = (listRef, orderNumber) => {
   if (!orderNumber || listRef.value.includes(orderNumber)) return;
@@ -53,34 +48,6 @@ const removeOrderNumber = (listRef, orderNumber) => {
 const handleSelectOrder = (orderNumber) => {
   if (!orderNumber) return;
   router.push({ name: 'my-page-order-detail', params: { orderNumber } });
-};
-
-const handleRefundRequest = async (order) => {
-  const orderNumber = order?.orderNumber;
-  if (!orderNumber) {
-    window.alert('주문번호를 찾지 못했어요. 다시 시도해 주세요.');
-    return;
-  }
-  if (refundRequestedOrderNumbers.value.includes(orderNumber)) {
-    window.alert('이미 환불 요청이 접수됐어요.');
-    return;
-  }
-  if (refundingOrderNumbers.value.includes(orderNumber)) return;
-
-  const confirmed = window.confirm('환불을 요청할까요?');
-  if (!confirmed) return;
-
-  addOrderNumber(refundingOrderNumbers, orderNumber);
-
-  try {
-    await requestOrderRefund(orderNumber);
-    addOrderNumber(refundRequestedOrderNumbers, orderNumber);
-    window.alert('환불 요청이 접수됐어요. 처리 현황은 알림으로 알려드릴게요.');
-  } catch (error) {
-    window.alert(error?.message ?? '환불 요청을 접수하지 못했어요. 잠시 후 다시 시도해 주세요.');
-  } finally {
-    removeOrderNumber(refundingOrderNumbers, orderNumber);
-  }
 };
 
 const handleDeleteOrder = async (order) => {
