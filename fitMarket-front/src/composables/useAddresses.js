@@ -8,6 +8,7 @@ const isLoading = ref(false);
 const isMutating = ref(false);
 const errorMessage = ref('');
 const hasLoaded = ref(false);
+let loadPromise = null;
 
 const buildAddressPayload = (payload) => {
   const phoneDigits = sanitizePhoneDigits(payload?.phone ?? '').slice(0, 11);
@@ -61,29 +62,33 @@ const syncSelection = () => {
   selectedAddressId.value = fallbackId;
 };
 
-const loadAddresses = async () => {
-  if (isLoading.value) return;
+const loadAddresses = () => {
+  if (loadPromise) return loadPromise;
 
   isLoading.value = true;
   errorMessage.value = '';
 
-  try {
-    const response = await fetchAddresses();
-    const normalized = response.map((item) => normalizeAddress(item));
-    console.log("normalized addresses:", normalized);
-    const mainId = findMainId(normalized) ?? normalized[0]?.id ?? null;
-    savedAddresses.value = markMain(normalized, mainId);
-    syncSelection();
-    hasLoaded.value = true;
-  } catch (error) {
-    console.error(error);
-    errorMessage.value = error?.message ?? '배송지를 불러오지 못했어요.';
-    savedAddresses.value = [];
-    selectedAddressId.value = null;
-    throw error;
-  } finally {
-    isLoading.value = false;
-  }
+  loadPromise = (async () => {
+    try {
+      const response = await fetchAddresses();
+      const normalized = response.map((item) => normalizeAddress(item));
+      const mainId = findMainId(normalized) ?? normalized[0]?.id ?? null;
+      savedAddresses.value = markMain(normalized, mainId);
+      syncSelection();
+      hasLoaded.value = true;
+    } catch (error) {
+      console.error(error);
+      errorMessage.value = error?.message ?? '배송지를 불러오지 못했어요.';
+      savedAddresses.value = [];
+      selectedAddressId.value = null;
+      throw error;
+    } finally {
+      isLoading.value = false;
+      loadPromise = null;
+    }
+  })();
+
+  return loadPromise;
 };
 
 const ensureLoaded = () => {
