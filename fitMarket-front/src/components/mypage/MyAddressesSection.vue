@@ -11,6 +11,13 @@
       {{ errorMessage }}
     </p>
 
+    <p
+      v-if="isLimitReached"
+      class="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2"
+    >
+      배송지는 최대 {{ maxCount }}개까지 등록할 수 있어요. 기존 배송지를 수정하거나 삭제해 주세요.
+    </p>
+
     <div class="space-y-4">
       <div
         v-if="isLoading"
@@ -76,15 +83,24 @@
       </template>
     </div>
 
-    <p class="text-xs text-gray-500">필요한 만큼 자유롭게 추가하거나 삭제할 수 있어요.</p>
+    <p class="text-xs text-gray-500">배송지는 최대 {{ maxCount }}개까지 등록할 수 있어요.</p>
 
     <div class="flex justify-end pt-2">
       <RouterLink
+        v-if="!isLimitReached"
         :to="{ name: 'my-page-addresses-new' }"
         class="px-4 py-2 rounded-lg text-sm font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors"
       >
         새 배송지 등록
       </RouterLink>
+      <button
+        v-else
+        type="button"
+        class="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-200 text-gray-500 cursor-not-allowed"
+        disabled
+      >
+        새 배송지 등록
+      </button>
     </div>
   </section>
 </template>
@@ -105,6 +121,14 @@ defineProps({
   errorMessage: {
     type: String,
     default: '',
+  },
+  isLimitReached: {
+    type: Boolean,
+    default: false,
+  },
+  maxCount: {
+    type: Number,
+    default: 5,
   },
 });
 

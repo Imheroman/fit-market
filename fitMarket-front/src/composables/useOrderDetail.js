@@ -33,6 +33,9 @@ const normalizeOrderDetail = (order) => ({
   discountAmount: Number(order?.discountAmount ?? 0),
   orderedAt: order?.orderedAt ?? null,
   comment: order?.comment ?? '',
+  refundable: typeof order?.refundable === 'boolean' ? order.refundable : null,
+  returnable: typeof order?.returnable === 'boolean' ? order.returnable : null,
+  exchangeable: typeof order?.exchangeable === 'boolean' ? order.exchangeable : null,
   address: normalizeAddress(order?.address),
   items: Array.isArray(order?.items) ? order.items.map((item, index) => normalizeItem(item, index)) : [],
 });
