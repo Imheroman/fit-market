@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+/**
+ * 배송지 생성 요청 정보를 담는 DTO.
+ */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -35,4 +38,9 @@ public class AddressCreateRequestDto {
   @NotBlank(message = "상세 주소를 입력해 주세요.")
   @Size(max = 255, message = "상세 주소는 255자 이내로 입력해 주세요.")
   private String addressLineDetail;
+
+  /**
+   * 기본 배송지 여부.
+   */
+  private Boolean main;
 }
