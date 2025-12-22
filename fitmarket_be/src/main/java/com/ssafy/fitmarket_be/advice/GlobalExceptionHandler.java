@@ -1,6 +1,8 @@
 package com.ssafy.fitmarket_be.advice;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -16,7 +18,20 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
   /**
+   * 클라이언트 에러 처리
+   *
+   * @param e IllegalArgumentException
+   * @return
+   */
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<Object> handleAllException(final IllegalArgumentException e) {
+    log.error("전역 에러 발생: {}", e.getMessage());
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(e.getMessage()));
+  }
+
+  /**
    * 일단 가장 크게만 에러를 잡음
+   *
    * @param e Throwable
    * @return
    */
@@ -25,5 +40,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     log.error("전역 에러 발생: {}", e.getMessage());
 
     return ResponseEntity.internalServerError().body("서버에서 에러 발생");
+  }
+
+  public record ErrorResponse(String message) {
+
   }
 }

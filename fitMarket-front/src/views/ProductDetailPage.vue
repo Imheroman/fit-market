@@ -175,6 +175,7 @@ import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import { useCart } from '@/composables/useCart'
 import { useProductDetail } from '@/composables/useProductDetail'
+import { shouldShowErrorAlert } from '@/utils/httpError'
 
 const router = useRouter()
 const route = useRoute()
@@ -262,15 +263,23 @@ const handleAddToCart = async () => {
     window.alert('장바구니에 담겼어요! 결제 전에 언제든 수정할 수 있어요.')
     return true
   } catch (error) {
+    if (!shouldShowErrorAlert(error)) return false
     window.alert(error?.message ?? '장바구니에 담지 못했어요. 다시 시도해 주세요.')
     return false
   }
 }
 
 const handleBuyNow = async () => {
-  const added = await handleAddToCart()
-  if (added) {
-    router.push({ name: 'order-checkout' })
+  const safeQuantity = clampQuantity(quantity.value)
+  quantity.value = safeQuantity
+  const productId = normalizedProduct.value.id
+  if (!productId) {
+    window.alert('상품 정보를 찾지 못했어요. 다시 시도해 주세요.')
+    return
   }
-}
+  router.push({
+    name: 'order-checkout',
+    query: { mode: 'direct', productId, quantity: safeQuantity },
+  })
+};
 </script>

@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 
-const SHIPPING_FEE = 3000
+const SHIPPING_FEE = 0
 const CANCELLATION_FEE = 3000
 
 const generateOrderNumber = () => {

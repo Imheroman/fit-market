@@ -6,7 +6,7 @@ spring:
   application:
     name: fitmarket
   profiles:
-    active: dev
+    active: prod
   # Spring AI 설정 (SSAFY GMS 사용)
   ai:
     openai:

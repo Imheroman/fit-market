@@ -1,6 +1,8 @@
 import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { fetchUserProfile, deleteUserAccount } from '@/api/userApi';
+import { logoutUser } from '@/api/authApi';
+import { clearAuthErrorState } from '@/restapi';
 import { useSessionStore, buildUserSession, ensureRoleArray } from '@/stores/sessionStore';
 
 export function useAuth() {
@@ -9,8 +11,25 @@ export function useAuth() {
   const isProfileLoading = ref(false);
   const profileError = ref('');
 
-  const login = (sessionPayload) => sessionStore.login(sessionPayload);
-  const logout = () => sessionStore.logout();
+  const login = (sessionPayload) => {
+    clearAuthErrorState();
+    return sessionStore.login(sessionPayload);
+  };
+  const logout = async () => {
+    let apiError = null;
+    try {
+      await logoutUser();
+    } catch (error) {
+      apiError = error;
+    }
+    sessionStore.logout();
+    if (apiError) {
+      const message = apiError?.message ?? '로그아웃에 실패했어요. 잠시 후 다시 시도해주세요.';
+      const wrappedError = new Error(message);
+      wrappedError.cause = apiError;
+      throw wrappedError;
+    }
+  };
   const deleteAccount = async () => {
     await deleteUserAccount();
     sessionStore.deleteAccount();

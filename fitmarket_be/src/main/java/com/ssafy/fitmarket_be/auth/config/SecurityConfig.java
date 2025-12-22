@@ -5,14 +5,17 @@ import com.ssafy.fitmarket_be.auth.filter.CustomAuthenticationFilter;
 import com.ssafy.fitmarket_be.auth.filter.CustomLoginFilter;
 import com.ssafy.fitmarket_be.auth.filter.CustomLogoutFilter;
 import com.ssafy.fitmarket_be.auth.filter.SecurityExceptionHandlingFilter;
+import com.ssafy.fitmarket_be.auth.handler.CustomAccessDeniedHandler;
+import com.ssafy.fitmarket_be.auth.handler.CustomAuthenticationEntryPoint;
 import com.ssafy.fitmarket_be.auth.handler.LoginSuccessHandler;
-import com.ssafy.fitmarket_be.auth.jwt.JwtUtil;
+
 import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -50,8 +53,10 @@ public class SecurityConfig {
   public SecurityFilterChain filterChain(HttpSecurity http,
       SecurityExceptionHandlingFilter exceptionFilter,
       CustomAuthenticationFilter authenticationFilter,
+      CustomLogoutFilter logoutFilter,
       LoginSuccessHandler loginSuccessHandler,
-      CustomLogoutFilter logoutFilter) throws Exception {
+      CustomAccessDeniedHandler accessDeniedHandler,
+      CustomAuthenticationEntryPoint authenticationEntryPoint) throws Exception {
 
     // setting login filter
     AuthenticationManager authenticationManager = this.authenticationManager(
@@ -73,10 +78,17 @@ public class SecurityConfig {
 
     http
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/auth/login", "/logout", "/public/**", "/users/signup")
-            .permitAll()
+            .requestMatchers(HttpMethod.GET, "/products/**", "/products").permitAll()
+            .requestMatchers(HttpMethod.GET, "/categories").permitAll()
+            .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+            .requestMatchers("/auth/login", "/logout", "/public/**", "/users/signup").permitAll()
             .anyRequest().authenticated()
         );
+
+    http.exceptionHandling(exception -> exception
+        .authenticationEntryPoint(authenticationEntryPoint) // 401 에러 핸들러
+        .accessDeniedHandler(accessDeniedHandler)           // 403 에러 핸들러
+    );
 
     return http.build();
   }
