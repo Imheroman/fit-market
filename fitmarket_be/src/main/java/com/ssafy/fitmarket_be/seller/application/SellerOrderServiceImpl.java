@@ -88,6 +88,12 @@ class SellerOrderServiceImpl implements SellerOrderService {
     if (currentStatus == newStatus) {
       return;
     }
+    if (!isSellerUpdatable(newStatus)) {
+      throw new IllegalArgumentException("판매자는 배송/거절 상태만 변경할 수 있어요.");
+    }
+    if (!isAllowedTransition(currentStatus, newStatus)) {
+      throw new IllegalStateException("승인 완료에서 배송 시작/거절이 가능하고, 배송 중에만 배송 완료로 변경할 수 있어요.");
+    }
     int updated = sellerOrderMapper.updateApprovalStatus(order.getId(), newStatus.dbValue());
     if (updated <= 0) {
       throw new IllegalStateException("주문 상태를 변경하지 못했어요. 잠시 후 다시 시도해 주세요.");
@@ -167,5 +173,24 @@ class SellerOrderServiceImpl implements SellerOrderService {
         products.size(),
         order.getOrderDate()
     );
+  }
+
+  private boolean isSellerUpdatable(OrderApprovalStatus status) {
+    return status == OrderApprovalStatus.SHIPPING
+        || status == OrderApprovalStatus.DELIVERED
+        || status == OrderApprovalStatus.REJECTED;
+  }
+
+  private boolean isAllowedTransition(OrderApprovalStatus current, OrderApprovalStatus next) {
+    if (next == OrderApprovalStatus.SHIPPING) {
+      return current == OrderApprovalStatus.APPROVED;
+    }
+    if (next == OrderApprovalStatus.DELIVERED) {
+      return current == OrderApprovalStatus.SHIPPING;
+    }
+    if (next == OrderApprovalStatus.REJECTED) {
+      return current == OrderApprovalStatus.APPROVED;
+    }
+    return false;
   }
 }
