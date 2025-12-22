@@ -21,6 +21,16 @@ const normalizeItem = (item, index) => ({
   totalPrice: Number(item?.totalPrice ?? 0),
 });
 
+const normalizeReturnExchange = (payload) => {
+  if (!payload || typeof payload !== 'object') return null;
+  return {
+    type: payload?.type ? String(payload.type).toUpperCase() : '',
+    status: payload?.status ? String(payload.status).toUpperCase() : '',
+    requestedAt: payload?.requestedAt ?? null,
+    processedAt: payload?.processedAt ?? null,
+  };
+};
+
 const normalizeOrderDetail = (order) => ({
   orderNumber: order?.orderNumber ?? '',
   orderMode: order?.orderMode ?? 'CART',
@@ -36,6 +46,7 @@ const normalizeOrderDetail = (order) => ({
   refundable: typeof order?.refundable === 'boolean' ? order.refundable : null,
   returnable: typeof order?.returnable === 'boolean' ? order.returnable : null,
   exchangeable: typeof order?.exchangeable === 'boolean' ? order.exchangeable : null,
+  returnExchange: normalizeReturnExchange(order?.returnExchange),
   address: normalizeAddress(order?.address),
   items: Array.isArray(order?.items) ? order.items.map((item, index) => normalizeItem(item, index)) : [],
 });

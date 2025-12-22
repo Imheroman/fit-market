@@ -66,6 +66,8 @@
                             class="w-full rounded-lg border border-gray-200 px-3 py-2 pr-10 focus:border-green-500 focus:ring-2 focus:ring-green-100 transition"
                             placeholder="010-1234-5678"
                             @input="handlePhoneInput"
+                            @keydown="handlePhoneKeydown"
+                            @compositionend="handlePhoneInput"
                             required
                         />
                         <button
@@ -86,11 +88,15 @@
                     우편번호
                     <div class="relative">
                         <input
-                            v-model="form.postalCode"
+                            :value="form.postalCode"
                             type="text"
-                            maxlength="15"
+                            inputmode="numeric"
+                            maxlength="5"
                             class="w-full rounded-lg border border-gray-200 px-3 py-2 pr-10 focus:border-green-500 focus:ring-2 focus:ring-green-100 transition"
                             placeholder="예: 06236"
+                            @input="handlePostalInput"
+                            @keydown="handlePostalKeydown"
+                            @compositionend="handlePostalInput"
                         />
                         <button
                             v-if="form.postalCode"
@@ -256,12 +262,14 @@ const showCancel = computed(() => props.mode === 'edit');
 const localError = ref('');
 const displayError = computed(() => props.submitError || localError.value);
 
+const sanitizePostalCode = (value = '') => value.replace(/[^0-9]/g, '').slice(0, 5);
+
 const syncForm = (data) => {
     form.name = data?.name ?? data?.label ?? '';
     form.recipient = data?.recipient ?? '';
     const digits = sanitizePhoneDigits(data?.phone ?? '').slice(0, 11);
     form.phone = digits ? formatPhoneNumber(digits) : '';
-    form.postalCode = data?.postalCode ?? '';
+    form.postalCode = sanitizePostalCode(data?.postalCode ?? '');
     form.addressLine = data?.addressLine ?? '';
     form.addressLineDetail = data?.addressLineDetail ?? data?.detailAddress ?? '';
     form.memo = data?.memo ?? data?.instructions ?? '';
@@ -290,6 +298,39 @@ const handlePhoneInput = (event) => {
     form.phone = formatPhoneNumber(digits);
     if (localError.value) {
         localError.value = '';
+    }
+};
+
+const handlePostalInput = (event) => {
+    form.postalCode = sanitizePostalCode(event.target.value);
+    if (localError.value) {
+        localError.value = '';
+    }
+};
+
+const handlePhoneKeydown = (event) => {
+    if (event.isComposing) return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+
+    const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'];
+    if (allowedKeys.includes(event.key)) return;
+    if (/^\d$/.test(event.key)) return;
+
+    if (event.key && event.key.length === 1) {
+        event.preventDefault();
+    }
+};
+
+const handlePostalKeydown = (event) => {
+    if (event.isComposing) return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+
+    const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'];
+    if (allowedKeys.includes(event.key)) return;
+    if (/^\d$/.test(event.key)) return;
+
+    if (event.key && event.key.length === 1) {
+        event.preventDefault();
     }
 };
 
