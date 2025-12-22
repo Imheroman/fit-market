@@ -15,6 +15,10 @@ const fitmarket = axios.create({
   // headers: {
     // "x-api-key": "reqres-free-v1",
   // },
+  headers: {
+    // 이 부분이 핵심입니다.
+    'Content-Type': 'application/json'
+  }
 });
 
 const AUTH_REQUIRED_MESSAGE = '로그인이 필요해요. 로그인 후 이용할 수 있어요.';

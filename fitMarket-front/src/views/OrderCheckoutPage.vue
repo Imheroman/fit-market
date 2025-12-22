@@ -173,11 +173,22 @@
             </div>
 
             <div class="bg-white border border-green-100 rounded-2xl p-6">
+              <h2 class="text-xl font-bold mb-2">주문 메모</h2>
+              <p class="text-sm text-gray-500 mb-4">배송팀에 전할 말이 있으면 남겨 주세요.</p>
+              <textarea
+                v-model="orderComment"
+                rows="4"
+                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 focus:border-green-500 focus:ring-2 focus:ring-green-100 resize-none"
+                placeholder="예) 부재 시 문 앞에 놓아 주세요."
+              ></textarea>
+            </div>
+
+            <div class="bg-white border border-green-100 rounded-2xl p-6">
               <h2 class="text-xl font-bold mb-4">주문 요약</h2>
               <div class="space-y-2 text-sm text-gray-600">
                 <p>총 {{ checkoutItems.length }}개 상품</p>
                 <p>선택한 배송지: {{ selectedAddress?.addressLine }} {{ selectedAddress?.addressLineDetail }}</p>
-                <p>배송 메모: {{ selectedAddress?.memo || '입력된 메모가 없어요.' }}</p>
+                <p>주문 메모: {{ normalizedOrderComment || '입력된 메모가 없어요.' }}</p>
               </div>
             </div>
           </div>
@@ -362,9 +373,12 @@ const displayTotalPrice = computed(() => {
   return sumItemsTotal([directItem.value]);
 });
 
+const orderComment = ref('');
+const normalizedOrderComment = computed(() => orderComment.value.trim());
+
 const buildOrderRequest = () => {
   const addressId = toNumberSafe(selectedAddress.value?.id);
-  const comment = (selectedAddress.value?.memo ?? '').trim();
+  const comment = normalizedOrderComment.value;
   if (!addressId) return null;
 
   if (isDirectMode.value) {

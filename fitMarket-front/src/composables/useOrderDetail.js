@@ -2,6 +2,7 @@ import { onMounted, ref, watch } from 'vue';
 import { fetchOrderDetail } from '@/api/ordersApi';
 
 const normalizeAddress = (address) => ({
+  id: address?.id ?? null,
   name: address?.name ?? '',
   recipient: address?.recipient ?? '',
   phone: address?.phone ?? '',

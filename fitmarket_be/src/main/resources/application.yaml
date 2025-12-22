@@ -6,7 +6,7 @@ spring:
   application:
     name: fitmarket
   profiles:
-    active: dev
+    active: prod
 
 logging:
   pattern:
