@@ -12,6 +12,9 @@ import com.ssafy.fitmarket_be.order.domain.OrderAddressSnapshot;
 import com.ssafy.fitmarket_be.order.domain.OrderApprovalStatus;
 import com.ssafy.fitmarket_be.order.domain.OrderMode;
 import com.ssafy.fitmarket_be.order.domain.OrderProductEntity;
+import com.ssafy.fitmarket_be.order.domain.OrderReturnExchangeEntity;
+import com.ssafy.fitmarket_be.order.domain.OrderReturnExchangeReason;
+import com.ssafy.fitmarket_be.order.domain.OrderReturnExchangeType;
 import com.ssafy.fitmarket_be.order.domain.OrderSearchPeriod;
 import com.ssafy.fitmarket_be.order.domain.OrderView;
 import com.ssafy.fitmarket_be.order.dto.OrderAddressUpdateRequest;
@@ -19,7 +22,10 @@ import com.ssafy.fitmarket_be.order.dto.OrderCreateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderCreateResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderDetailResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderItemResponse;
+import com.ssafy.fitmarket_be.order.dto.OrderRefundEligibilityResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderRefundRequest;
+import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeRequest;
+import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderStatusUpdateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderSummaryResponse;
 import com.ssafy.fitmarket_be.order.repository.OrderRepository;
@@ -51,6 +57,9 @@ import org.springframework.util.StringUtils;
 public class OrderService {
 
   private static final int MAX_QUANTITY_PER_PRODUCT = 100;
+  private static final int REFUND_AVAILABLE_DAYS = 3;
+  private static final int RETURN_EXCHANGE_AVAILABLE_DAYS = 7;
+  private static final String CLAIM_ALREADY_REQUESTED_MESSAGE = "이미 환불/반품/교환 요청이 접수된 주문이에요.";
 
   private final OrderRepository orderRepository;
   private final ShoppingCartRepository shoppingCartRepository;
@@ -183,6 +192,10 @@ public class OrderService {
         findOrderProductsGrouped(List.of(order));
     List<OrderProductEntity> products = productsByOrderId.getOrDefault(order.getId(), List.of());
     String orderName = resolveOrderName(products);
+    boolean hasReturnExchangeRequest = hasReturnExchangeRequest(order.getId());
+    RefundEligibility refundEligibility = evaluateRefundEligibility(order, hasReturnExchangeRequest);
+    ReturnExchangeEligibility returnExchangeEligibility =
+        evaluateReturnExchangeEligibility(order, hasReturnExchangeRequest);
 
     return new OrderDetailResponse(
         order.getOrderNumber(),
@@ -194,6 +207,9 @@ public class OrderService {
         order.getMerchandiseAmount(),
         order.getShippingFee(),
         order.getDiscountAmount(),
+        refundEligibility.eligible(),
+        returnExchangeEligibility.eligible(),
+        returnExchangeEligibility.eligible(),
         order.getOrderDate(),
         order.getComment(),
         parseSnapshot(order.getAddressSnapshot()),
@@ -254,26 +270,40 @@ public class OrderService {
   }
 
   /**
+   * 환불 가능 여부를 조회한다.
+   *
+   * @param userId      사용자 식별자
+   * @param orderNumber 주문 번호
+   * @return 환불 가능 여부 응답
+   */
+  @Transactional(readOnly = true)
+  public OrderRefundEligibilityResponse getRefundEligibility(Long userId, String orderNumber) {
+    OrderView order = findOwnedOrder(userId, orderNumber);
+    boolean hasReturnExchangeRequest = hasReturnExchangeRequest(order.getId());
+    RefundEligibility eligibility = evaluateRefundEligibility(order, hasReturnExchangeRequest);
+    return new OrderRefundEligibilityResponse(eligibility.eligible(), eligibility.message());
+  }
+
+  /**
    * 결제 완료된 주문을 환불 처리한다.
    *
    * @param userId      사용자 식별자
    * @param orderNumber 주문 번호
    * @param request     환불 요청
+   * @return 환불 처리 응답
    */
   @Transactional
-  public void refundOrder(Long userId, String orderNumber, OrderRefundRequest request) {
+  public OrderRefundEligibilityResponse refundOrder(Long userId, String orderNumber, OrderRefundRequest request) {
     OrderView order = findOwnedOrder(userId, orderNumber);
-    OrderApprovalStatus status = OrderApprovalStatus.from(order.getApprovalStatus());
-    if (status.isTerminal()) {
-      throw new IllegalStateException("이미 종료된 주문이에요. 환불할 수 없어요.");
-    }
-    if (order.getPaymentStatus() != PaymentStatus.PAID) {
-      throw new IllegalStateException("결제 완료된 주문만 환불할 수 있어요.");
+    boolean hasReturnExchangeRequest = hasReturnExchangeRequest(order.getId());
+    RefundEligibility eligibility = evaluateRefundEligibility(order, hasReturnExchangeRequest);
+    if (!eligibility.eligible()) {
+      throw new IllegalArgumentException(eligibility.message());
     }
 
     int updatedOrder = orderRepository.updatePaymentStatus(order.getId(), PaymentStatus.REFUNDED);
     if (updatedOrder <= 0) {
-      throw new IllegalStateException("주문 결제 상태를 변경하지 못했어요.");
+      throw new RuntimeException("주문 결제 상태를 변경하지 못했어요.");
     }
     int updatedPayment = paymentRepository.updateStatusByOrderId(order.getId(), PaymentStatus.REFUNDED);
     if (updatedPayment == 0) {
@@ -281,8 +311,146 @@ public class OrderService {
     }
     orderRepository.updateApprovalStatus(order.getId(), OrderApprovalStatus.CANCELLED.dbValue());
 
+    saveReturnExchangeRequest(
+        order.getId(),
+        OrderReturnExchangeType.REFUND,
+        resolveReason(request.reason()),
+        resolveDetail(request.detail())
+    );
+
     log.info("refund requested for order {} by user {} reason={}", orderNumber, userId,
         Objects.toString(request.reason(), "N/A"));
+
+    return new OrderRefundEligibilityResponse(true, "환불 요청이 정상적으로 접수됐어요.");
+  }
+
+  /**
+   * 반품/교환 가능 여부를 확인하고 요청을 기록한다.
+   *
+   * @param userId      사용자 식별자
+   * @param orderNumber 주문 번호
+   * @param request     반품/교환 요청
+   * @return 반품/교환 가능 여부 응답
+   */
+  @Transactional
+  public OrderReturnExchangeResponse requestReturnOrExchange(
+      Long userId,
+      String orderNumber,
+      OrderReturnExchangeRequest request
+  ) {
+    OrderView order = findOwnedOrder(userId, orderNumber);
+    boolean hasReturnExchangeRequest = hasReturnExchangeRequest(order.getId());
+    ReturnExchangeEligibility eligibility =
+        evaluateReturnExchangeEligibility(order, hasReturnExchangeRequest);
+    if (!eligibility.eligible()) {
+      return new OrderReturnExchangeResponse(false, eligibility.message(), request.type());
+    }
+
+    saveReturnExchangeRequest(
+        order.getId(),
+        request.type(),
+        request.reason(),
+        request.detail()
+    );
+
+    log.info("return/exchange requested for order {} by user {} type={} reason={} detail={}",
+        orderNumber, userId, request.type(), request.reason(), request.detail());
+
+    return new OrderReturnExchangeResponse(true, "요청이 접수됐어요. 빠르게 확인해 볼게요.", request.type());
+  }
+
+  private RefundEligibility evaluateRefundEligibility(OrderView order, boolean hasReturnExchangeRequest) {
+    if (hasReturnExchangeRequest) {
+      return new RefundEligibility(false, CLAIM_ALREADY_REQUESTED_MESSAGE);
+    }
+    OrderApprovalStatus status = OrderApprovalStatus.from(order.getApprovalStatus());
+    if (status.isTerminal()) {
+      return new RefundEligibility(false, "이미 종료된 주문이라 환불할 수 없어요.");
+    }
+    if (status.isShippingOrLater()) {
+      return new RefundEligibility(false, "배송이 시작된 주문은 환불할 수 없어요.");
+    }
+    if (order.getPaymentStatus() != PaymentStatus.PAID) {
+      return new RefundEligibility(false, "결제 완료된 주문만 환불할 수 있어요.");
+    }
+
+    LocalDateTime approvedAt = paymentRepository.findApprovedAtByOrderId(order.getId())
+        .orElseThrow(() -> new RuntimeException("결제 승인 시점을 확인하지 못했어요. 잠시 후 다시 시도해 주세요."));
+    LocalDateTime refundDeadline = approvedAt.plusDays(REFUND_AVAILABLE_DAYS);
+    if (refundDeadline.isBefore(LocalDateTime.now())) {
+      return new RefundEligibility(false, "결제 후 3일이 지나 환불할 수 없어요.");
+    }
+    return new RefundEligibility(true, "환불이 가능해요.");
+  }
+
+  private ReturnExchangeEligibility evaluateReturnExchangeEligibility(
+      OrderView order,
+      boolean hasReturnExchangeRequest
+  ) {
+    if (hasReturnExchangeRequest) {
+      return new ReturnExchangeEligibility(false, CLAIM_ALREADY_REQUESTED_MESSAGE);
+    }
+    OrderApprovalStatus status = OrderApprovalStatus.from(order.getApprovalStatus());
+    if (status == OrderApprovalStatus.CANCELLED || status == OrderApprovalStatus.REJECTED) {
+      return new ReturnExchangeEligibility(false, "종료된 주문은 반품/교환할 수 없어요.");
+    }
+    if (status != OrderApprovalStatus.DELIVERED) {
+      return new ReturnExchangeEligibility(false, "배송 완료 후에 반품/교환을 요청할 수 있어요.");
+    }
+
+    LocalDateTime baseDate = resolveReturnExchangeBaseDate(order);
+    LocalDateTime deadline = baseDate.plusDays(RETURN_EXCHANGE_AVAILABLE_DAYS);
+    if (deadline.isBefore(LocalDateTime.now())) {
+      return new ReturnExchangeEligibility(false, "배송 완료 후 7일이 지나 반품/교환할 수 없어요.");
+    }
+    return new ReturnExchangeEligibility(true, "반품/교환이 가능해요.");
+  }
+
+  private boolean hasReturnExchangeRequest(Long orderId) {
+    return orderRepository.countOrderReturnExchanges(orderId) > 0;
+  }
+
+  private void saveReturnExchangeRequest(
+      Long orderId,
+      OrderReturnExchangeType type,
+      OrderReturnExchangeReason reason,
+      String detail
+  ) {
+    OrderReturnExchangeEntity request = OrderReturnExchangeEntity.builder()
+        .orderId(orderId)
+        .type(type)
+        .reason(reason)
+        .detail(detail)
+        .build();
+    try {
+      int inserted = orderRepository.insertOrderReturnExchange(request);
+      if (inserted <= 0) {
+        throw new IllegalStateException("반품/교환/환불 요청을 저장하지 못했어요. 다시 시도해 주세요.");
+      }
+    } catch (DuplicateKeyException e) {
+      throw new IllegalArgumentException(CLAIM_ALREADY_REQUESTED_MESSAGE, e);
+    }
+  }
+
+  private OrderReturnExchangeReason resolveReason(OrderReturnExchangeReason reason) {
+    return reason == null ? OrderReturnExchangeReason.OTHER : reason;
+  }
+
+  private String resolveDetail(String detail) {
+    if (!StringUtils.hasText(detail)) {
+      return "사유 미입력";
+    }
+    return detail.trim();
+  }
+
+  private LocalDateTime resolveReturnExchangeBaseDate(OrderView order) {
+    if (order.getDueDate() != null) {
+      return order.getDueDate();
+    }
+    if (order.getShipDate() != null) {
+      return order.getShipDate();
+    }
+    return order.getOrderDate();
   }
 
   /**
@@ -328,6 +496,12 @@ public class OrderService {
   private void refreshOrderAddressHistory(Long orderId, Address address) {
     orderRepository.deactivateOrderAddresses(orderId);
     saveOrderAddressHistory(orderId, address);
+  }
+
+  private record RefundEligibility(boolean eligible, String message) {
+  }
+
+  private record ReturnExchangeEligibility(boolean eligible, String message) {
   }
 
   private List<OrderProductEntity> buildFromCart(Long userId, List<Long> cartItemIds) {

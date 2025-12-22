@@ -2,7 +2,10 @@ package com.ssafy.fitmarket_be.order.controller;
 
 import com.ssafy.fitmarket_be.order.dto.OrderAddressUpdateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderDetailResponse;
+import com.ssafy.fitmarket_be.order.dto.OrderRefundEligibilityResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderRefundRequest;
+import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeRequest;
+import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderStatusUpdateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderSummaryResponse;
 import com.ssafy.fitmarket_be.order.domain.OrderSearchPeriod;
@@ -119,21 +122,59 @@ public class OrderController {
   }
 
   /**
+   * 환불 가능 여부를 조회한다.
+   *
+   * @param userId      인증된 사용자 식별자
+   * @param orderNumber 주문 번호
+   * @return 환불 가능 여부
+   */
+  @GetMapping("/{orderNumber}/refund/eligibility")
+  public ResponseEntity<OrderRefundEligibilityResponse> getRefundEligibility(
+      @AuthenticationPrincipal(expression = "id") Long userId,
+      @PathVariable String orderNumber
+  ) {
+    OrderRefundEligibilityResponse response = orderService.getRefundEligibility(userId, orderNumber);
+    return ResponseEntity.status(HttpStatus.OK).body(response);
+  }
+
+  /**
    * 결제 완료된 주문을 환불 처리한다.
    *
    * @param userId      인증된 사용자 식별자
    * @param orderNumber 주문 번호
    * @param request     환불 요청
-   * @return HTTP 200
+   * @return 환불 처리 응답
    */
   @PostMapping("/{orderNumber}/refund")
-  public ResponseEntity<Void> refundOrder(
+  public ResponseEntity<OrderRefundEligibilityResponse> refundOrder(
       @AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable String orderNumber,
       @RequestBody(required = false) OrderRefundRequest request
   ) {
-    orderService.refundOrder(userId, orderNumber, request == null ? new OrderRefundRequest(null) : request);
-    return ResponseEntity.status(HttpStatus.OK).build();
+    OrderRefundEligibilityResponse response = orderService.refundOrder(
+        userId,
+        orderNumber,
+        request == null ? new OrderRefundRequest(null, null) : request
+    );
+    return ResponseEntity.status(HttpStatus.OK).body(response);
+  }
+
+  /**
+   * 반품/교환을 요청한다.
+   *
+   * @param userId      인증된 사용자 식별자
+   * @param orderNumber 주문 번호
+   * @param request     반품/교환 요청
+   * @return 반품/교환 가능 여부
+   */
+  @PostMapping("/{orderNumber}/return-exchange")
+  public ResponseEntity<OrderReturnExchangeResponse> requestReturnOrExchange(
+      @AuthenticationPrincipal(expression = "id") Long userId,
+      @PathVariable String orderNumber,
+      @Valid @RequestBody OrderReturnExchangeRequest request
+  ) {
+    OrderReturnExchangeResponse response = orderService.requestReturnOrExchange(userId, orderNumber, request);
+    return ResponseEntity.status(HttpStatus.OK).body(response);
   }
 
   /**
