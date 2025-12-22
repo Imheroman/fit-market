@@ -68,16 +68,15 @@
             class="px-4 py-2 rounded-lg text-sm font-semibold border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
             @click="handleRefundRequest"
           >
-            환불 요청
-          </button>
-          <button
-            type="button"
-            class="px-4 py-2 rounded-lg text-sm font-semibold border border-green-200 text-green-700 hover:bg-green-50 transition-colors"
-            @click="handleChangeAddress"
-          >
-            배송지 변경
+            {{ isRefunding ? '환불 요청 중...' : '환불 요청' }}
           </button>
         </div>
+        <p v-if="refundMessage" class="text-sm text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
+          {{ refundMessage }}
+        </p>
+        <p v-if="refundError" class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+          {{ refundError }}
+        </p>
       </section>
 
       <section class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-4">
@@ -99,13 +98,72 @@
 
       <section class="grid gap-6 lg:grid-cols-2">
         <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-3">
-          <h3 class="text-lg font-semibold text-gray-900">배송지</h3>
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900">배송지</h3>
+            <button
+              type="button"
+              class="px-3 py-2 rounded-lg text-sm font-semibold border border-green-200 text-green-700 hover:bg-green-50 transition-colors"
+              @click="toggleAddressEditor"
+            >
+              배송지 변경
+            </button>
+          </div>
           <div class="text-sm text-gray-600 space-y-1">
             <p class="font-semibold text-gray-900">{{ orderDetail.address.name || '배송지 이름' }}</p>
             <p>{{ orderDetail.address.recipient }} · {{ orderDetail.address.phone }}</p>
             <p>{{ orderDetail.address.postalCode }} {{ orderDetail.address.addressLine }}</p>
             <p>{{ orderDetail.address.addressLineDetail }}</p>
             <p v-if="orderDetail.address.memo" class="text-gray-500">메모: {{ orderDetail.address.memo }}</p>
+          </div>
+          <div v-if="isAddressEditorOpen" class="border border-dashed border-green-200 rounded-xl p-4 space-y-3">
+            <p class="text-sm text-gray-600">변경할 배송지를 선택해 주세요.</p>
+            <div v-if="isAddressLoading" class="text-sm text-gray-500">배송지를 불러오는 중이에요.</div>
+            <div v-else-if="addressErrorMessage" class="text-sm text-red-600">
+              {{ addressErrorMessage }}
+            </div>
+            <div v-else-if="addresses.length === 0" class="text-sm text-gray-500">
+              등록된 배송지가 없어요. 배송지를 먼저 추가해 주세요.
+              <RouterLink
+                :to="{ name: 'my-page-addresses' }"
+                class="text-green-600 font-semibold ml-1 hover:underline"
+              >
+                배송지 관리로 이동
+              </RouterLink>
+            </div>
+            <div v-else class="space-y-3">
+              <select
+                v-model="selectedAddressId"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-100"
+              >
+                <option value="" disabled>배송지를 선택해 주세요.</option>
+                <option v-for="address in addresses" :key="address.id" :value="address.id">
+                  {{ address.name || address.recipient }} · {{ address.addressLine }}
+                </option>
+              </select>
+              <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  class="px-4 py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                  @click="closeAddressEditor"
+                >
+                  닫기
+                </button>
+                <button
+                  type="button"
+                  class="px-4 py-2 rounded-lg text-sm font-semibold border border-green-200 text-green-700 hover:bg-green-50 transition-colors"
+                  :disabled="isChangingAddress || !selectedAddressId"
+                  @click="handleChangeAddress"
+                >
+                  {{ isChangingAddress ? '변경 요청 중...' : '배송지 변경 요청' }}
+                </button>
+              </div>
+              <p v-if="addressChangeMessage" class="text-sm text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
+                {{ addressChangeMessage }}
+              </p>
+              <p v-if="addressChangeError" class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                {{ addressChangeError }}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -136,14 +194,31 @@
 </template>
 
 <script setup lang="js">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute, RouterLink } from 'vue-router';
 import { useOrderDetail } from '@/composables/useOrderDetail';
+import { useAddresses } from '@/composables/useAddresses';
+import { requestOrderAddressChange, requestOrderRefund } from '@/api/ordersApi';
 
 const route = useRoute();
 const orderNumber = computed(() => route.params.orderNumber ?? '');
 
 const { orderDetail, isLoading, errorMessage, loadOrderDetail } = useOrderDetail(orderNumber);
+const {
+  addresses,
+  loadAddresses,
+  isLoading: isAddressLoading,
+  errorMessage: addressErrorMessage,
+} = useAddresses();
+
+const isRefunding = ref(false);
+const refundMessage = ref('');
+const refundError = ref('');
+const isAddressEditorOpen = ref(false);
+const selectedAddressId = ref('');
+const isChangingAddress = ref(false);
+const addressChangeMessage = ref('');
+const addressChangeError = ref('');
 
 const orderStatusMeta = {
   pending_approval: { label: '승인 대기', badgeClass: 'bg-yellow-100 text-yellow-700' },
@@ -179,11 +254,90 @@ const formatOrderDate = (date) => {
 
 const formatCurrency = (value) => `${Number(value ?? 0).toLocaleString()}원`;
 
-const handleRefundRequest = () => {
-  window.alert('환불 요청은 곧 연결할게요. 지금은 고객센터로 알려 주세요.');
+const handleRefundRequest = async () => {
+  if (!orderNumber.value || isRefunding.value) return;
+
+  const shouldRequest = window.confirm('환불 요청을 접수할까요?');
+  if (!shouldRequest) return;
+
+  isRefunding.value = true;
+  refundMessage.value = '';
+  refundError.value = '';
+
+  try {
+    await requestOrderRefund(orderNumber.value);
+    refundMessage.value = '환불 요청을 접수했어요. 진행 상황은 주문 상태에서 확인해 주세요.';
+    await loadOrderDetail();
+  } catch (error) {
+    refundError.value = error?.message ?? '환불 요청을 접수하지 못했어요. 잠시 후 다시 시도해 주세요.';
+  } finally {
+    isRefunding.value = false;
+  }
 };
 
-const handleChangeAddress = () => {
-  window.alert('배송지 변경은 곧 연결할게요. 필요하면 고객센터로 요청해 주세요.');
+const closeAddressEditor = () => {
+  isAddressEditorOpen.value = false;
+  addressChangeMessage.value = '';
+  addressChangeError.value = '';
 };
+
+const ensureAddressesLoaded = async () => {
+  if (addresses.value.length > 0 || isAddressLoading.value) return;
+  try {
+    await loadAddresses();
+  } catch (error) {
+    return;
+  }
+};
+
+const toggleAddressEditor = async () => {
+  isAddressEditorOpen.value = !isAddressEditorOpen.value;
+  if (!isAddressEditorOpen.value) return;
+  await ensureAddressesLoaded();
+};
+
+const handleChangeAddress = async () => {
+  if (!orderNumber.value || isChangingAddress.value) return;
+  const addressId = Number(selectedAddressId.value);
+  if (!Number.isFinite(addressId)) {
+    addressChangeError.value = '배송지를 선택해 주세요.';
+    return;
+  }
+
+  isChangingAddress.value = true;
+  addressChangeMessage.value = '';
+  addressChangeError.value = '';
+
+  try {
+    await requestOrderAddressChange(orderNumber.value, addressId);
+    addressChangeMessage.value = '배송지 변경 요청을 접수했어요. 반영되면 알려드릴게요.';
+    await loadOrderDetail();
+    closeAddressEditor();
+  } catch (error) {
+    addressChangeError.value = error?.message ?? '배송지 변경 요청을 접수하지 못했어요.';
+  } finally {
+    isChangingAddress.value = false;
+  }
+};
+
+watch(
+  () => orderDetail.value?.address?.id,
+  (value) => {
+    if (!value) return;
+    if (String(selectedAddressId.value || '') === String(value)) return;
+    selectedAddressId.value = value;
+  },
+  { immediate: true },
+);
+
+watch(
+  () => isAddressEditorOpen.value,
+  (isOpen) => {
+    if (!isOpen) return;
+    if (selectedAddressId.value) return;
+    if (addresses.value.length > 0) {
+      selectedAddressId.value = addresses.value[0]?.id ?? '';
+    }
+  },
+);
 </script>
