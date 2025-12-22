@@ -447,7 +447,7 @@ const orderName = computed(() => {
 });
 
 const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-const successUrl = computed(() => `${baseUrl}/order/complete?paymentStatus=success`);
+const successUrl = computed(() => `${baseUrl}/mypage/orders/${orderNumber.value}?paymentStatus=success`);
 const failUrl = computed(() => `${baseUrl}/order/checkout?paymentStatus=fail`);
 const customerName = computed(() => selectedAddress.value?.recipient || selectedAddress.value?.name || '핏마켓 고객');
 const customerPhone = computed(() => sanitizePhoneDigits(selectedAddress.value?.phone));
