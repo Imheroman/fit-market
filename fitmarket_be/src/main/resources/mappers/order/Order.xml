@@ -54,6 +54,23 @@
     </constructor>
   </resultMap>
 
+  <resultMap id="OrderReturnExchangeMap" type="com.ssafy.fitmarket_be.order.domain.OrderReturnExchangeEntity">
+    <id property="id" column="id"/>
+    <result property="orderId" column="order_id"/>
+    <result property="type" column="type"
+            javaType="com.ssafy.fitmarket_be.order.domain.OrderReturnExchangeType"
+            typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+    <result property="reason" column="reason"
+            javaType="com.ssafy.fitmarket_be.order.domain.OrderReturnExchangeReason"
+            typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+    <result property="detail" column="detail"/>
+    <result property="status" column="status"
+            javaType="com.ssafy.fitmarket_be.order.domain.OrderReturnExchangeStatus"
+            typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+    <result property="requestedAt" column="requested_at"/>
+    <result property="processedAt" column="processed_at"/>
+  </resultMap>
+
   <insert id="insertOrder" parameterType="com.ssafy.fitmarket_be.entity.Order"
           useGeneratedKeys="true" keyProperty="id">
     INSERT INTO orders (
@@ -337,5 +354,20 @@
     FROM order_return_exchanges
     WHERE order_id = #{orderId}
       AND deleted_date IS NULL
+  </select>
+
+  <select id="findOrderReturnExchangeByOrderId" resultMap="OrderReturnExchangeMap">
+    SELECT id,
+           order_id,
+           type,
+           reason,
+           detail,
+           status,
+           requested_at,
+           processed_at
+    FROM order_return_exchanges
+    WHERE order_id = #{orderId}
+      AND deleted_date IS NULL
+    LIMIT 1
   </select>
 </mapper>

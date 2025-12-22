@@ -26,6 +26,7 @@ import com.ssafy.fitmarket_be.order.dto.OrderRefundEligibilityResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderRefundRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeResponse;
+import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeStatusResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderStatusUpdateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderSummaryResponse;
 import com.ssafy.fitmarket_be.order.repository.OrderRepository;
@@ -192,7 +193,9 @@ public class OrderService {
         findOrderProductsGrouped(List.of(order));
     List<OrderProductEntity> products = productsByOrderId.getOrDefault(order.getId(), List.of());
     String orderName = resolveOrderName(products);
-    boolean hasReturnExchangeRequest = hasReturnExchangeRequest(order.getId());
+    OrderReturnExchangeEntity returnExchange = orderRepository.findOrderReturnExchangeByOrderId(order.getId())
+        .orElse(null);
+    boolean hasReturnExchangeRequest = returnExchange != null;
     RefundEligibility refundEligibility = evaluateRefundEligibility(order, hasReturnExchangeRequest);
     ReturnExchangeEligibility returnExchangeEligibility =
         evaluateReturnExchangeEligibility(order, hasReturnExchangeRequest);
@@ -210,12 +213,22 @@ public class OrderService {
         refundEligibility.eligible(),
         returnExchangeEligibility.eligible(),
         returnExchangeEligibility.eligible(),
+        returnExchange == null ? null : toReturnExchangeStatusResponse(returnExchange),
         order.getOrderDate(),
         order.getComment(),
         parseSnapshot(order.getAddressSnapshot()),
         products.stream()
             .map(this::toItemResponse)
             .toList()
+    );
+  }
+
+  private OrderReturnExchangeStatusResponse toReturnExchangeStatusResponse(OrderReturnExchangeEntity entity) {
+    return new OrderReturnExchangeStatusResponse(
+        entity.getType(),
+        entity.getStatus(),
+        entity.getRequestedAt(),
+        entity.getProcessedAt()
     );
   }
 

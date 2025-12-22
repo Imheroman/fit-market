@@ -209,4 +209,12 @@ public interface OrderRepository {
    * @return 요청 건수
    */
   int countOrderReturnExchanges(@Param("orderId") Long orderId);
+
+  /**
+   * 주문 반품/교환/환불 요청 단건을 조회한다.
+   *
+   * @param orderId 주문 식별자
+   * @return 반품/교환/환불 요청
+   */
+  Optional<OrderReturnExchangeEntity> findOrderReturnExchangeByOrderId(@Param("orderId") Long orderId);
 }
