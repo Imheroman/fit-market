@@ -1,34 +1,35 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col">
-    <AppHeader />
+    <div class="min-h-screen bg-gray-50 flex flex-col">
+        <AppHeader/>
 
-    <main class="flex-1">
-      <div class="container mx-auto px-4 py-10 max-w-3xl">
-        <div class="space-y-8">
-          <!-- 헤더 -->
-          <header class="text-center space-y-3">
-            <p class="text-sm font-semibold text-green-600">판매자 등록</p>
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">판매자 신청하기</h1>
-            <p class="text-gray-500">
-              건강식품을 판매하고 싶으신가요? 아래 정보를 입력하고 신청해주세요.
-            </p>
-          </header>
+        <main class="flex-1">
+            <div class="container mx-auto px-4 py-10 max-w-3xl">
+                <div class="space-y-8">
+                    <!-- 헤더 -->
+                    <header class="text-center space-y-3">
+                        <p class="text-sm font-semibold text-green-600">판매자 등록</p>
+                        <h1 class="text-3xl md:text-4xl font-bold text-gray-900">판매자 신청하기</h1>
+                        <p class="text-gray-500">
+                            건강식품을 판매하고 싶으신가요? 아래 정보를 입력하고 신청해주세요.
+                        </p>
+                    </header>
 
-          <!-- 성공 메시지 -->
-          <div
-            v-if="successMessage"
-            class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2"
-          >
-            <CheckCircle2 class="w-5 h-5" />
-            <span>{{ successMessage }}</span>
-          </div>
+                    <!-- 성공 메시지 -->
+                    <div
+                        v-if="successMessage"
+                        class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2"
+                    >
+                        <CheckCircle2 class="w-5 h-5"/>
+                        <span>{{ successMessage }}</span>
+                    </div>
 
-          <!-- 내 신청 상태 -->
-          <div v-if="hasExistingApplication" class="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 space-y-3">
-            <div class="flex items-center gap-3">
+                    <!-- 내 신청 상태 -->
+                    <div v-if="hasExistingApplication"
+                         class="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 space-y-3">
+                        <div class="flex items-center gap-3">
               <span
-                class="px-3 py-1 rounded-full text-xs font-semibold"
-                :class="{
+                  class="px-3 py-1 rounded-full text-xs font-semibold"
+                  :class="{
                   'bg-yellow-100 text-yellow-700': isPending,
                   'bg-green-100 text-green-700': isApproved,
                   'bg-red-100 text-red-700': isRejected,
@@ -36,234 +37,238 @@
               >
                 {{ isPending ? '대기중' : isApproved ? '승인됨' : '거절됨' }}
               </span>
-              <span class="text-sm text-gray-600">
+                            <span class="text-sm text-gray-600">
                 신청일:
-                <strong>{{ myApplication?.appliedAt ? new Date(myApplication.appliedAt).toLocaleString() : '-' }}</strong>
+                <strong>{{
+                        myApplication?.appliedAt ? new Date(myApplication.appliedAt).toLocaleString() : '-'
+                    }}</strong>
               </span>
-            </div>
-            <div class="text-sm text-gray-700">
-              <p class="font-semibold">{{ myApplication?.businessName }}</p>
-              <p class="text-gray-500">사업자등록번호: {{ myApplication?.businessNumber }}</p>
-            </div>
-            <div v-if="isRejected && myApplication?.reviewNote" class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-              거절 사유: {{ myApplication.reviewNote }}
-            </div>
-            <div v-if="isApproved" class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
-              판매자 신청이 승인되었습니다.
-            </div>
-            <p v-if="isPending" class="text-sm text-gray-500">심사 중입니다. 결과는 이메일로 안내드릴게요.</p>
-            <div v-if="isRejected" class="flex justify-end">
-              <button
-                type="button"
-                @click="showEditForm = true"
-                class="px-4 py-2 text-sm font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
-              >
-                재신청하기
-              </button>
-            </div>
-          </div>
+                        </div>
+                        <div class="text-sm text-gray-700">
+                            <p class="font-semibold">{{ myApplication?.businessName }}</p>
+                            <p class="text-gray-500">사업자등록번호: {{ myApplication?.businessNumber }}</p>
+                        </div>
+                        <div v-if="isRejected && myApplication?.reviewNote"
+                             class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                            거절 사유: {{ myApplication.reviewNote }}
+                        </div>
+                        <div v-if="isApproved"
+                             class="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+                            판매자 신청이 승인되었습니다.
+                        </div>
+                        <p v-if="isPending" class="text-sm text-gray-500">심사 중입니다. 결과는 이메일로 안내드릴게요.</p>
+                        <div v-if="isRejected" class="flex justify-end">
+                            <button
+                                type="button"
+                                @click="showEditForm = true"
+                                class="px-4 py-2 text-sm font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+                            >
+                                재신청하기
+                            </button>
+                        </div>
+                    </div>
 
-          <!-- 에러 메시지 -->
-          <div
-            v-if="errorMessage"
-            class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2"
-          >
-            <AlertCircle class="w-5 h-5" />
-            <span>{{ errorMessage }}</span>
-          </div>
+                    <!-- 에러 메시지 -->
+                    <div
+                        v-if="errorMessage"
+                        class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2"
+                    >
+                        <AlertCircle class="w-5 h-5"/>
+                        <span>{{ errorMessage }}</span>
+                    </div>
 
-          <!-- 신청 폼 -->
-          <form
-            v-if="!hasExistingApplication || (isRejected && showEditForm)"
-            @submit.prevent="handleSubmit"
-            class="bg-white shadow-lg rounded-2xl p-6 md:p-8 border border-gray-200"
-          >
-            <div class="space-y-6">
-              <h2 class="text-xl font-semibold text-gray-900 pb-3 border-b border-gray-200">
-                사업자 정보
-              </h2>
+                    <!-- 신청 폼 -->
+                    <form
+                        v-if="!hasExistingApplication || (isRejected && showEditForm)"
+                        @submit.prevent="handleSubmit"
+                        class="bg-white shadow-lg rounded-2xl p-6 md:p-8 border border-gray-200"
+                    >
+                        <div class="space-y-6">
+                            <h2 class="text-xl font-semibold text-gray-900 pb-3 border-b border-gray-200">
+                                사업자 정보
+                            </h2>
 
-              <!-- 상호명 -->
-              <div>
-                <label for="businessName" class="block text-sm font-medium text-gray-700 mb-2">
-                  상호명 <span class="text-red-500">*</span>
-                </label>
-                <input
-                  id="businessName"
-                  v-model="form.businessName"
-                  type="text"
-                  placeholder="예: 건강한 밥상"
-                  class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  :class="errors.businessName ? 'border-red-300' : 'border-gray-300'"
-                />
-                <p v-if="errors.businessName" class="mt-1 text-sm text-red-600">
-                  {{ errors.businessName }}
-                </p>
-              </div>
+                            <!-- 상호명 -->
+                            <div>
+                                <label for="businessName" class="block text-sm font-medium text-gray-700 mb-2">
+                                    상호명 <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    id="businessName"
+                                    v-model="form.businessName"
+                                    type="text"
+                                    placeholder="예: 건강한 밥상"
+                                    class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    :class="errors.businessName ? 'border-red-300' : 'border-gray-300'"
+                                />
+                                <p v-if="errors.businessName" class="mt-1 text-sm text-red-600">
+                                    {{ errors.businessName }}
+                                </p>
+                            </div>
 
-              <!-- 사업자등록번호 -->
-              <div>
-                <label for="businessNumber" class="block text-sm font-medium text-gray-700 mb-2">
-                  사업자등록번호 <span class="text-red-500">*</span>
-                </label>
-                <input
-                  id="businessNumber"
-                  v-model="form.businessNumber"
-                  type="text"
-                  placeholder="123-45-67890"
-                  class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  :class="errors.businessNumber ? 'border-red-300' : 'border-gray-300'"
-                />
-                <p v-if="errors.businessNumber" class="mt-1 text-sm text-red-600">
-                  {{ errors.businessNumber }}
-                </p>
-              </div>
+                            <!-- 사업자등록번호 -->
+                            <div>
+                                <label for="businessNumber" class="block text-sm font-medium text-gray-700 mb-2">
+                                    사업자등록번호 <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    id="businessNumber"
+                                    v-model="form.businessNumber"
+                                    type="text"
+                                    placeholder="123-45-67890"
+                                    class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    :class="errors.businessNumber ? 'border-red-300' : 'border-gray-300'"
+                                />
+                                <p v-if="errors.businessNumber" class="mt-1 text-sm text-red-600">
+                                    {{ errors.businessNumber }}
+                                </p>
+                            </div>
 
-              <!-- 사업자 유형 -->
-              <div>
-                <label for="businessType" class="block text-sm font-medium text-gray-700 mb-2">
-                  사업자 유형 <span class="text-red-500">*</span>
-                </label>
-                <select
-                  id="businessType"
-                  v-model="form.businessType"
-                  class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  :class="errors.businessType ? 'border-red-300' : 'border-gray-300'"
-                >
-                  <option value="">선택해주세요</option>
-                  <option value="individual">개인사업자</option>
-                  <option value="corporation">법인사업자</option>
-                </select>
-                <p v-if="errors.businessType" class="mt-1 text-sm text-red-600">
-                  {{ errors.businessType }}
-                </p>
-              </div>
+                            <!-- 사업자 유형 -->
+                            <div>
+                                <label for="businessType" class="block text-sm font-medium text-gray-700 mb-2">
+                                    사업자 유형 <span class="text-red-500">*</span>
+                                </label>
+                                <select
+                                    id="businessType"
+                                    v-model="form.businessType"
+                                    class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    :class="errors.businessType ? 'border-red-300' : 'border-gray-300'"
+                                >
+                                    <option value="">선택해주세요</option>
+                                    <option value="individual">개인사업자</option>
+                                    <option value="corporation">법인사업자</option>
+                                </select>
+                                <p v-if="errors.businessType" class="mt-1 text-sm text-red-600">
+                                    {{ errors.businessType }}
+                                </p>
+                            </div>
 
-              <!-- 연락처 -->
-              <div>
-                <label for="contactPhone" class="block text-sm font-medium text-gray-700 mb-2">
-                  대표 연락처 <span class="text-red-500">*</span>
-                </label>
-                <input
-                  id="contactPhone"
-                  v-model="form.contactPhone"
-                  type="text"
-                  placeholder="010-1234-5678"
-                  inputmode="numeric"
-                  maxlength="13"
-                  class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  :class="errors.contactPhone ? 'border-red-300' : 'border-gray-300'"
-                  @input="onContactPhoneInput"
-                />
-                <p v-if="errors.contactPhone" class="mt-1 text-sm text-red-600">
-                  {{ errors.contactPhone }}
-                </p>
-                <p v-else class="mt-1 text-sm text-gray-500">
-                  숫자만 입력하면 하이픈(-)은 자동으로 채워둘게요.
-                </p>
-              </div>
+                            <!-- 연락처 -->
+                            <div>
+                                <label for="contactPhone" class="block text-sm font-medium text-gray-700 mb-2">
+                                    대표 연락처 <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    id="contactPhone"
+                                    v-model="form.contactPhone"
+                                    type="text"
+                                    placeholder="010-1234-5678"
+                                    inputmode="numeric"
+                                    maxlength="13"
+                                    class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    :class="errors.contactPhone ? 'border-red-300' : 'border-gray-300'"
+                                    @input="onContactPhoneInput"
+                                />
+                                <p v-if="errors.contactPhone" class="mt-1 text-sm text-red-600">
+                                    {{ errors.contactPhone }}
+                                </p>
+                                <p v-else class="mt-1 text-sm text-gray-500">
+                                    숫자만 입력하면 하이픈(-)은 자동으로 채워둘게요.
+                                </p>
+                            </div>
 
-              <!-- 사업장 주소 -->
-              <div>
-                <label for="businessAddress" class="block text-sm font-medium text-gray-700 mb-2">
-                  사업장 주소 <span class="text-red-500">*</span>
-                </label>
-                <input
-                  id="businessAddress"
-                  v-model="form.businessAddress"
-                  type="text"
-                  placeholder="서울시 강남구 테헤란로 123"
-                  class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  :class="errors.businessAddress ? 'border-red-300' : 'border-gray-300'"
-                />
-                <p v-if="errors.businessAddress" class="mt-1 text-sm text-red-600">
-                  {{ errors.businessAddress }}
-                </p>
-              </div>
+                            <!-- 사업장 주소 -->
+                            <div>
+                                <label for="businessAddress" class="block text-sm font-medium text-gray-700 mb-2">
+                                    사업장 주소 <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    id="businessAddress"
+                                    v-model="form.businessAddress"
+                                    type="text"
+                                    placeholder="서울시 강남구 테헤란로 123"
+                                    class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                    :class="errors.businessAddress ? 'border-red-300' : 'border-gray-300'"
+                                />
+                                <p v-if="errors.businessAddress" class="mt-1 text-sm text-red-600">
+                                    {{ errors.businessAddress }}
+                                </p>
+                            </div>
 
-              <!-- 사업 소개 -->
-              <div>
-                <label for="introduction" class="block text-sm font-medium text-gray-700 mb-2">
-                  사업 소개 <span class="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="introduction"
-                  v-model="form.introduction"
-                  rows="5"
-                  placeholder="어떤 상품을 판매하시나요? 특징과 강점을 소개해주세요. (최소 20자)"
-                  class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
-                  :class="errors.introduction ? 'border-red-300' : 'border-gray-300'"
-                ></textarea>
-                <p v-if="errors.introduction" class="mt-1 text-sm text-red-600">
-                  {{ errors.introduction }}
-                </p>
-                <p class="mt-1 text-sm text-gray-500">
-                  {{ form.introduction.length }} / 20자 이상
-                </p>
-              </div>
+                            <!-- 사업 소개 -->
+                            <div>
+                                <label for="introduction" class="block text-sm font-medium text-gray-700 mb-2">
+                                    사업 소개 <span class="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    id="introduction"
+                                    v-model="form.introduction"
+                                    rows="5"
+                                    placeholder="어떤 상품을 판매하시나요? 특징과 강점을 소개해주세요. (최소 20자)"
+                                    class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                                    :class="errors.introduction ? 'border-red-300' : 'border-gray-300'"
+                                ></textarea>
+                                <p v-if="errors.introduction" class="mt-1 text-sm text-red-600">
+                                    {{ errors.introduction }}
+                                </p>
+                                <p class="mt-1 text-sm text-gray-500">
+                                    {{ form.introduction.length }} / 20자 이상
+                                </p>
+                            </div>
 
-              <!-- 버튼 -->
-              <div class="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  @click="handleReset"
-                  class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-                  :disabled="isSubmitting"
-                >
-                  초기화
-                </button>
-                <button
-                  type="submit"
-                  class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  :disabled="isSubmitting || (hasExistingApplication && !isRejected)"
-                >
-                  <Loader2 v-if="isSubmitting" class="w-5 h-5 animate-spin" />
-                  <span>
+                            <!-- 버튼 -->
+                            <div class="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    @click="handleReset"
+                                    class="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                                    :disabled="isSubmitting"
+                                >
+                                    초기화
+                                </button>
+                                <button
+                                    type="submit"
+                                    class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    :disabled="isSubmitting || (hasExistingApplication && !isRejected)"
+                                >
+                                    <Loader2 v-if="isSubmitting" class="w-5 h-5 animate-spin"/>
+                                    <span>
                     {{ isSubmitting ? '신청 중...' : hasExistingApplication && !isRejected ? '신청 내역이 존재합니다' : '판매자 신청하기' }}
                   </span>
-                </button>
-              </div>
+                                </button>
+                            </div>
 
-              <p class="text-sm text-gray-500 text-center">
-                신청 후 1-2일 내에 검토 결과를 이메일로 알려드립니다.
-              </p>
+                            <p class="text-sm text-gray-500 text-center">
+                                신청 후 1-2일 내에 검토 결과를 이메일로 알려드립니다.
+                            </p>
+                        </div>
+                    </form>
+                    <div
+                        v-else
+                        class="bg-white shadow-lg rounded-2xl p-6 md:p-8 border border-gray-200 text-center text-gray-600"
+                    >
+                        <p class="font-semibold text-gray-800 mb-2">이미 신청 내역이 있습니다.</p>
+                        <p class="text-sm">심사 결과를 기다려 주세요.</p>
+                    </div>
+                </div>
             </div>
-          </form>
-          <div
-            v-else
-            class="bg-white shadow-lg rounded-2xl p-6 md:p-8 border border-gray-200 text-center text-gray-600"
-          >
-            <p class="font-semibold text-gray-800 mb-2">이미 신청 내역이 있습니다.</p>
-            <p class="text-sm">심사 결과를 기다려 주세요.</p>
-          </div>
-        </div>
-      </div>
-    </main>
+        </main>
 
-    <AppFooter />
-  </div>
+        <AppFooter/>
+    </div>
 </template>
 
 <script setup>
-import { onMounted, computed, ref } from 'vue'
-import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-vue-next'
+import {onMounted, computed, ref} from 'vue'
+import {CheckCircle2, AlertCircle, Loader2} from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
-import { useSellerApplication } from '@/composables/useSellerApplication'
-import { useRouter } from 'vue-router'
+import {useSellerApplication} from '@/composables/useSellerApplication'
+import {useRouter} from 'vue-router'
 
 const router = useRouter()
 const {
-  form,
-  errors,
-  isSubmitting,
-  successMessage,
-  errorMessage,
-  handleContactPhoneInput,
-  submitApplication,
-  resetForm,
-  loadMyApplication,
-  myApplication,
+    form,
+    errors,
+    isSubmitting,
+    successMessage,
+    errorMessage,
+    handleContactPhoneInput,
+    submitApplication,
+    resetForm,
+    loadMyApplication,
+    myApplication,
 } = useSellerApplication()
 
 const showEditForm = ref(false)
@@ -274,26 +279,26 @@ const isApproved = computed(() => myApplication.value?.status === 'approved')
 const isRejected = computed(() => myApplication.value?.status === 'rejected')
 
 const handleSubmit = async () => {
-  const success = await submitApplication()
-  if (success) {
-    await loadMyApplication()
-    setTimeout(() => {
-      router.push('/mypage')
-    }, 2000)
-  }
+    const success = await submitApplication()
+    if (success) {
+        await loadMyApplication()
+        setTimeout(() => {
+            router.push('/mypage')
+        }, 2000)
+    }
 }
 
 const handleReset = () => {
-  if (confirm('입력한 내용을 모두 초기화하시겠습니까?')) {
-    resetForm()
-  }
+    if (confirm('입력한 내용을 모두 초기화하시겠습니까?')) {
+        resetForm()
+    }
 }
 
 const onContactPhoneInput = (event) => {
-  handleContactPhoneInput(event.target.value)
+    handleContactPhoneInput(event.target.value)
 }
 
 onMounted(() => {
-  loadMyApplication()
+    loadMyApplication()
 })
 </script>
