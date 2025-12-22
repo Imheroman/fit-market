@@ -206,7 +206,8 @@ const selectedNutrition = computed(() =>
         {calories: 0, protein: 0, carbs: 0, fat: 0},
     ),
 );
-const shippingFee = computed(() => (hasSelectedItems.value ? 3000 : 0));
+// const shippingFee = computed(() => (hasSelectedItems.value ? 3000 : 0));
+const shippingFee = 0;
 
 const formatNumber = (value) => Number(value ?? 0).toLocaleString();
 const isItemBusy = (item) => pendingItemId.value === item.cartItemId || isLoading.value;
