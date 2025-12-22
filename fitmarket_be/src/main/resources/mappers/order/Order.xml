@@ -315,4 +315,27 @@
     WHERE id = #{orderId}
       AND deleted_date IS NULL
   </update>
+
+  <insert id="insertOrderReturnExchange">
+    INSERT INTO order_return_exchanges (
+      order_id,
+      type,
+      reason,
+      detail
+    ) VALUES (
+      #{request.orderId},
+      #{request.type, javaType=com.ssafy.fitmarket_be.order.domain.OrderReturnExchangeType,
+      typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+      #{request.reason, javaType=com.ssafy.fitmarket_be.order.domain.OrderReturnExchangeReason,
+      typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+      #{request.detail}
+    )
+  </insert>
+
+  <select id="countOrderReturnExchanges" resultType="int">
+    SELECT COUNT(*)
+    FROM order_return_exchanges
+    WHERE order_id = #{orderId}
+      AND deleted_date IS NULL
+  </select>
 </mapper>

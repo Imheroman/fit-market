@@ -47,4 +47,12 @@
     WHERE order_id = #{orderId}
       AND deleted_date IS NULL
   </update>
+
+  <select id="findApprovedAtByOrderId" resultType="java.time.LocalDateTime">
+    SELECT approved_at
+    FROM payments
+    WHERE order_id = #{orderId}
+      AND deleted_date IS NULL
+    LIMIT 1
+  </select>
 </mapper>

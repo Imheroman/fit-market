@@ -289,6 +289,25 @@ CREATE TABLE `order_addresses` (
     CONSTRAINT `fk_order_addresses_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 15. 반품, 교환, 환불 요청
+CREATE TABLE `order_return_exchanges` (
+                                          `id` BIGINT NOT NULL AUTO_INCREMENT,
+                                          `order_id` BIGINT NOT NULL,
+                                          `type` ENUM('REFUND', 'RETURN', 'EXCHANGE') NOT NULL,
+                                          `reason` ENUM('QUALITY_ISSUE', 'CHANGE_OF_MIND', 'DAMAGED', 'WRONG_ITEM', 'OTHER') NOT NULL,
+                                          `detail` VARCHAR(500) NOT NULL,
+                                          `status` ENUM('PENDING', 'APPROVED', 'REJECTED', 'COMPLETED') NOT NULL DEFAULT 'PENDING',
+                                          `requested_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                          `processed_at` TIMESTAMP NULL,
+                                          `created_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                          `modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                                          `deleted_date` TIMESTAMP NULL,
+                                          PRIMARY KEY (`id`),
+                                          UNIQUE KEY `uk_order_return_exchanges_order` (`order_id`),
+                                          CONSTRAINT `fk_order_return_exchanges_order`
+                                              FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ============================================
 -- 초기 데이터 삽입
 -- ============================================
