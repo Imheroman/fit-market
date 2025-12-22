@@ -138,6 +138,7 @@ export function useSellerProducts() {
         categoryId: selectedCategory.categoryId,
         price: Number(form.price),
         description: form.description,
+        weightG: Number(form.weight),
         stock: Number(form.stock),
         imageUrl: imageUrl,
         userId: 1, // TODO: 인증 구현 후 실제 사용자 ID로 변경
@@ -269,6 +270,7 @@ export function useSellerProducts() {
         categoryId: selectedCategory.categoryId,
         price: Number(form.price),
         description: form.description,
+        weightG: Number(form.weight),
         stock: Number(form.stock),
         imageUrl: imageUrl,
         userId: 1,

@@ -45,7 +45,7 @@
     <section class="container mx-auto px-4 py-8">
       <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
         <button
-          v-for="category in categories"
+          v-for="category in displayCategories"
           :key="category.id"
           @click="filterByCategory(category.id)"
           :class="[
@@ -245,7 +245,7 @@
       <div class="flex items-center justify-between mb-6">
         <h2 class="text-2xl font-bold">
           {{ hasActiveFilters ? '필터링된 상품' : '인기 상품' }}
-          <span class="text-lg text-gray-500 ml-2">({{ sortedProducts.length }})</span>
+          <span class="text-lg text-gray-500 ml-2">({{ displayTotalCount }})</span>
         </h2>
       </div>
 
@@ -259,6 +259,42 @@
           @toggle-favorite="toggleFavorite"
           @add-to-cart="handleAddToCart"
         />
+      </div>
+      <div
+        v-if="!isLoading && !errorMessage && pageCount > 1"
+        class="mt-10 flex items-center justify-between"
+      >
+        <button
+          class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors"
+          :class="currentPage === 1 ? 'border-gray-200 text-gray-300' : 'border-gray-200 text-gray-600 hover:border-green-200 hover:text-green-700'"
+          :disabled="currentPage === 1"
+          @click="goToPage(currentPage - 1)"
+        >
+          이전
+        </button>
+        <div class="flex items-center gap-2">
+          <button
+            v-for="page in pageNumbers"
+            :key="page"
+            class="w-9 h-9 rounded-lg text-sm font-semibold border transition-colors"
+            :class="
+              currentPage === page
+                ? 'bg-green-600 border-green-600 text-white'
+                : 'border-gray-200 text-gray-600 hover:border-green-200'
+            "
+            @click="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+        </div>
+        <button
+          class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors"
+          :class="currentPage === pageCount ? 'border-gray-200 text-gray-300' : 'border-gray-200 text-gray-600 hover:border-green-200 hover:text-green-700'"
+          :disabled="currentPage === pageCount"
+          @click="goToPage(currentPage + 1)"
+        >
+          다음
+        </button>
       </div>
     </section>
 
@@ -312,15 +348,17 @@ import { useProducts } from '@/composables/useProducts';
 import { useCart } from '@/composables/useCart';
 import { shouldShowErrorAlert } from '@/utils/httpError';
 import { fetchCategories } from '@/api/categoriesApi';
-import { fetchProducts } from '@/api/productsApi';
 
-const { products, isLoading, errorMessage, toggleFavorite, loadProducts } = useProducts();
+const { products, isLoading, errorMessage, toggleFavorite, loadProducts, pagination } = useProducts();
 const { addToCart } = useCart();
 
 const searchQuery = ref('');
+const activeKeyword = ref('');
 const isFilterOpen = ref(false);
 const categories = ref([]);
 const selectedCategoryId = ref(null);
+const currentPage = ref(1);
+const pageSize = ref(20);
 
 // Load categories from API
 const loadCategories = async () => {
@@ -337,20 +375,26 @@ const loadCategories = async () => {
 };
 
 // Filter products by category
+const loadWithFilters = async (page = 1) => {
+  const keyword = activeKeyword.value.trim();
+  const categoryId = selectedCategoryId.value ?? undefined;
+  await loadProducts({ page, size: pageSize.value, categoryId, keyword: keyword || undefined });
+  currentPage.value = page;
+};
+
 const filterByCategory = async (categoryId) => {
   if (selectedCategoryId.value === categoryId) {
     // 같은 카테고리를 다시 클릭하면 필터 해제
     selectedCategoryId.value = null;
-    await loadProducts();
   } else {
     selectedCategoryId.value = categoryId;
-    await loadProducts({ categoryId });
   }
+  await loadWithFilters(1);
 };
 
 onMounted(() => {
   loadCategories();
-  loadProducts();
+  loadWithFilters(1);
 });
 
 // Nutrition filters
@@ -425,9 +469,8 @@ const getSortIcon = (key) => {
   return sortDirections.value[key] === 'asc' ? ArrowUp : ArrowDown
 }
 
-const sortedProducts = computed(() => {
-  // 1. 영양소 필터링
-  let filtered = products.value.filter((product) => {
+const filteredProducts = computed(() => {
+  return products.value.filter((product) => {
     const calories = product.calories || 0
     const protein = product.protein || 0
     const carbs = product.carbs || 0
@@ -444,6 +487,10 @@ const sortedProducts = computed(() => {
       fat <= nutritionFilters.value.fat.max
     )
   })
+})
+
+const sortedProducts = computed(() => {
+  const filtered = filteredProducts.value
 
   // 2. 정렬
   const sorted = [...filtered]
@@ -494,6 +541,46 @@ const sortedProducts = computed(() => {
   return sorted
 })
 
+const categoryCountMap = computed(() => {
+  const counts = new Map()
+  filteredProducts.value.forEach((product) => {
+    if (product.categoryId == null) return
+    counts.set(product.categoryId, (counts.get(product.categoryId) ?? 0) + 1)
+  })
+  return counts
+})
+
+const isScopedCount = computed(() => activeKeyword.value.trim().length > 0 || hasActiveFilters.value)
+
+const displayCategories = computed(() =>
+  categories.value.map((category) => ({
+    ...category,
+    count: isScopedCount.value ? (categoryCountMap.value.get(category.id) ?? 0) : category.count,
+  }))
+)
+
+const displayTotalCount = computed(() => {
+  if (hasActiveFilters.value) {
+    return filteredProducts.value.length
+  }
+  return pagination.value.totalElements || filteredProducts.value.length
+})
+
+const pageCount = computed(() => Math.max(pagination.value.totalPages || 1, 1))
+
+const pageNumbers = computed(() => {
+  const total = pageCount.value
+  const current = currentPage.value
+  const maxButtons = 10
+  const half = Math.floor(maxButtons / 2)
+  let start = Math.max(1, current - half)
+  let end = Math.min(total, start + maxButtons - 1)
+  if (end - start + 1 < maxButtons) {
+    start = Math.max(1, end - maxButtons + 1)
+  }
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index)
+})
+
 const handleAddToCart = async (productId) => {
   const product = products.value.find((p) => p.id === productId);
   if (!product) return;
@@ -521,12 +608,16 @@ const handleAddToCart = async (productId) => {
   }
 };
 
+const goToPage = async (page) => {
+  const total = pageCount.value
+  const nextPage = Math.min(Math.max(page, 1), total)
+  if (nextPage === currentPage.value) return
+  await loadWithFilters(nextPage)
+}
+
 const handleSearch = async () => {
   const keyword = searchQuery.value.trim();
-  if (!keyword) {
-    await loadProducts();
-    return;
-  }
-  await loadProducts({ keyword });
+  activeKeyword.value = keyword;
+  await loadWithFilters(1);
 };
 </script>

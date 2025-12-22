@@ -36,6 +36,17 @@
             >
               등록 상품 목록
             </button>
+            <button
+              @click="handleTabChange('orders')"
+              class="px-6 py-3 font-semibold transition-colors border-b-2"
+              :class="
+                activeTab === 'orders'
+                  ? 'text-green-600 border-green-600'
+                  : 'text-gray-500 border-transparent hover:text-gray-700'
+              "
+            >
+              주문 현황
+            </button>
           </div>
 
           <!-- 상품 등록 폼 -->
@@ -318,6 +329,139 @@
               </div>
             </div>
           </div>
+
+          <!-- 주문 현황 -->
+          <div v-else-if="activeTab === 'orders'">
+            <div class="bg-white shadow-lg rounded-2xl border border-gray-200 p-6 md:p-8 space-y-6">
+              <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div class="space-y-1">
+                  <h2 class="text-xl font-semibold text-gray-900">주문 현황</h2>
+                  <p class="text-sm text-gray-500">주문 번호를 선택하면 주문 상품을 확인할 수 있어요.</p>
+                </div>
+                <div class="text-sm text-gray-500">
+                  총 {{ orders.length }}건
+                </div>
+              </div>
+
+              <div class="space-y-6">
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="option in orderFilterOptions"
+                    :key="option.value"
+                    class="px-4 py-2 rounded-full text-sm font-semibold border transition-colors"
+                    :class="
+                      selectedOrderRange === option.value
+                        ? 'bg-green-600 border-green-600 text-white'
+                        : 'bg-white border-gray-200 text-gray-600 hover:border-green-200'
+                    "
+                    @click="setOrderRange(option.value)"
+                  >
+                    {{ option.label }}
+                  </button>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div
+                    v-for="summary in orderStatusSummary"
+                    :key="summary.key"
+                    class="rounded-xl border px-4 py-3"
+                    :class="summary.cardClass"
+                  >
+                    <p class="text-xs font-semibold uppercase tracking-wide">{{ summary.label }}</p>
+                    <p class="text-2xl font-semibold mt-1">{{ summary.count }}</p>
+                  </div>
+                </div>
+
+                <div v-if="orderActionError" class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-4">
+                  {{ orderActionError }}
+                </div>
+
+                <div v-if="ordersLoading" class="text-sm text-gray-500">주문 현황을 불러오는 중이에요.</div>
+
+                <div v-else-if="ordersErrorMessage" class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-4 flex items-center justify-between gap-3">
+                  <span>{{ ordersErrorMessage }}</span>
+                  <button
+                    class="px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                    @click="loadOrders(selectedOrderRange)"
+                  >
+                    다시 시도
+                  </button>
+                </div>
+
+                <div v-else-if="orders.length" class="space-y-4">
+                  <article
+                    v-for="order in orders"
+                    :key="order.id"
+                    class="border border-gray-200 rounded-2xl p-4 space-y-3 hover:border-green-200 transition-colors"
+                  >
+                    <button class="w-full text-left" @click="toggleOrder(order.orderNumber)">
+                      <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                        <div class="space-y-1">
+                          <p class="text-sm text-gray-500">주문번호 {{ order.orderNumber }}</p>
+                          <h3 class="text-lg font-semibold text-gray-900">{{ order.orderName }}</h3>
+                          <p class="text-xs text-gray-500">주문일 {{ formatOrderDate(order.orderedAt) }}</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                          <span
+                            class="inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full"
+                            :class="getStatusMeta(order.approvalStatus).badgeClass"
+                          >
+                            {{ getStatusMeta(order.approvalStatus).label }}
+                          </span>
+                          <span class="inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full border border-gray-200 text-gray-600 bg-gray-50">
+                            {{ getPaymentStatusLabel(order.paymentStatus) }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mt-3">
+                        <span>주문 상품 {{ order.itemCount }}개</span>
+                        <span>결제 금액 {{ formatCurrency(order.totalAmount) }}</span>
+                        <span class="text-xs text-gray-500">
+                          {{ isOrderExpanded(order.orderNumber) ? '접기' : '상세 보기' }}
+                        </span>
+                      </div>
+                    </button>
+
+                    <div v-if="isOrderExpanded(order.orderNumber)" class="mt-3 border-t border-gray-100 pt-3 space-y-3">
+                      <div v-if="order.items.length" class="flex flex-wrap gap-2">
+                        <span
+                          v-for="item in order.items"
+                          :key="`${order.id}-${item.id}`"
+                          class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700"
+                        >
+                          {{ item.productName }} · {{ item.quantity }}개 · {{ formatCurrency(item.totalPrice) }}
+                        </span>
+                      </div>
+                      <div v-else class="text-sm text-gray-500">주문 상품 정보를 불러오지 못했어요.</div>
+
+                      <div class="flex flex-wrap gap-2 border-t border-gray-100 pt-3">
+                        <button
+                          v-for="action in orderStatusActions"
+                          :key="action.key"
+                          class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors"
+                          :class="[
+                            action.className,
+                            (!isActionEnabled(order.approvalStatus, action.key) || isOrderUpdating(order.orderNumber))
+                              ? 'opacity-40 cursor-not-allowed'
+                              : ''
+                          ]"
+                          :disabled="!isActionEnabled(order.approvalStatus, action.key) || isOrderUpdating(order.orderNumber)"
+                          @click="updateOrderStatus(order.orderNumber, action.key)"
+                        >
+                          {{ action.label }}
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+
+                <div v-else class="text-center text-gray-500 py-12 border border-dashed border-gray-200 rounded-2xl">
+                  주문이 아직 없어요.
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </main>
@@ -327,15 +471,35 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { CheckCircle2, AlertCircle, Loader2, Package, Upload } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import { useSellerProducts, PRODUCT_CATEGORIES } from '@/composables/useSellerProducts'
+import {
+  fetchSellerOrders,
+  fetchSellerOrderDetail,
+  updateSellerOrderStatus as updateOrderStatusApi,
+} from '@/api/ordersApi'
 
 const activeTab = ref('register')
 const categories = PRODUCT_CATEGORIES
 const imagePreview = ref(null)
+const orderFilterOptions = [
+  { label: '전체', value: 'ALL' },
+  { label: '1개월', value: '1M' },
+  { label: '3개월', value: '3M' },
+  { label: '6개월', value: '6M' },
+  { label: '1년', value: '1Y' },
+]
+const selectedOrderRange = ref(orderFilterOptions[2].value)
+const orders = ref([])
+const ordersLoading = ref(false)
+const ordersErrorMessage = ref('')
+const ordersLoaded = ref(false)
+const updatingOrderNumbers = ref({})
+const orderActionError = ref('')
+const expandedOrderNumbers = ref({})
 
 const {
   form,
@@ -345,13 +509,136 @@ const {
   errorMessage,
   editingProductId,
   myProducts,
-  registerProduct,
   submitProduct,
   setEditingProduct,
   deleteProduct,
   resetForm,
   loadSellerProducts,
 } = useSellerProducts()
+
+const normalizeItem = (item, index) => ({
+  id: item?.productId ?? `item-${index}`,
+  productId: item?.productId ?? null,
+  productName: item?.productName ?? '상품',
+  quantity: Number(item?.quantity ?? 0),
+  unitPrice: Number(item?.unitPrice ?? 0),
+  totalPrice: Number(item?.totalPrice ?? 0),
+})
+
+const normalizeOrderSummary = (order, index) => ({
+  id: order?.orderNumber ?? `order-${index}`,
+  orderNumber: order?.orderNumber ?? '',
+  orderName: order?.orderName ?? '주문 상품',
+  approvalStatus: order?.approvalStatus ?? 'pending_approval',
+  paymentStatus: order?.paymentStatus ?? 'PENDING',
+  totalAmount: Number(order?.totalAmount ?? 0),
+  orderedAt: order?.orderedAt ?? null,
+  itemCount: Number(order?.itemCount ?? 0),
+  items: [],
+})
+
+const normalizeOrderDetail = (detail, summary, index) => {
+  const base = normalizeOrderSummary(summary, index)
+  if (!detail) {
+    return base
+  }
+  const items = Array.isArray(detail.items)
+    ? detail.items.map((item, itemIndex) => normalizeItem(item, itemIndex))
+    : []
+  return {
+    ...base,
+    orderNumber: detail.orderNumber ?? base.orderNumber,
+    orderName: detail.orderName ?? base.orderName,
+    approvalStatus: detail.approvalStatus ?? base.approvalStatus,
+    paymentStatus: detail.paymentStatus ?? base.paymentStatus,
+    totalAmount: Number(detail.totalAmount ?? base.totalAmount),
+    orderedAt: detail.orderedAt ?? base.orderedAt,
+    itemCount: items.length || base.itemCount,
+    items,
+  }
+}
+
+const orderStatusSummary = computed(() => {
+  const counts = {
+    pending_approval: 0,
+    approved: 0,
+    shipping: 0,
+    delivered: 0,
+    cancelled: 0,
+  }
+  orders.value.forEach((order) => {
+    if (order.approvalStatus === 'pending_approval') {
+      counts.pending_approval += 1
+      return
+    }
+    if (order.approvalStatus === 'cancelled' || order.approvalStatus === 'rejected') {
+      counts.cancelled += 1
+      return
+    }
+    if (counts[order.approvalStatus] !== undefined) {
+      counts[order.approvalStatus] += 1
+    }
+  })
+  return [
+    { key: 'pending_approval', label: '결제 대기', count: counts.pending_approval, cardClass: 'border-gray-200 bg-gray-50 text-gray-600' },
+    { key: 'approved', label: '승인 완료', count: counts.approved, cardClass: 'border-green-200 bg-green-50 text-green-700' },
+    { key: 'shipping', label: '배송 중', count: counts.shipping, cardClass: 'border-blue-200 bg-blue-50 text-blue-700' },
+    { key: 'delivered', label: '배송 완료', count: counts.delivered, cardClass: 'border-emerald-200 bg-emerald-50 text-emerald-700' },
+    { key: 'cancelled', label: '취소/거절', count: counts.cancelled, cardClass: 'border-red-200 bg-red-50 text-red-700' },
+  ].filter((summary) => summary.key !== 'pending_approval' || summary.count > 0)
+})
+
+const orderStatusActions = [
+  { key: 'shipping', label: '배송', className: 'border-blue-200 text-blue-700 hover:bg-blue-50' },
+  { key: 'delivered', label: '배송 완료', className: 'border-emerald-200 text-emerald-700 hover:bg-emerald-50' },
+  { key: 'rejected', label: '거절', className: 'border-red-200 text-red-600 hover:bg-red-50' },
+]
+
+const isOrderUpdating = (orderNumber) => Boolean(updatingOrderNumbers.value[orderNumber])
+
+const isActionEnabled = (currentStatus, nextStatus) => {
+  if (!currentStatus || !nextStatus) return false
+  if (nextStatus === 'shipping') return currentStatus === 'approved'
+  if (nextStatus === 'delivered') return currentStatus === 'shipping'
+  if (nextStatus === 'rejected') return currentStatus === 'approved'
+  return false
+}
+
+const isOrderExpanded = (orderNumber) => Boolean(expandedOrderNumbers.value[orderNumber])
+
+const toggleOrder = (orderNumber) => {
+  if (!orderNumber) return
+  expandedOrderNumbers.value = {
+    ...expandedOrderNumbers.value,
+    [orderNumber]: !expandedOrderNumbers.value[orderNumber],
+  }
+}
+
+const updateOrderStatus = async (orderNumber, status) => {
+  if (!orderNumber || !status) return
+  if (isOrderUpdating(orderNumber)) return
+  const currentStatus = orders.value.find((order) => order.orderNumber === orderNumber)?.approvalStatus
+  if (!isActionEnabled(currentStatus, status)) return
+  if (status === 'rejected') {
+    const confirmed = confirm('주문 상태를 거절로 변경할까요?')
+    if (!confirmed) return
+  }
+
+  updatingOrderNumbers.value = { ...updatingOrderNumbers.value, [orderNumber]: true }
+  orderActionError.value = ''
+
+  try {
+    await updateOrderStatusApi(orderNumber, status)
+    orders.value = orders.value.map((order) =>
+      order.orderNumber === orderNumber ? { ...order, approvalStatus: status } : order,
+    )
+  } catch (error) {
+    console.error(error)
+    orderActionError.value = error?.message ?? '주문 상태를 변경하지 못했어요.'
+  } finally {
+    updatingOrderNumbers.value = { ...updatingOrderNumbers.value, [orderNumber]: false }
+  }
+}
 
 // 페이지 로드 시 판매자 상품 목록 조회
 onMounted(() => {
@@ -363,6 +650,9 @@ const handleTabChange = async (tab) => {
   activeTab.value = tab
   if (tab === 'list') {
     await loadSellerProducts()
+  }
+  if (tab === 'orders' && !ordersLoaded.value) {
+    await loadOrders()
   }
 }
 
@@ -419,4 +709,68 @@ const getCategoryLabel = (value) => {
   const category = categories.find((c) => c.value === value)
   return category ? category.label : value
 }
+
+const loadOrders = async (period = selectedOrderRange.value) => {
+  if (ordersLoading.value) return
+  ordersLoading.value = true
+  ordersErrorMessage.value = ''
+
+  try {
+    const summaryList = await fetchSellerOrders(period)
+    const detailList = await Promise.all(
+      summaryList.map(async (order, index) => {
+        try {
+          const detail = await fetchSellerOrderDetail(order.orderNumber)
+          return normalizeOrderDetail(detail, order, index)
+        } catch (error) {
+          console.error(error)
+          return normalizeOrderSummary(order, index)
+        }
+      }),
+    )
+    orders.value = detailList
+    expandedOrderNumbers.value = {}
+    ordersLoaded.value = true
+  } catch (error) {
+    console.error(error)
+    orders.value = []
+    ordersErrorMessage.value = error?.message ?? '주문 현황을 불러오지 못했어요.'
+  } finally {
+    ordersLoading.value = false
+  }
+}
+
+const setOrderRange = async (value) => {
+  const exists = orderFilterOptions.some((opt) => opt.value === value)
+  if (!exists || selectedOrderRange.value === value) return
+  selectedOrderRange.value = value
+  await loadOrders(value)
+}
+
+const orderStatusMeta = {
+  pending_approval: { label: '결제 대기', badgeClass: 'bg-gray-100 text-gray-600' },
+  approved: { label: '승인 완료', badgeClass: 'bg-green-100 text-green-700' },
+  rejected: { label: '승인 거절', badgeClass: 'bg-red-100 text-red-600' },
+  cancelled: { label: '주문 취소', badgeClass: 'bg-red-100 text-red-600' },
+  shipping: { label: '배송 중', badgeClass: 'bg-blue-100 text-blue-700' },
+  delivered: { label: '배송 완료', badgeClass: 'bg-green-100 text-green-700' },
+}
+
+const getStatusMeta = (status) => orderStatusMeta[status] ?? { label: '확인 필요', badgeClass: 'bg-gray-100 text-gray-600' }
+
+const paymentStatusLabel = {
+  PENDING: '결제 대기',
+  PAID: '결제 완료',
+  REFUNDED: '환불 완료',
+  FAILED: '결제 실패',
+}
+
+const getPaymentStatusLabel = (status) => paymentStatusLabel[status] ?? '확인 필요'
+
+const formatOrderDate = (date) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
+const formatCurrency = (value) => `${Number(value ?? 0).toLocaleString()}원`
 </script>

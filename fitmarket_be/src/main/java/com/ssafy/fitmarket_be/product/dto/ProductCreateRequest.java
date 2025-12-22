@@ -26,6 +26,10 @@ public record ProductCreateRequest(
     @Size(min = 10, message = "상품 설명은 최소 10자 이상이어야 합니다")
     String description,
 
+    @NotNull(message = "상품 중량은 필수입니다")
+    @Min(value = 1, message = "상품 중량은 1g 이상이어야 합니다")
+    Integer weightG,
+
     @NotNull(message = "재고는 필수입니다")
     @Min(value = 0, message = "올바른 재고를 입력해주세요")
     Integer stock,

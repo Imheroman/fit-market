@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.fitmarket_be.seller.infrastructure.mybatis.SellerOrderMapper">
+
+  <resultMap id="OrderViewMap" type="com.ssafy.fitmarket_be.order.domain.OrderView">
+    <id property="id" column="id"/>
+    <result property="orderNumber" column="order_number"/>
+    <result property="orderMode" column="order_mode"
+            javaType="com.ssafy.fitmarket_be.order.domain.OrderMode"
+            typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+    <result property="approvalStatus" column="approval_status"/>
+    <result property="addressId" column="address_id"/>
+    <result property="addressSnapshot" column="address_snapshot"/>
+    <result property="userId" column="user_id"/>
+    <result property="orderDate" column="order_date"/>
+    <result property="shipDate" column="ship_date"/>
+    <result property="dueDate" column="due_date"/>
+    <result property="merchandiseAmount" column="merchandise_amount"/>
+    <result property="shippingFee" column="shipping_fee"/>
+    <result property="discountAmount" column="discount_amount"/>
+    <result property="totalAmount" column="total_amount"/>
+    <result property="paymentStatus" column="payment_status"
+            javaType="com.ssafy.fitmarket_be.payment.domain.PaymentStatus"
+            typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+    <result property="comment" column="comment"/>
+  </resultMap>
+
+  <resultMap id="OrderProductMap" type="com.ssafy.fitmarket_be.order.domain.OrderProductEntity">
+    <id property="id" column="id"/>
+    <result property="orderId" column="order_id"/>
+    <result property="productId" column="product_id"/>
+    <result property="cartItemId" column="cart_item_id"/>
+    <result property="productName" column="product_name"/>
+    <result property="quantity" column="quantity"/>
+    <result property="unitPrice" column="unit_price"/>
+    <result property="totalPrice" column="total_price"/>
+    <result property="optionInfo" column="option_info"/>
+  </resultMap>
+
+  <select id="findOrdersBySellerIdAndStartDate" resultMap="OrderViewMap">
+    SELECT DISTINCT
+      o.id,
+      o.order_number,
+      o.order_mode,
+      s.name AS approval_status,
+      o.address_id,
+      o.address_snapshot,
+      o.user_id,
+      o.order_date,
+      o.ship_date,
+      o.due_date,
+      o.merchandise_amount,
+      o.shipping_fee,
+      o.discount_amount,
+      o.total_amount,
+      o.payment_status,
+      o.comment
+    FROM orders o
+           JOIN order_approval_status s ON o.order_approval_status_id = s.id
+           JOIN order_products op ON op.order_id = o.id AND op.deleted_date IS NULL
+           JOIN products p ON p.id = op.product_id
+    WHERE p.user_id = #{sellerId}
+      AND o.deleted_date IS NULL
+      <if test="startDate != null">
+        AND o.order_date <![CDATA[>=]]> #{startDate}
+      </if>
+    ORDER BY o.order_date DESC
+  </select>
+
+  <select id="findOrderByNumberAndSellerId" resultMap="OrderViewMap">
+    SELECT DISTINCT
+      o.id,
+      o.order_number,
+      o.order_mode,
+      s.name AS approval_status,
+      o.address_id,
+      o.address_snapshot,
+      o.user_id,
+      o.order_date,
+      o.ship_date,
+      o.due_date,
+      o.merchandise_amount,
+      o.shipping_fee,
+      o.discount_amount,
+      o.total_amount,
+      o.payment_status,
+      o.comment
+    FROM orders o
+           JOIN order_approval_status s ON o.order_approval_status_id = s.id
+           JOIN order_products op ON op.order_id = o.id AND op.deleted_date IS NULL
+           JOIN products p ON p.id = op.product_id
+    WHERE o.order_number = #{orderNumber}
+      AND p.user_id = #{sellerId}
+      AND o.deleted_date IS NULL
+    LIMIT 1
+  </select>
+
+  <select id="findOrderProductsByOrderIdsAndSellerId" resultMap="OrderProductMap">
+    SELECT
+      op.id,
+      op.order_id,
+      op.product_id,
+      op.cart_item_id,
+      op.product_name,
+      op.quantity,
+      op.unit_price,
+      op.total_price,
+      op.option_info
+    FROM order_products op
+           JOIN products p ON p.id = op.product_id
+    WHERE op.deleted_date IS NULL
+      AND p.user_id = #{sellerId}
+      AND op.order_id IN
+      <foreach collection="orderIds" item="orderId" open="(" separator="," close=")">
+        #{orderId}
+      </foreach>
+  </select>
+
+  <update id="updateApprovalStatus">
+    UPDATE orders o
+    JOIN order_approval_status s ON s.name = #{approvalStatusName}
+    SET o.order_approval_status_id = s.id,
+        o.modified_date = CURRENT_TIMESTAMP
+    WHERE o.id = #{orderId}
+      AND o.deleted_date IS NULL
+  </update>
+</mapper>

@@ -7,10 +7,32 @@ spring:
     name: fitmarket
   profiles:
     active: prod
+  # Spring AI 설정 (SSAFY GMS 사용)
+  ai:
+    openai:
+      base-url: "https://gms.ssafy.io/gmsapi/api.openai.com"
+      api-key: "S14P02CD08-e534c819-019d-4de4-8947-375b22b4a9da"
+      chat:
+        options:
+          model: "gpt-4o-mini"
+          temperature: 0.3
+      embedding:
+        options:
+          model: "text-embedding-3-small"
 
 logging:
   pattern:
     console: "%d{HH:mm:ss} [%level] %c{36} %m%n"
+  level:
+    org.springframework.ai: DEBUG
+    org.springframework.web.client: DEBUG
+
+# OpenAI API 설정 (기존 LLMService용 - SSAFY GMS)
+openai:
+  api:
+    key: "S14P02CD08-e534c819-019d-4de4-8947-375b22b4a9da"
+    url: "https://gms.ssafy.io/gmsapi/api.openai.com/v1/chat/completions"
+  model: "gpt-4o-mini"
 
 #mybatis:
 #  type-aliases-package: com.ssafy.fitmarket_be.dto
