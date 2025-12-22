@@ -15,6 +15,7 @@ import { onMounted } from 'vue';
 import MyAddressesSection from '@/components/mypage/MyAddressesSection.vue';
 import { useAuth } from '@/composables/useAuth';
 import { useAddresses } from '@/composables/useAddresses';
+import { shouldShowErrorAlert } from '@/utils/httpError';
 
 const { loadUserProfile } = useAuth();
 const {
@@ -28,7 +29,14 @@ const {
 
 onMounted(async () => {
   try {
-    await Promise.all([loadUserProfile(), loadAddresses()]);
+    await loadUserProfile();
+  } catch (error) {
+    console.error(error);
+    return;
+  }
+
+  try {
+    await loadAddresses();
   } catch (error) {
     console.error(error);
   }
@@ -41,6 +49,7 @@ const handleSetDefault = (addressId) => {
     })
     .catch((error) => {
       console.error(error);
+      if (!shouldShowErrorAlert(error)) return;
       window.alert(error?.message ?? '기본 배송지 설정에 실패했어요.');
     });
 };
@@ -53,6 +62,7 @@ const handleRemoveAddress = async (addressId) => {
     window.alert('배송지를 삭제했어요.');
   } catch (error) {
     console.error(error);
+    if (!shouldShowErrorAlert(error)) return;
     window.alert(error?.message ?? '배송지를 삭제하지 못했어요.');
   }
 };
