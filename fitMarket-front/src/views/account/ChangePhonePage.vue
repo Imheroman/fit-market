@@ -40,7 +40,9 @@
                     maxlength="13"
                     class="w-full rounded-xl border border-gray-200 px-4 py-3 pr-12 focus:border-green-500 focus:ring-2 focus:ring-green-100"
                     placeholder="010-0000-0000"
+                    @beforeinput="handleBeforeInput"
                     @input="handleInput"
+                    @paste="handlePaste"
                   />
                   <button
                     v-if="phone"
@@ -142,9 +144,41 @@ const handleInput = (event) => {
   phone.value = formatPhone(event.target.value);
 };
 
+const handleBeforeInput = (event) => {
+  const inputType = event.inputType ?? '';
+  if (inputType.startsWith('delete')) {
+    return;
+  }
+
+  const data = event.data ?? '';
+  if (!data) {
+    return;
+  }
+
+  if (/[^0-9]/.test(data)) {
+    event.preventDefault();
+  }
+};
+
+const handlePaste = (event) => {
+  const text = event.clipboardData?.getData('text') ?? '';
+  if (!text || !/[^0-9]/.test(text)) {
+    return;
+  }
+
+  event.preventDefault();
+  const input = event.target;
+  const value = input?.value ?? '';
+  const start = input?.selectionStart ?? value.length;
+  const end = input?.selectionEnd ?? value.length;
+  const digits = text.replace(/[^0-9]/g, '');
+  const nextValue = `${value.slice(0, start)}${digits}${value.slice(end)}`;
+  phone.value = formatPhone(nextValue);
+};
+
 const handleSubmit = async () => {
   const result = await submit();
-  console.log("phone change result:", result)
+  console.log("phone change result:", result);
   if (result) {
     await loadUserProfile();
     const message = successMessage.value || '연락처를 새로 저장했어요.';
