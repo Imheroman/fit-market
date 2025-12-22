@@ -71,7 +71,7 @@ public class ProductService {
      * RAG를 사용하여 상품명과 유사한 식품 후보를 찾고, LLM으로 최종 매칭합니다.
      */
     @Transactional
-    public ProductCreateResponse createProduct(ProductCreateRequest request) {
+    public ProductCreateResponse createProduct(Long userId, ProductCreateRequest request) {
         // RAG: 벡터 검색으로 상위 50개 유사 식품 추출 (토큰 대폭 절감!)
         List<Food> similarFoods =
             foodVectorStoreService.searchSimilarFoods(request.name(), 50);
@@ -81,7 +81,7 @@ public class ProductService {
 
         // 상품 등록
         productMapper.insertProduct(
-            request.userId(),
+            userId,
             request.categoryId(),
             request.name(),
             request.description(),
