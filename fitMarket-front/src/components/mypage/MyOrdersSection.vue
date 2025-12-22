@@ -27,7 +27,11 @@
       <article
         v-for="order in orders"
         :key="order.id"
-        class="border border-gray-100 rounded-2xl p-5 hover:border-green-200 transition-colors"
+        class="border border-gray-100 rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:border-green-200 hover:scale-[1.01] hover:shadow-sm"
+        tabindex="0"
+        role="link"
+        @click="emit('select-order', order.orderNumber)"
+        @keydown.enter.prevent="emit('select-order', order.orderNumber)"
       >
         <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
@@ -55,20 +59,20 @@
             <dt class="text-gray-500">결제 금액</dt>
             <dd class="font-semibold">{{ formatCurrency(order.totalAmount) }}</dd>
           </div>
-          <div>
-            <dt class="text-gray-500">결제 상태</dt>
-            <dd class="font-semibold">{{ getPaymentStatusLabel(order.paymentStatus) }}</dd>
-          </div>
         </dl>
 
         <div class="mt-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <p class="text-xs text-gray-500">주문 같은 날 다른 상품이 있다면 묶음으로 확인할 수 있어요.</p>
-          <RouterLink
-            :to="{ name: 'my-page-order-detail', params: { orderNumber: order.orderNumber } }"
-            class="px-4 py-2 rounded-lg text-sm font-semibold border border-green-200 text-green-700 hover:bg-green-50 transition-colors"
-          >
-            주문 상세 보기
-          </RouterLink>
+          <div class="flex flex-wrap gap-2">
+            <button
+              class="px-3 py-2 rounded-lg text-sm font-semibold border transition-colors"
+              :class="isDeleting(order.orderNumber) ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed' : 'border-red-200 text-red-600 hover:bg-red-50'"
+              :disabled="isDeleting(order.orderNumber)"
+              @click.stop="emit('delete-order', order)"
+            >
+              {{ isDeleting(order.orderNumber) ? '삭제 중...' : '주문 삭제' }}
+            </button>
+          </div>
         </div>
       </article>
     </div>
@@ -79,9 +83,8 @@
 </template>
 
 <script setup>
-import { RouterLink } from 'vue-router';
 
-defineProps({
+const props = defineProps({
   filterOptions: {
     type: Array,
     default: () => [],
@@ -106,9 +109,15 @@ defineProps({
     type: String,
     default: '',
   },
+  deletingOrderNumbers: {
+    type: Array,
+    default: () => [],
+  },
 });
 
-const emit = defineEmits(['change-filter']);
+const emit = defineEmits(['change-filter', 'select-order', 'delete-order']);
+
+const isDeleting = (orderNumber) => props.deletingOrderNumbers.includes(orderNumber);
 
 const orderStatusMeta = {
   pending_approval: { label: '승인 대기', badgeClass: 'bg-yellow-100 text-yellow-700' },

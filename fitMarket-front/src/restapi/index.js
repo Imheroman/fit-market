@@ -1,5 +1,7 @@
-// /src/restapi/index.js
+﻿// /src/restapi/index.js
 import axios from 'axios';
+import router from '@/router';
+import { useSessionStore } from '@/stores/sessionStore';
 
 // 전역 로딩 카운터 : useApi 등에서 개별적으로 관리
 //const loadingCount = ref(0);
@@ -13,7 +15,15 @@ const fitmarket = axios.create({
   // headers: {
     // "x-api-key": "reqres-free-v1",
   // },
+  headers: {
+    // 이 부분이 핵심입니다.
+    'Content-Type': 'application/json'
+  }
 });
+
+const AUTH_REQUIRED_MESSAGE = '로그인이 필요해요. 로그인 후 이용할 수 있어요.';
+
+const clearAuthErrorState = () => {};
 
 // 요청 인터셉터 설정
 fitmarket.interceptors.request.use(
@@ -39,11 +49,25 @@ fitmarket.interceptors.response.use(
   },
   async (error) => {
     console.error('[응답 에러]', error);
+
+    const status = error?.response?.status;
+    if (status === 401) {
+      error.isAuthError = true;
+      const sessionStore = useSessionStore();
+      sessionStore.logout();
+
+      const isOnLogin = router.currentRoute.value?.name === 'login';
+      if (!isOnLogin) {
+        alert(AUTH_REQUIRED_MESSAGE);
+        router.push({ name: 'login' });
+      }
+    }
+
     //  error 메시지가 TOKEN_ERROR인 경우 refresh token으로 access token 재발급 시도, 아니면 로그아웃 처리
-     return Promise.reject(error);
+    return Promise.reject(error);
 
     // END
   }
 );
 
-export { fitmarket };
+export { fitmarket, clearAuthErrorState };

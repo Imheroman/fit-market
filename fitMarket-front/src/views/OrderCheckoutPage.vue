@@ -12,7 +12,7 @@
                 배송지 선택 → 결제 준비
               </p>
               <h1 class="text-3xl font-bold mb-2">배송지를 고르고 결제를 준비해요</h1>
-              <p class="text-gray-600">상품 {{ cartItems.length }}개 · 결제 전까지 언제든 수정할 수 있어요.</p>
+              <p class="text-gray-600">상품 {{ checkoutItems.length }}개 · 결제 전까지 언제든 수정할 수 있어요.</p>
             </div>
             <div class="bg-green-50 border border-green-100 rounded-xl px-4 py-3 text-sm text-green-700">
               <p class="font-semibold">한눈에 보는 단계</p>
@@ -146,7 +146,7 @@
               <div class="border-t border-green-100 mt-6 pt-4 space-y-2 text-sm">
                 <div class="flex justify-between text-gray-600">
                   <span>상품 금액</span>
-                  <span>{{ totalPrice.toLocaleString() }}원</span>
+                  <span>{{ displayTotalPrice.toLocaleString() }}원</span>
                 </div>
                 <div class="flex justify-between text-gray-600">
                   <span>배송비</span>
@@ -173,11 +173,22 @@
             </div>
 
             <div class="bg-white border border-green-100 rounded-2xl p-6">
+              <h2 class="text-xl font-bold mb-2">주문 메모</h2>
+              <p class="text-sm text-gray-500 mb-4">배송팀에 전할 말이 있으면 남겨 주세요.</p>
+              <textarea
+                v-model="orderComment"
+                rows="4"
+                class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 focus:border-green-500 focus:ring-2 focus:ring-green-100 resize-none"
+                placeholder="예) 부재 시 문 앞에 놓아 주세요."
+              ></textarea>
+            </div>
+
+            <div class="bg-white border border-green-100 rounded-2xl p-6">
               <h2 class="text-xl font-bold mb-4">주문 요약</h2>
               <div class="space-y-2 text-sm text-gray-600">
-                <p>총 {{ cartItems.length }}개 상품</p>
+                <p>총 {{ checkoutItems.length }}개 상품</p>
                 <p>선택한 배송지: {{ selectedAddress?.addressLine }} {{ selectedAddress?.addressLineDetail }}</p>
-                <p>배송 메모: {{ selectedAddress?.memo || '입력된 메모가 없어요.' }}</p>
+                <p>주문 메모: {{ normalizedOrderComment || '입력된 메모가 없어요.' }}</p>
               </div>
             </div>
           </div>
@@ -189,13 +200,15 @@
               <h2 class="text-xl font-bold">담긴 상품</h2>
               <p class="text-sm text-gray-500">상품을 누르면 상세 정보로 이동할 수 있어요.</p>
             </div>
-            <span class="text-sm text-gray-500">총 {{ cartItems.length }}건</span>
+            <span class="text-sm text-gray-500">총 {{ checkoutItems.length }}건</span>
           </div>
 
-          <div v-if="isCartLoading" class="py-6 text-center text-gray-500">장바구니를 불러오는 중이에요.</div>
-          <div v-else-if="cartItems.length" class="divide-y divide-green-100">
+          <div v-if="isCheckoutLoading" class="py-6 text-center text-gray-500">
+            상품 정보를 불러오는 중이에요.
+          </div>
+          <div v-else-if="checkoutItems.length" class="divide-y divide-green-100">
             <div
-              v-for="item in cartItems"
+              v-for="item in checkoutItems"
               :key="item.cartItemId || item.productId"
               class="py-4 flex items-center gap-4 cursor-pointer transition-colors hover:bg-green-50/70 px-2 rounded-xl"
               @click="navigateToProduct(item.productId || item.id)"
@@ -211,9 +224,7 @@
               </div>
             </div>
           </div>
-          <div v-else class="text-center py-12 text-gray-500">
-            장바구니가 비어 있어요. 상품을 담고 다시 시도해 주세요.
-          </div>
+          <div v-else class="text-center py-12 text-gray-500">{{ emptyItemsMessage }}</div>
         </section>
       </div>
     </div>
@@ -233,16 +244,20 @@ import { useAddresses } from '@/composables/useAddresses';
 import { useOrderStatus } from '@/composables/useOrderStatus';
 import { useTossPayments } from '@/composables/useTossPayments';
 import { usePaymentCallbacks } from '@/composables/usePaymentCallbacks';
+import { useProductDetail } from '@/composables/useProductDetail';
 import { formatPhoneNumber, sanitizePhoneDigits } from '@/utils/phone';
 import { savePendingOrderRequest } from '@/utils/paymentRequestStorage';
+import { shouldShowErrorAlert } from '@/utils/httpError';
 
 const router = useRouter();
 const route = useRoute();
 const MAX_VISIBLE_ADDRESSES = 3;
+const MIN_QUANTITY = 1;
+const MAX_QUANTITY = 100;
 const TOSS_CLIENT_KEY = 'test_ck_6bJXmgo28eDWxw4yY4oyrLAnGKWx';
 const TOSS_CUSTOMER_KEY = 'A_I811IPruggOPKpP-5ee';
 
-const { cartItems, totalPrice, isLoading: isCartLoading, loadCart } = useCart();
+const { cartItems, isLoading: isCartLoading, loadCart } = useCart();
 const {
   addresses,
   selectedAddress,
@@ -275,16 +290,116 @@ const toNumberSafe = (value) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+const normalizeOrderMode = (value) => {
+  const normalized = typeof value === 'string' ? value.toLowerCase() : '';
+  if (normalized === 'direct') return 'direct';
+  return 'cart';
+};
+
+const normalizeQuantity = (value) => {
+  const parsed = Math.floor(Number(value) || 0);
+  if (!Number.isFinite(parsed) || parsed < MIN_QUANTITY) return MIN_QUANTITY;
+  if (parsed > MAX_QUANTITY) return MAX_QUANTITY;
+  return parsed;
+};
+
+const normalizeCheckoutItem = (item) => ({
+  cartItemId: item?.cartItemId ?? null,
+  productId: item?.productId ?? item?.id ?? null,
+  name: item?.name ?? '',
+  category: item?.category ?? '',
+  price: Number(item?.price ?? 0),
+  quantity: normalizeQuantity(item?.quantity),
+  image: item?.image ?? '',
+  calories: Number(item?.calories ?? 0),
+  protein: Number(item?.protein ?? 0),
+  carbs: Number(item?.carbs ?? 0),
+  fat: Number(item?.fat ?? 0),
+});
+
+const parseCartItemIds = (value) => {
+  if (!value) return [];
+  const rawValue = Array.isArray(value) ? value.join(',') : String(value);
+  return rawValue
+    .split(',')
+    .map((entry) => Number(entry))
+    .filter((entry) => Number.isFinite(entry) && entry > 0);
+};
+
+const sumItemsTotal = (items) =>
+  items.reduce((sum, item) => sum + (item.price ?? 0) * (item.quantity ?? 0), 0);
+
+const orderMode = computed(() => normalizeOrderMode(route.query?.mode));
+const isDirectMode = computed(() => orderMode.value === 'direct');
+const directProductId = computed(() => toNumberSafe(route.query?.productId));
+const directQuantity = computed(() => normalizeQuantity(route.query?.quantity));
+const {
+  product: directProduct,
+  isLoading: isDirectLoading,
+  errorMessage: directErrorMessage,
+} = useProductDetail(directProductId);
+
+const directItem = computed(() => {
+  if (!directProduct.value?.id) return null;
+  return {
+    productId: directProduct.value.id,
+    name: directProduct.value.name ?? '',
+    category: directProduct.value.category ?? '',
+    price: Number(directProduct.value.price) || 0,
+    quantity: directQuantity.value,
+    image: directProduct.value.image ?? '',
+    calories: Number(directProduct.value.nutrition?.calories) || 0,
+    protein: Number(directProduct.value.nutrition?.protein) || 0,
+    carbs: Number(directProduct.value.nutrition?.carbs) || 0,
+    fat: Number(directProduct.value.nutrition?.fat) || 0,
+  };
+});
+
+const selectedCartItemIds = computed(() => parseCartItemIds(route.query?.cartItemIds));
+const checkoutItems = computed(() => {
+  if (isDirectMode.value) {
+    return directItem.value ? [directItem.value] : [];
+  }
+  if (!selectedCartItemIds.value.length) {
+    return cartItems.value;
+  }
+  const selectedSet = new Set(selectedCartItemIds.value);
+  return cartItems.value.filter((item) => selectedSet.has(item.cartItemId));
+});
+
+const displayTotalPrice = computed(() => {
+  if (!isDirectMode.value) return sumItemsTotal(checkoutItems.value);
+  if (!directItem.value) return 0;
+  return sumItemsTotal([directItem.value]);
+});
+
+const orderComment = ref('');
+const normalizedOrderComment = computed(() => orderComment.value.trim());
+
 const buildOrderRequest = () => {
   const addressId = toNumberSafe(selectedAddress.value?.id);
-  const cartItemIds = cartItems.value
+  const comment = normalizedOrderComment.value;
+  if (!addressId) return null;
+
+  if (isDirectMode.value) {
+    if (!directProductId.value) return null;
+    return {
+      orderNumber: orderNumber.value,
+      mode: 'direct',
+      productId: directProductId.value,
+      quantity: directQuantity.value,
+      addressId,
+      ...(shippingFee ? { shippingFee } : {}),
+      ...(comment ? { comment } : {}),
+    };
+  }
+
+  const cartItemIds = checkoutItems.value
     .map((item) => toNumberSafe(item?.cartItemId))
     .filter((id) => id !== null);
-  if (!addressId || !cartItemIds.length) return null;
-
-  const comment = (selectedAddress.value?.memo ?? '').trim();
+  if (!cartItemIds.length) return null;
   return {
-    orderMode: 'CART',
+    mode: orderMode.value,
     cartItemIds,
     addressId,
     ...(comment ? { comment } : {}),
@@ -294,7 +409,8 @@ const buildOrderRequest = () => {
 const persistOrderRequest = () => {
   const orderRequest = buildOrderRequest();
   if (!orderRequest) return;
-  savePendingOrderRequest({ orderId: orderNumber.value, orderRequest });
+  const checkoutSnapshot = checkoutItems.value.map((item) => normalizeCheckoutItem(item));
+  savePendingOrderRequest({ orderId: orderNumber.value, orderRequest, checkoutItems: checkoutSnapshot });
 };
 
 const addressListOverflow = computed(() => addresses.value.length > MAX_VISIBLE_ADDRESSES);
@@ -307,11 +423,11 @@ const displayedAddresses = computed(() => {
 });
 const remainingAddressCount = computed(() => Math.max(addresses.value.length - MAX_VISIBLE_ADDRESSES, 0));
 
-const totalPayment = computed(() => totalPrice.value + shippingFee);
+const totalPayment = computed(() => displayTotalPrice.value + shippingFee);
 const orderName = computed(() => {
-  if (!cartItems.value.length) return '핏마켓 주문';
-  if (cartItems.value.length === 1) return cartItems.value[0].name;
-  return `${cartItems.value[0].name} 외 ${cartItems.value.length - 1}건`;
+  if (!checkoutItems.value.length) return '핏마켓 주문';
+  if (checkoutItems.value.length === 1) return checkoutItems.value[0].name;
+  return `${checkoutItems.value[0].name} 외 ${checkoutItems.value.length - 1}건`;
 });
 
 const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
@@ -319,9 +435,22 @@ const successUrl = computed(() => `${baseUrl}/order/complete?paymentStatus=succe
 const failUrl = computed(() => `${baseUrl}/order/checkout?paymentStatus=fail`);
 const customerName = computed(() => selectedAddress.value?.recipient || selectedAddress.value?.name || '핏마켓 고객');
 const customerPhone = computed(() => sanitizePhoneDigits(selectedAddress.value?.phone));
+const isCheckoutLoading = computed(() => (isDirectMode.value ? isDirectLoading.value : isCartLoading.value));
+const hasCheckoutItems = computed(() => checkoutItems.value.length > 0);
+const isFilteredSelection = computed(() => !isDirectMode.value && selectedCartItemIds.value.length > 0);
 const isPaymentDisabled = computed(
   () =>
-    isPaymentRequesting.value || isCartLoading.value || isAddressLoading.value || !cartItems.value.length,
+    isPaymentRequesting.value ||
+    isCheckoutLoading.value ||
+    isAddressLoading.value ||
+    !hasCheckoutItems.value,
+);
+const emptyItemsMessage = computed(() =>
+  isDirectMode.value
+    ? directErrorMessage.value || '바로 구매할 상품을 찾지 못했어요. 다시 선택해 주세요.'
+    : isFilteredSelection.value
+      ? '선택한 상품이 없어요. 장바구니에서 다시 골라 주세요.'
+      : '장바구니가 비어 있어요. 상품을 담고 다시 시도해 주세요.',
 );
 const paymentFailureNotice = computed(() => {
   if (failureGuide.value) {
@@ -374,16 +503,42 @@ const processPaymentFailure = async () => {
   router.replace({ name: 'order-checkout' });
 };
 
+const ensureAddressExists = async () => {
+  try {
+    await loadAddresses();
+  } catch (error) {
+    return;
+  }
+
+  if (addresses.value.length > 0) return;
+  window.alert('배송지가 아직 없어요. 먼저 추가해 주세요.');
+  router.replace({ name: 'my-page-addresses-new', query: { redirect: 'order-checkout' } });
+};
+
 const dismissFailureNotice = () => {
   failureGuide.value = null;
   failureErrorMessage.value = '';
   paymentFailureFallback.value = '';
 };
 
+const ensureDirectOrder = () => {
+  if (!isDirectMode.value) return true;
+  if (directProductId.value) return true;
+  window.alert('바로 구매할 상품을 찾지 못했어요. 다시 선택해 주세요.');
+  router.replace({ name: 'home' });
+  return false;
+};
+
 const handlePayment = async () => {
-  if (!cartItems.value.length) {
-    window.alert('장바구니가 비어 있어요. 상품을 담고 다시 시도해 주세요.');
-    router.push({ name: 'home' });
+  if (!hasCheckoutItems.value) {
+    window.alert(emptyItemsMessage.value);
+    if (isDirectMode.value && directProductId.value) {
+      router.push({ name: 'product-detail', params: { id: directProductId.value } });
+    } else if (isFilteredSelection.value) {
+      router.push({ name: 'cart' });
+    } else {
+      router.push({ name: 'home' });
+    }
     return;
   }
   if (!selectedAddress.value) {
@@ -418,6 +573,7 @@ const handlePayment = async () => {
       },
     });
   } catch (error) {
+    if (!shouldShowErrorAlert(error)) return;
     const message = error?.message ?? '결제창을 열지 못했어요. 잠시 후 다시 시도해 주세요.';
     window.alert(message);
   }
@@ -430,10 +586,11 @@ const navigateToProduct = (productId) => {
 
 onMounted(() => {
   resetOrderStatus();
-  loadCart({ force: true }).catch((error) => console.error(error));
-  loadAddresses().catch((error) => {
-    console.error(error);
-  });
+  if (!ensureDirectOrder()) return;
+  if (!isDirectMode.value) {
+    loadCart({ force: true }).catch((error) => console.error(error));
+  }
+  ensureAddressExists().catch((error) => console.error(error));
   processPaymentFailure().catch((error) => console.error(error));
   prepareSdk().catch((error) => console.error(error));
 });

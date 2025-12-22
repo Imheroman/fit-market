@@ -66,6 +66,11 @@ const setFilter = async (value) => {
   }
 };
 
+const removeOrderByNumber = (orderNumber) => {
+  if (!orderNumber) return;
+  orderHistory.value = orderHistory.value.filter((order) => order.orderNumber !== orderNumber);
+};
+
 const ensureLoaded = () => {
   if (!hasLoaded.value && !isLoading.value) {
     loadOrders();
@@ -83,6 +88,7 @@ export function useOrderHistory() {
     filterDescription,
     setFilter,
     loadOrders,
+    removeOrderByNumber,
     isLoading,
     errorMessage,
   };

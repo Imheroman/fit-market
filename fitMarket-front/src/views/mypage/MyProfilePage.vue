@@ -17,6 +17,7 @@ import { useRouter } from 'vue-router';
 import MyProfileSection from '@/components/mypage/MyProfileSection.vue';
 import { useAuth } from '@/composables/useAuth';
 import { formatPhoneNumber } from '@/utils/phone';
+import { shouldShowErrorAlert } from '@/utils/httpError';
 
 const router = useRouter();
 const { user, isAuthenticated, deleteAccount, loadUserProfile, isProfileLoading, profileError } = useAuth();
@@ -60,6 +61,7 @@ const handleDeleteAccount = async () => {
     router.push('/');
   } catch (error) {
     console.error(error);
+    if (!shouldShowErrorAlert(error)) return;
     alert('탈퇴 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
   }
 };
