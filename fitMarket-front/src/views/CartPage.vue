@@ -27,11 +27,28 @@
             장바구니가 비어 있어요. 마음에 드는 상품을 담아주세요.
           </div>
           <div v-else>
+            <div class="flex items-center justify-between mb-4">
+              <button
+                class="text-sm font-semibold text-green-700 hover:text-green-600 transition-colors"
+                @click="toggleAllSelection"
+              >
+                {{ allSelected ? '전체 해제' : '전체 선택' }}
+              </button>
+              <span class="text-sm text-gray-500">선택 {{ selectedItems.length }}개</span>
+            </div>
             <div
               v-for="item in cartItems"
               :key="item.cartItemId || item.productId"
               class="bg-white border border-green-100 rounded-xl p-6 flex gap-6"
             >
+              <label class="pt-2">
+                <input
+                  type="checkbox"
+                  class="h-5 w-5 text-green-600 border-green-200 rounded"
+                  :checked="isItemSelected(item)"
+                  @change="toggleItemSelection(item)"
+                />
+              </label>
               <img :src="item.image" :alt="item.name" class="w-24 h-24 object-cover rounded-lg bg-green-50" />
               
               <div class="flex-1">
@@ -105,26 +122,26 @@
               <div class="grid grid-cols-2 gap-3">
                 <div>
                   <div class="text-xs text-gray-600">칼로리</div>
-                  <div class="text-lg font-bold">{{ totalNutrition.calories }}</div>
+                  <div class="text-lg font-bold">{{ selectedNutrition.calories }}</div>
                 </div>
                 <div>
                   <div class="text-xs text-gray-600">단백질</div>
-                  <div class="text-lg font-bold text-green-600">{{ totalNutrition.protein }}g</div>
+                  <div class="text-lg font-bold text-green-600">{{ selectedNutrition.protein }}g</div>
                 </div>
                 <div>
                   <div class="text-xs text-gray-600">탄수화물</div>
-                  <div class="text-lg font-bold">{{ totalNutrition.carbs }}g</div>
+                  <div class="text-lg font-bold">{{ selectedNutrition.carbs }}g</div>
                 </div>
                 <div>
                   <div class="text-xs text-gray-600">지방</div>
-                  <div class="text-lg font-bold">{{ totalNutrition.fat }}g</div>
+                  <div class="text-lg font-bold">{{ selectedNutrition.fat }}g</div>
                 </div>
               </div>
             </div>
 
             <button
               class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-4 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              :disabled="!hasItems || isLoading"
+              :disabled="!hasSelectedItems || isLoading"
               @click="handleOrder"
             >
               주문하기
@@ -145,16 +162,34 @@ import { useRouter } from 'vue-router';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
 import { useCart } from '@/composables/useCart';
+import { useCartSelection } from '@/composables/useCartSelection';
+import { shouldShowErrorAlert } from '@/utils/httpError';
 
 const router = useRouter();
 const MIN_QUANTITY = 1;
 const MAX_QUANTITY = 100;
-const { cartItems, totalPrice, totalNutrition, isLoading, errorMessage, loadCart, updateQuantity, removeItem } = useCart();
+const { cartItems, isLoading, errorMessage, loadCart, updateQuantity, removeItem } = useCart();
+const { selectedItems, allSelected, isItemSelected, toggleItemSelection, toggleAllSelection } = useCartSelection(cartItems);
 const pendingItemId = ref(null);
 
 const hasItems = computed(() => cartItems.value.length > 0);
-const displayTotalPrice = computed(() => totalPrice.value || 0);
-const shippingFee = 3000;
+const hasSelectedItems = computed(() => selectedItems.value.length > 0);
+const displayTotalPrice = computed(() => {
+  if (!hasSelectedItems.value) return 0;
+  return selectedItems.value.reduce((sum, item) => sum + (item.price ?? 0) * (item.quantity ?? 0), 0);
+});
+const selectedNutrition = computed(() =>
+  selectedItems.value.reduce(
+    (totals, item) => ({
+      calories: totals.calories + (item.calories ?? 0) * (item.quantity ?? 0),
+      protein: totals.protein + (item.protein ?? 0) * (item.quantity ?? 0),
+      carbs: totals.carbs + (item.carbs ?? 0) * (item.quantity ?? 0),
+      fat: totals.fat + (item.fat ?? 0) * (item.quantity ?? 0),
+    }),
+    { calories: 0, protein: 0, carbs: 0, fat: 0 },
+  ),
+);
+const shippingFee = computed(() => (hasSelectedItems.value ? 3000 : 0));
 
 const formatNumber = (value) => Number(value ?? 0).toLocaleString();
 const isItemBusy = (item) => pendingItemId.value === item.cartItemId || isLoading.value;
@@ -171,6 +206,7 @@ const handleQuantityChange = async (item, delta) => {
   try {
     await updateQuantity(item.cartItemId, nextQuantity);
   } catch (error) {
+    if (!shouldShowErrorAlert(error)) return;
     window.alert(error?.message ?? '수량을 바꾸지 못했어요. 다시 시도해 주세요.');
   } finally {
     pendingItemId.value = null;
@@ -187,6 +223,7 @@ const handleRemoveItem = async (item) => {
   try {
     await removeItem(item.cartItemId);
   } catch (error) {
+    if (!shouldShowErrorAlert(error)) return;
     window.alert(error?.message ?? '상품을 삭제하지 못했어요. 다시 시도해 주세요.');
   } finally {
     pendingItemId.value = null;
@@ -194,11 +231,14 @@ const handleRemoveItem = async (item) => {
 };
 
 const handleOrder = () => {
-  if (!hasItems.value) {
-    window.alert('담긴 상품이 없어요. 상품을 먼저 담아주세요.');
+  if (!hasSelectedItems.value) {
+    window.alert('선택한 상품이 없어요. 상품을 골라 주세요.');
     return;
   }
-  router.push({ name: 'order-checkout' });
+  const selectedCartItemIds = selectedItems.value
+    .map((item) => item.cartItemId)
+    .filter((cartItemId) => cartItemId !== null && cartItemId !== undefined);
+  router.push({ name: 'order-checkout', query: { cartItemIds: selectedCartItemIds.join(',') } });
 };
 
 onMounted(() => {

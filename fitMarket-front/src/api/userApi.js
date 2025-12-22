@@ -89,7 +89,6 @@ export async function updateUserPassword(payload) {
     const body = {
       currentPassword: payload?.currentPassword,
       newPassword: payload?.newPassword ?? payload?.value,
-      value: payload?.newPassword ?? payload?.value,
     };
     const response = await fitmarket.patch('/users/password', body, { withCredentials: true });
     return {

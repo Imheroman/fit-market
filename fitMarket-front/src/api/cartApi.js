@@ -1,10 +1,12 @@
 import {fitmarket} from '@/restapi';
+import {isAuthError} from '@/utils/httpError';
 
 const extractPayload = (response) => response?.data?.data ?? response?.data ?? [];
 const buildError = (error, fallback) => {
   const message = error?.response?.data?.message ?? fallback;
   const wrapped = new Error(message);
   wrapped.cause = error;
+  wrapped.isAuthError = isAuthError(error);
   return wrapped;
 };
 

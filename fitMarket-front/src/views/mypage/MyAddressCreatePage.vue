@@ -43,7 +43,14 @@ const isMainLocked = computed(() => addresses.value.length === 0);
 
 onMounted(async () => {
   try {
-    await Promise.all([loadUserProfile(), loadAddresses()]);
+    await loadUserProfile();
+  } catch (error) {
+    console.error(error);
+    return;
+  }
+
+  try {
+    await loadAddresses();
     syncMainLock();
   } catch (error) {
     console.error(error);
