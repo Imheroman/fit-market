@@ -7,7 +7,7 @@ const CLAIM_DELIVERY_MESSAGE = '배송이 완료된 뒤에 반품이나 교환�
 
 const CLAIM_REASONS = [
   { value: 'CHANGE_OF_MIND', label: '단순 변심', placeholder: '어떤 점이 아쉬웠나요?' },
-  { value: 'DEFECTIVE', label: '상품 파손', placeholder: '파손된 상태를 자세히 알려주세요.' },
+  { value: 'DAMAGED', label: '상품 파손', placeholder: '파손된 상태를 자세히 알려주세요.' },
   { value: 'WRONG_ITEM', label: '오배송', placeholder: '받은 상품 정보를 알려주세요.' },
   { value: 'QUALITY_ISSUE', label: '품질 문제', placeholder: '어떤 문제가 있었나요?' },
   { value: 'OTHER', label: '기타', placeholder: '상황을 자세히 알려주세요.' },

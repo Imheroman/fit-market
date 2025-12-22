@@ -39,11 +39,10 @@
           <div class="flex flex-col gap-2 items-start md:items-end">
             <span
               class="inline-flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-full"
-              :class="getStatusMeta(orderDetail.approvalStatus).badgeClass"
+              :class="getOrderStatusMeta(orderDetail).badgeClass"
             >
-              {{ getStatusMeta(orderDetail.approvalStatus).label }}
+              {{ getOrderStatusMeta(orderDetail).label }}
             </span>
-            <span class="text-sm text-gray-500">{{ getPaymentStatusLabel(orderDetail.paymentStatus) }}</span>
           </div>
         </div>
 
@@ -299,17 +298,22 @@
 </template>
 
 <script setup lang="js">
-import { computed, ref, watch } from 'vue';
-import { useRoute, RouterLink } from 'vue-router';
+import { computed, ref, watch, onMounted } from 'vue';
+import { useRoute, RouterLink, useRouter } from 'vue-router';
 import { useOrderDetail } from '@/composables/useOrderDetail';
 import { useAddresses } from '@/composables/useAddresses';
 import { requestOrderAddressChange } from '@/api/ordersApi';
 import { useOrderClaims } from '@/composables/useOrderClaims';
+import { usePaymentCallbacks } from '@/composables/usePaymentCallbacks';
+import { clearPendingOrderRequest, readPendingOrderRequest } from '@/utils/paymentRequestStorage';
+import { getOrderStatusMeta } from '@/utils/orderStatus';
 
 const route = useRoute();
+const router = useRouter();
 const orderNumber = computed(() => route.params.orderNumber ?? '');
 
 const { orderDetail, isLoading, errorMessage, loadOrderDetail } = useOrderDetail(orderNumber);
+const { confirmPaymentFromQuery, confirmErrorMessage } = usePaymentCallbacks();
 const {
   addresses,
   loadAddresses,
@@ -355,15 +359,6 @@ const {
   loadRefundEligibility,
 } = useOrderClaims(orderNumber, orderDetail);
 
-const orderStatusMeta = {
-  pending_approval: { label: '승인 대기', badgeClass: 'bg-yellow-100 text-yellow-700' },
-  approved: { label: '승인 완료', badgeClass: 'bg-green-100 text-green-700' },
-  rejected: { label: '승인 거절', badgeClass: 'bg-red-100 text-red-600' },
-  cancelled: { label: '주문 취소', badgeClass: 'bg-red-100 text-red-600' },
-  shipping: { label: '배송 중', badgeClass: 'bg-blue-100 text-blue-700' },
-  delivered: { label: '배송 완료', badgeClass: 'bg-green-100 text-green-700' },
-};
-
 const paymentStatusLabel = {
   PENDING: '결제 대기',
   PAID: '결제 완료',
@@ -375,8 +370,6 @@ const orderModeLabel = {
   CART: '장바구니 주문',
   DIRECT: '바로구매',
 };
-
-const getStatusMeta = (status) => orderStatusMeta[status] ?? { label: '확인 필요', badgeClass: 'bg-gray-100 text-gray-600' };
 
 const getPaymentStatusLabel = (status) => paymentStatusLabel[status] ?? '확인 필요';
 
@@ -391,6 +384,60 @@ const formatCurrency = (value) => `${Number(value ?? 0).toLocaleString()}원`;
 
 const shouldShowRefundAction = computed(() => !isClaimLocked.value);
 const canEditAddress = computed(() => !isClaimLocked.value);
+
+const normalizeQueryValue = (value) => (Array.isArray(value) ? value[0] : value);
+
+const getStoredOrderPayload = (orderId) => {
+  if (!orderId) return null;
+  const stored = readPendingOrderRequest();
+  if (!stored || stored.orderId !== orderId) return null;
+  return {
+    orderRequest: stored.orderRequest ?? null,
+    checkoutItems: Array.isArray(stored.checkoutItems) ? stored.checkoutItems : [],
+  };
+};
+
+const processPaymentResult = async () => {
+  const paymentStatusFromQuery = route.query.paymentStatus;
+  const orderIdFromQuery = normalizeQueryValue(route.query.orderId);
+  const normalizedOrderId = orderIdFromQuery ? String(orderIdFromQuery) : '';
+  const hasSuccessParams = Boolean(route.query.paymentKey && route.query.amount !== undefined && normalizedOrderId);
+
+  if (paymentStatusFromQuery === 'fail') {
+    await router.replace({
+      name: 'order-checkout',
+      query: { paymentStatus: 'fail', orderId: normalizedOrderId || orderNumber.value },
+    });
+    return;
+  }
+
+  if (!hasSuccessParams) {
+    if (paymentStatusFromQuery === 'success') {
+      confirmErrorMessage.value = '결제 정보를 찾지 못했어요. 다시 결제를 시작해 주세요.';
+      await router.replace({
+        name: 'order-checkout',
+        query: { paymentStatus: 'fail', orderId: normalizedOrderId || orderNumber.value },
+      });
+    }
+    return;
+  }
+
+  try {
+    const storedPayload = getStoredOrderPayload(normalizedOrderId);
+    const orderRequest = storedPayload?.orderRequest ?? null;
+    await confirmPaymentFromQuery(route.query, { orderRequest });
+    clearPendingOrderRequest();
+    const resolvedOrderId = normalizedOrderId || orderNumber.value;
+    await router.replace({ name: 'my-page-order-detail', params: { orderNumber: resolvedOrderId } });
+    await loadOrderDetail(resolvedOrderId);
+  } catch (error) {
+    console.error(error);
+    await router.replace({
+      name: 'order-checkout',
+      query: { paymentStatus: 'fail', orderId: normalizedOrderId || orderNumber.value },
+    });
+  }
+};
 
 const handleRefundRequest = async () => {
   if (!orderNumber.value || isRefunding.value) return;
@@ -501,4 +548,8 @@ watch(
     closeAddressEditor();
   },
 );
+
+onMounted(() => {
+  processPaymentResult().catch((error) => console.error(error));
+});
 </script>

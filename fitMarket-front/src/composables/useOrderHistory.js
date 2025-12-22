@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue';
-import { fetchOrders } from '@/api/ordersApi';
+import { fetchOrderDetail, fetchOrders } from '@/api/ordersApi';
 
 const filterOptions = [
   { label: '전체', value: 'ALL' },
@@ -15,6 +15,16 @@ const isLoading = ref(false);
 const errorMessage = ref('');
 const hasLoaded = ref(false);
 
+const normalizeReturnExchange = (payload) => {
+  if (!payload || typeof payload !== 'object') return null;
+  return {
+    type: payload?.type ? String(payload.type).toUpperCase() : '',
+    status: payload?.status ? String(payload.status).toUpperCase() : '',
+    requestedAt: payload?.requestedAt ?? null,
+    processedAt: payload?.processedAt ?? null,
+  };
+};
+
 const normalizeOrder = (order, index) => ({
   id: order?.orderNumber ?? `order-${index}`,
   orderNumber: order?.orderNumber ?? '',
@@ -22,6 +32,7 @@ const normalizeOrder = (order, index) => ({
   orderMode: order?.orderMode ?? 'CART',
   approvalStatus: order?.approvalStatus ?? 'pending_approval',
   paymentStatus: order?.paymentStatus ?? 'PENDING',
+  returnExchange: normalizeReturnExchange(order?.returnExchange),
   totalAmount: Number(order?.totalAmount ?? 0),
   itemCount: Number(order?.itemCount ?? 0),
   orderedAt: order?.orderedAt ?? null,
@@ -29,6 +40,32 @@ const normalizeOrder = (order, index) => ({
   shippingFee: order?.shippingFee ?? null,
   discountAmount: order?.discountAmount ?? null,
 });
+
+const shouldFetchOrderDetail = (order) => {
+  if (!order?.orderNumber) return false;
+  const claimType = order?.returnExchange?.type ?? '';
+  const claimStatus = order?.returnExchange?.status ?? '';
+  return !(claimType && claimStatus);
+};
+
+const hydrateOrderClaims = async (orders) => {
+  const tasks = orders.map(async (order) => {
+    if (!shouldFetchOrderDetail(order)) return order;
+    try {
+      const detail = await fetchOrderDetail(order.orderNumber);
+      if (!detail?.returnExchange) return order;
+      return {
+        ...order,
+        returnExchange: normalizeReturnExchange(detail.returnExchange),
+      };
+    } catch (error) {
+      console.error(error);
+      return order;
+    }
+  });
+
+  return Promise.all(tasks);
+};
 
 const filteredOrders = computed(() => orderHistory.value);
 
@@ -46,7 +83,8 @@ const loadOrders = async (period = selectedRange.value) => {
 
   try {
     const response = await fetchOrders(period);
-    orderHistory.value = response.map((order, index) => normalizeOrder(order, index));
+    const normalizedOrders = response.map((order, index) => normalizeOrder(order, index));
+    orderHistory.value = await hydrateOrderClaims(normalizedOrders);
     hasLoaded.value = true;
   } catch (error) {
     console.error(error);
