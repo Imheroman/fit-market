@@ -20,7 +20,7 @@ public class OrderReturnExchangeEntity {
   private OrderReturnExchangeType type;
   private OrderReturnExchangeReason reason;
   private String detail;
-  private String status;
+  private OrderReturnExchangeStatus status;
   private LocalDateTime requestedAt;
   private LocalDateTime processedAt;
 }
