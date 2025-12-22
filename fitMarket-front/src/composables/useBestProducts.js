@@ -20,17 +20,42 @@ export function useBestProducts({ page = 1, size = 12 } = {}) {
   const products = ref([])
   const isLoading = ref(false)
   const errorMessage = ref('')
+  const pagination = ref({
+    page,
+    size,
+    totalElements: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+  })
 
-  const loadProducts = async () => {
+  const loadProducts = async ({ page: nextPage = pagination.value.page, size: nextSize = pagination.value.size } = {}) => {
     isLoading.value = true
     errorMessage.value = ''
     try {
-      const response = await fetchBestProducts({ page, size })
+      const response = await fetchBestProducts({ page: nextPage, size: nextSize })
       const content = Array.isArray(response?.content) ? response.content : []
       products.value = content.map(mapProduct)
+      pagination.value = {
+        page: response.page ?? nextPage,
+        size: response.size ?? nextSize,
+        totalElements: response.totalElements ?? content.length,
+        totalPages: response.totalPages ?? 1,
+        hasNext: response.hasNext ?? false,
+        hasPrevious: response.hasPrevious ?? false,
+      }
     } catch (error) {
       console.error(error)
       errorMessage.value = '베스트 상품을 불러오지 못했습니다.'
+      pagination.value = {
+        ...pagination.value,
+        page: nextPage,
+        size: nextSize,
+        totalElements: 0,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+      }
     } finally {
       isLoading.value = false
     }
@@ -53,6 +78,7 @@ export function useBestProducts({ page = 1, size = 12 } = {}) {
     products,
     isLoading,
     errorMessage,
+    pagination,
     toggleFavorite,
     loadProducts,
   }
