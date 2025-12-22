@@ -36,6 +36,17 @@
             >
               등록 상품 목록
             </button>
+            <button
+              @click="handleTabChange('orders')"
+              class="px-6 py-3 font-semibold transition-colors border-b-2"
+              :class="
+                activeTab === 'orders'
+                  ? 'text-green-600 border-green-600'
+                  : 'text-gray-500 border-transparent hover:text-gray-700'
+              "
+            >
+              주문 현황
+            </button>
           </div>
 
           <!-- 상품 등록 폼 -->
@@ -318,6 +329,247 @@
               </div>
             </div>
           </div>
+
+          <!-- 주문 현황 -->
+          <div v-else-if="activeTab === 'orders'">
+            <div class="bg-white shadow-lg rounded-2xl border border-gray-200 p-6 md:p-8 space-y-6">
+              <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div class="space-y-1">
+                  <h2 class="text-xl font-semibold text-gray-900">주문 현황</h2>
+                  <p class="text-sm text-gray-500">상품을 선택하면 상세 주문 현황을 확인할 수 있어요.</p>
+                </div>
+                <div class="text-sm text-gray-500">
+                  {{ selectedProductLabel ? `총 ${filteredOrders.length}건` : '상품을 선택해주세요.' }}
+                </div>
+              </div>
+
+              <div v-if="!myProducts.length" class="border border-dashed border-gray-200 rounded-2xl p-8 text-center text-gray-500">
+                <Package class="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>등록된 상품이 없어서 주문 현황을 표시할 수 없어요.</p>
+                <button
+                  @click="handleTabChange('register')"
+                  class="mt-4 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  상품 등록하기
+                </button>
+              </div>
+
+              <div v-else class="space-y-6">
+                <div class="space-y-4">
+                  <div class="flex items-center justify-between">
+                    <p class="text-sm font-semibold text-gray-700">상품 목록</p>
+                    <p class="text-xs text-gray-500">페이지 {{ productPage }} / {{ productPageCount }}</p>
+                  </div>
+                  <div class="border border-gray-200 rounded-2xl overflow-hidden divide-y divide-gray-100">
+                    <button
+                      v-for="product in pagedProducts"
+                      :key="product.id"
+                      class="w-full text-left px-4 py-3 transition-colors hover:bg-green-50/50"
+                      @click="openOrderModal(product.id)"
+                    >
+                      <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <div class="min-w-0">
+                          <p class="text-xs text-gray-500">{{ getCategoryLabel(product.category) }}</p>
+                          <p class="text-sm font-semibold text-gray-900 truncate">{{ product.name }}</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2 text-xs text-gray-600">
+                          <span class="font-semibold text-gray-900">{{ formatCurrency(product.price) }}</span>
+                          <span>재고 {{ product.stock }}개</span>
+                          <span v-if="product.calories">{{ product.calories }}kcal</span>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <button
+                      class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors"
+                      :class="productPage === 1 ? 'border-gray-200 text-gray-300' : 'border-gray-200 text-gray-600 hover:border-green-200 hover:text-green-700'"
+                      :disabled="productPage === 1"
+                      @click="setProductPage(productPage - 1)"
+                    >
+                      이전
+                    </button>
+                    <div class="flex items-center gap-2">
+                      <button
+                        v-for="page in productPages"
+                        :key="page"
+                        class="w-9 h-9 rounded-lg text-sm font-semibold border transition-colors"
+                        :class="
+                          productPage === page
+                            ? 'bg-green-600 border-green-600 text-white'
+                            : 'border-gray-200 text-gray-600 hover:border-green-200'
+                        "
+                        @click="setProductPage(page)"
+                      >
+                        {{ page }}
+                      </button>
+                    </div>
+                    <button
+                      class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors"
+                      :class="productPage === productPageCount ? 'border-gray-200 text-gray-300' : 'border-gray-200 text-gray-600 hover:border-green-200 hover:text-green-700'"
+                      :disabled="productPage === productPageCount"
+                      @click="setProductPage(productPage + 1)"
+                    >
+                      다음
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              v-if="isOrderModalOpen"
+              class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+              @click.self="closeOrderModal"
+            >
+              <div class="w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between px-6 py-4 border-b border-gray-200">
+                  <div>
+                    <p class="text-xs text-gray-500">주문 현황</p>
+                    <h3 class="text-xl font-semibold text-gray-900">{{ selectedProductLabel || '상품 주문 현황' }}</h3>
+                    <p class="text-sm text-gray-500">{{ orderFilterDescription }}</p>
+                  </div>
+                  <button
+                    class="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-600 hover:border-green-200 hover:text-green-700 transition-colors"
+                    @click="closeOrderModal"
+                  >
+                    닫기
+                  </button>
+                </div>
+
+                <div class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+                  <div v-if="selectedProduct" class="border border-gray-200 rounded-2xl p-4 bg-gray-50/70">
+                    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+                      <span class="text-gray-500">카테고리</span>
+                      <span class="font-semibold text-gray-900">{{ getCategoryLabel(selectedProduct.category) }}</span>
+                      <span class="text-gray-500">가격</span>
+                      <span class="font-semibold text-gray-900">{{ formatCurrency(selectedProduct.price) }}</span>
+                      <span class="text-gray-500">재고</span>
+                      <span class="font-semibold text-gray-900">{{ selectedProduct.stock }}개</span>
+                      <span v-if="selectedProduct.calories" class="text-gray-500">칼로리</span>
+                      <span v-if="selectedProduct.calories" class="font-semibold text-gray-900">{{ selectedProduct.calories }}kcal</span>
+                    </div>
+                  </div>
+
+                  <div v-else class="text-sm text-gray-500 border border-dashed border-gray-200 rounded-2xl p-4">
+                    선택한 상품 정보를 찾지 못했어요.
+                  </div>
+
+                  <div class="flex flex-wrap gap-2">
+                    <button
+                      v-for="option in orderFilterOptions"
+                      :key="option.value"
+                      class="px-4 py-2 rounded-full text-sm font-semibold border transition-colors"
+                      :class="
+                        selectedOrderRange === option.value
+                          ? 'bg-green-600 border-green-600 text-white'
+                          : 'bg-white border-gray-200 text-gray-600 hover:border-green-200'
+                      "
+                      @click="setOrderRange(option.value)"
+                    >
+                      {{ option.label }}
+                    </button>
+                  </div>
+
+                  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div
+                      v-for="summary in orderStatusSummary"
+                      :key="summary.key"
+                      class="rounded-xl border px-4 py-3"
+                      :class="summary.cardClass"
+                    >
+                      <p class="text-xs font-semibold uppercase tracking-wide">{{ summary.label }}</p>
+                      <p class="text-2xl font-semibold mt-1">{{ summary.count }}</p>
+                    </div>
+                  </div>
+
+                  <div v-if="orderActionError" class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-4">
+                    {{ orderActionError }}
+                  </div>
+
+                  <div v-if="ordersLoading" class="text-sm text-gray-500">주문 현황을 불러오는 중이에요.</div>
+
+                  <div v-else-if="ordersErrorMessage" class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-4 flex items-center justify-between gap-3">
+                    <span>{{ ordersErrorMessage }}</span>
+                    <button
+                      class="px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                      @click="loadOrders(selectedOrderRange)"
+                    >
+                      다시 시도
+                    </button>
+                  </div>
+
+                  <div v-else-if="filteredOrders.length" class="space-y-4">
+                    <article
+                      v-for="order in filteredOrders"
+                      :key="order.id"
+                      class="border border-gray-200 rounded-2xl p-4 space-y-3 hover:border-green-200 transition-colors"
+                    >
+                      <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                        <div class="space-y-1">
+                          <p class="text-sm text-gray-500">주문번호 {{ order.orderNumber }}</p>
+                          <h3 class="text-lg font-semibold text-gray-900">{{ order.orderName }}</h3>
+                          <p class="text-xs text-gray-500">주문일 {{ formatOrderDate(order.orderedAt) }}</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                          <span
+                            class="inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full"
+                            :class="getStatusMeta(order.approvalStatus).badgeClass"
+                          >
+                            {{ getStatusMeta(order.approvalStatus).label }}
+                          </span>
+                          <span class="inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full border border-gray-200 text-gray-600 bg-gray-50">
+                            {{ getPaymentStatusLabel(order.paymentStatus) }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div class="flex flex-wrap gap-2">
+                        <span
+                          v-for="item in order.matchedItems"
+                          :key="`${order.id}-${item.id}`"
+                          class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700"
+                        >
+                          {{ item.productName }} · {{ item.quantity }}개 · {{ formatCurrency(item.totalPrice) }}
+                        </span>
+                      </div>
+
+                      <div class="flex flex-col gap-2 text-sm text-gray-600 md:flex-row md:items-center md:justify-between">
+                        <div class="flex flex-wrap gap-4">
+                          <span>선택 상품 {{ order.matchedItems.length }}건</span>
+                          <span v-if="order.itemCount && order.itemCount !== order.matchedItems.length">전체 {{ order.itemCount }}건</span>
+                          <span>결제 금액 {{ formatCurrency(order.totalAmount) }}</span>
+                        </div>
+                        <span class="text-xs text-gray-500">{{ selectedProductLabel }} 기준으로 표시된 주문이에요.</span>
+                      </div>
+
+                      <div class="flex flex-wrap gap-2 border-t border-gray-100 pt-3">
+                        <button
+                          v-for="action in orderStatusActions"
+                          :key="action.key"
+                          class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors"
+                          :class="[
+                            action.className,
+                            (order.approvalStatus === action.key || isOrderUpdating(order.orderNumber))
+                              ? 'opacity-40 cursor-not-allowed'
+                              : ''
+                          ]"
+                          :disabled="order.approvalStatus === action.key || isOrderUpdating(order.orderNumber)"
+                          @click="updateOrderStatus(order.orderNumber, action.key)"
+                        >
+                          {{ action.label }}
+                        </button>
+                      </div>
+                    </article>
+                  </div>
+
+                  <div v-else class="text-center text-gray-500 py-12 border border-dashed border-gray-200 rounded-2xl">
+                    해당 조건에 맞는 주문이 없어요. 필터를 변경해 다시 확인해 주세요.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </main>
@@ -327,15 +579,38 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { CheckCircle2, AlertCircle, Loader2, Package, Upload } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import { useSellerProducts, PRODUCT_CATEGORIES } from '@/composables/useSellerProducts'
+import {
+  fetchSellerOrders,
+  fetchSellerOrderDetail,
+  updateSellerOrderStatus as updateOrderStatusApi,
+} from '@/api/ordersApi'
 
 const activeTab = ref('register')
 const categories = PRODUCT_CATEGORIES
 const imagePreview = ref(null)
+const orderFilterOptions = [
+  { label: '전체', value: 'ALL' },
+  { label: '1개월', value: '1M' },
+  { label: '3개월', value: '3M' },
+  { label: '6개월', value: '6M' },
+  { label: '1년', value: '1Y' },
+]
+const selectedOrderRange = ref(orderFilterOptions[2].value)
+const selectedProductId = ref('')
+const productPage = ref(1)
+const productPageSize = ref(20)
+const orders = ref([])
+const ordersLoading = ref(false)
+const ordersErrorMessage = ref('')
+const ordersLoaded = ref(false)
+const isOrderModalOpen = ref(false)
+const updatingOrderNumbers = ref({})
+const orderActionError = ref('')
 
 const {
   form,
@@ -353,16 +628,230 @@ const {
   loadSellerProducts,
 } = useSellerProducts()
 
+const productPageCount = computed(() => {
+  const count = Math.ceil(myProducts.value.length / productPageSize.value)
+  return count > 0 ? count : 1
+})
+
+const pagedProducts = computed(() => {
+  const startIndex = (productPage.value - 1) * productPageSize.value
+  return myProducts.value.slice(startIndex, startIndex + productPageSize.value)
+})
+
+const productPages = computed(() => {
+  const total = productPageCount.value
+  const current = productPage.value
+  const maxButtons = 5
+  const half = Math.floor(maxButtons / 2)
+  let start = Math.max(1, current - half)
+  let end = Math.min(total, start + maxButtons - 1)
+  if (end - start + 1 < maxButtons) {
+    start = Math.max(1, end - maxButtons + 1)
+  }
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index)
+})
+
+const selectedProduct = computed(() =>
+  myProducts.value.find((product) => String(product.id) === selectedProductId.value) ?? null,
+)
+
+const selectedProductLabel = computed(() => selectedProduct.value?.name ?? '')
+
+const orderFilterDescription = computed(() => {
+  const rangeLabel = orderFilterOptions.find((opt) => opt.value === selectedOrderRange.value)?.label ?? '전체'
+  if (!selectedProductLabel.value) return `${rangeLabel} 주문을 보여드려요.`
+  return `${selectedProductLabel.value} 주문을 ${rangeLabel} 기준으로 보여드려요.`
+})
+
+const normalizeItem = (item, index) => ({
+  id: item?.productId ?? `item-${index}`,
+  productId: item?.productId ?? null,
+  productName: item?.productName ?? '상품',
+  quantity: Number(item?.quantity ?? 0),
+  unitPrice: Number(item?.unitPrice ?? 0),
+  totalPrice: Number(item?.totalPrice ?? 0),
+})
+
+const normalizeOrderSummary = (order, index) => ({
+  id: order?.orderNumber ?? `order-${index}`,
+  orderNumber: order?.orderNumber ?? '',
+  orderName: order?.orderName ?? '주문 상품',
+  approvalStatus: order?.approvalStatus ?? 'pending_approval',
+  paymentStatus: order?.paymentStatus ?? 'PENDING',
+  totalAmount: Number(order?.totalAmount ?? 0),
+  orderedAt: order?.orderedAt ?? null,
+  itemCount: Number(order?.itemCount ?? 0),
+  items: [],
+})
+
+const normalizeOrderDetail = (detail, summary, index) => {
+  const base = normalizeOrderSummary(summary, index)
+  if (!detail) {
+    return base
+  }
+  const items = Array.isArray(detail.items)
+    ? detail.items.map((item, itemIndex) => normalizeItem(item, itemIndex))
+    : []
+  return {
+    ...base,
+    orderNumber: detail.orderNumber ?? base.orderNumber,
+    orderName: detail.orderName ?? base.orderName,
+    approvalStatus: detail.approvalStatus ?? base.approvalStatus,
+    paymentStatus: detail.paymentStatus ?? base.paymentStatus,
+    totalAmount: Number(detail.totalAmount ?? base.totalAmount),
+    orderedAt: detail.orderedAt ?? base.orderedAt,
+    itemCount: items.length || base.itemCount,
+    items,
+  }
+}
+
+const filteredOrders = computed(() => {
+  const targetId = selectedProductId.value
+  if (!targetId) return []
+  return orders.value
+    .map((order) => {
+      const matchedItems = order.items.filter((item) => String(item.productId) === targetId)
+      return {
+        ...order,
+        matchedItems,
+      }
+    })
+    .filter((order) => {
+      return order.matchedItems.length > 0
+    })
+})
+
+const orderStatusSummary = computed(() => {
+  const counts = {
+    approved: 0,
+    shipping: 0,
+    delivered: 0,
+    cancelled: 0,
+  }
+  filteredOrders.value.forEach((order) => {
+    if (order.approvalStatus === 'cancelled' || order.approvalStatus === 'rejected') {
+      counts.cancelled += 1
+      return
+    }
+    if (counts[order.approvalStatus] !== undefined) {
+      counts[order.approvalStatus] += 1
+    }
+  })
+  return [
+    { key: 'approved', label: '승인 완료', count: counts.approved, cardClass: 'border-green-200 bg-green-50 text-green-700' },
+    { key: 'shipping', label: '배송 중', count: counts.shipping, cardClass: 'border-blue-200 bg-blue-50 text-blue-700' },
+    { key: 'delivered', label: '배송 완료', count: counts.delivered, cardClass: 'border-emerald-200 bg-emerald-50 text-emerald-700' },
+    { key: 'cancelled', label: '취소/거절', count: counts.cancelled, cardClass: 'border-red-200 bg-red-50 text-red-700' },
+  ]
+})
+
+const orderStatusActions = [
+  { key: 'approved', label: '승인 완료', className: 'border-green-200 text-green-700 hover:bg-green-50' },
+  { key: 'shipping', label: '배송', className: 'border-blue-200 text-blue-700 hover:bg-blue-50' },
+  { key: 'delivered', label: '배송 완료', className: 'border-emerald-200 text-emerald-700 hover:bg-emerald-50' },
+  { key: 'cancelled', label: '취소', className: 'border-red-200 text-red-600 hover:bg-red-50' },
+  { key: 'rejected', label: '거절', className: 'border-red-200 text-red-600 hover:bg-red-50' },
+]
+
+const isOrderUpdating = (orderNumber) => Boolean(updatingOrderNumbers.value[orderNumber])
+
+const openOrderModal = async (productId) => {
+  selectedProductId.value = String(productId)
+  isOrderModalOpen.value = true
+  if (!ordersLoaded.value) {
+    await loadOrders()
+  }
+}
+
+const closeOrderModal = () => {
+  isOrderModalOpen.value = false
+  orderActionError.value = ''
+}
+
+const handleModalKeydown = (event) => {
+  if (event.key === 'Escape' && isOrderModalOpen.value) {
+    closeOrderModal()
+  }
+}
+
+const updateOrderStatus = async (orderNumber, status) => {
+  if (!orderNumber || !status) return
+  if (isOrderUpdating(orderNumber)) return
+  if (status === 'cancelled' || status === 'rejected') {
+    const confirmed = confirm(`주문 상태를 ${status === 'cancelled' ? '취소' : '거절'}로 변경할까요?`)
+    if (!confirmed) return
+  }
+
+  updatingOrderNumbers.value = { ...updatingOrderNumbers.value, [orderNumber]: true }
+  orderActionError.value = ''
+
+  try {
+    await updateOrderStatusApi(orderNumber, status)
+    orders.value = orders.value.map((order) =>
+      order.orderNumber === orderNumber ? { ...order, approvalStatus: status } : order,
+    )
+  } catch (error) {
+    console.error(error)
+    orderActionError.value = error?.message ?? '주문 상태를 변경하지 못했어요.'
+  } finally {
+    updatingOrderNumbers.value = { ...updatingOrderNumbers.value, [orderNumber]: false }
+  }
+}
+
+const setProductPage = (page) => {
+  const total = productPageCount.value
+  const nextPage = Math.min(Math.max(page, 1), total)
+  productPage.value = nextPage
+}
+
+watch(
+  () => myProducts.value,
+  (products) => {
+    if (!products.length) {
+      selectedProductId.value = ''
+      productPage.value = 1
+      return
+    }
+
+    const hasSelected = products.some((product) => String(product.id) === selectedProductId.value)
+    if (!hasSelected) {
+      selectedProductId.value = ''
+      if (isOrderModalOpen.value) {
+        closeOrderModal()
+      }
+    }
+  },
+  { immediate: true },
+)
+
+watch(productPageCount, (count) => {
+  if (productPage.value > count) {
+    setProductPage(count)
+  }
+})
+
 // 페이지 로드 시 판매자 상품 목록 조회
 onMounted(() => {
   loadSellerProducts()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('keydown', handleModalKeydown)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('keydown', handleModalKeydown)
+  }
 })
 
 // 탭 변경 핸들러
 const handleTabChange = async (tab) => {
   activeTab.value = tab
-  if (tab === 'list') {
+  if (tab === 'list' || tab === 'orders') {
     await loadSellerProducts()
+  }
+  if (tab === 'orders' && !ordersLoaded.value) {
+    await loadOrders()
   }
 }
 
@@ -419,4 +908,66 @@ const getCategoryLabel = (value) => {
   const category = categories.find((c) => c.value === value)
   return category ? category.label : value
 }
+
+const loadOrders = async (period = selectedOrderRange.value) => {
+  if (ordersLoading.value) return
+  ordersLoading.value = true
+  ordersErrorMessage.value = ''
+
+  try {
+    const summaryList = await fetchSellerOrders(period)
+    const detailList = await Promise.all(
+      summaryList.map(async (order, index) => {
+        try {
+          const detail = await fetchSellerOrderDetail(order.orderNumber)
+          return normalizeOrderDetail(detail, order, index)
+        } catch (error) {
+          console.error(error)
+          return normalizeOrderSummary(order, index)
+        }
+      }),
+    )
+    orders.value = detailList
+    ordersLoaded.value = true
+  } catch (error) {
+    console.error(error)
+    orders.value = []
+    ordersErrorMessage.value = error?.message ?? '주문 현황을 불러오지 못했어요.'
+  } finally {
+    ordersLoading.value = false
+  }
+}
+
+const setOrderRange = async (value) => {
+  const exists = orderFilterOptions.some((opt) => opt.value === value)
+  if (!exists || selectedOrderRange.value === value) return
+  selectedOrderRange.value = value
+  await loadOrders(value)
+}
+
+const orderStatusMeta = {
+  approved: { label: '승인 완료', badgeClass: 'bg-green-100 text-green-700' },
+  rejected: { label: '승인 거절', badgeClass: 'bg-red-100 text-red-600' },
+  cancelled: { label: '주문 취소', badgeClass: 'bg-red-100 text-red-600' },
+  shipping: { label: '배송 중', badgeClass: 'bg-blue-100 text-blue-700' },
+  delivered: { label: '배송 완료', badgeClass: 'bg-green-100 text-green-700' },
+}
+
+const getStatusMeta = (status) => orderStatusMeta[status] ?? { label: '확인 필요', badgeClass: 'bg-gray-100 text-gray-600' }
+
+const paymentStatusLabel = {
+  PENDING: '결제 대기',
+  PAID: '결제 완료',
+  REFUNDED: '환불 완료',
+  FAILED: '결제 실패',
+}
+
+const getPaymentStatusLabel = (status) => paymentStatusLabel[status] ?? '확인 필요'
+
+const formatOrderDate = (date) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
+const formatCurrency = (value) => `${Number(value ?? 0).toLocaleString()}원`
 </script>
