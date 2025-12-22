@@ -155,7 +155,7 @@ import { useAuth } from '@/composables/useAuth';
 import { useChangePassword } from '@/composables/useChangePassword';
 
 const router = useRouter();
-const { isAuthenticated, isProfileLoading, profileError, loadUserProfile } = useAuth();
+const { isAuthenticated, isProfileLoading, profileError, loadUserProfile, logout } = useAuth();
 const {
   currentPassword,
   newPassword,
@@ -180,10 +180,14 @@ onMounted(async () => {
 const handleSubmit = async () => {
   const result = await submit();
   if (result) {
-    await loadUserProfile();
-    const message = successMessage.value || '비밀번호를 바꿨어요.';
+    const message = successMessage.value || '비밀번호를 바꿨어요. 다시 로그인해 주세요.';
     window.alert(message);
-    router.push('/mypage');
+    try {
+      await logout();
+    } catch (error) {
+      console.error(error);
+    }
+    router.push('/login');
   }
 };
 
