@@ -69,6 +69,7 @@ public interface ProductMapper {
         @Param("name") String name,
         @Param("description") String description,
         @Param("price") Long price,
+        @Param("weightG") Integer weightG,
         @Param("stock") Integer stock,
         @Param("imageUrl") String imageUrl,
         @Param("foodId") Long foodId
@@ -88,6 +89,7 @@ public interface ProductMapper {
         @Param("categoryId") Long categoryId,
         @Param("price") Long price,
         @Param("description") String description,
+        @Param("weightG") Integer weightG,
         @Param("stock") Integer stock,
         @Param("imageUrl") String imageUrl
     );

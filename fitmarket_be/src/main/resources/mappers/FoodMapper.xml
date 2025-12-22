@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.fitmarket_be.food.repository.FoodMapper">
+
+    <resultMap id="FoodResultMap" type="com.ssafy.fitmarket_be.food.domain.Food">
+        <constructor>
+            <idArg column="id" javaType="long"/>
+            <arg column="code" javaType="string"/>
+            <arg column="name" javaType="string"/>
+            <arg column="food_category_major" javaType="string"/>
+            <arg column="food_category_minor" javaType="string"/>
+            <arg column="calories" javaType="string"/>
+            <arg column="protein" javaType="string"/>
+            <arg column="carbs" javaType="string"/>
+            <arg column="fat" javaType="string"/>
+            <arg column="sodium" javaType="string"/>
+            <arg column="sugars" javaType="string"/>
+            <arg column="fiber" javaType="string"/>
+            <arg column="saturated_fat" javaType="string"/>
+            <arg column="trans_fat" javaType="string"/>
+            <arg column="calcium" javaType="string"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 전체 식품 조회 (limit 적용) -->
+    <select id="selectAllFoods" resultMap="FoodResultMap">
+        SELECT
+            id,
+            code,
+            name,
+            food_category_major,
+            food_category_minor,
+            calories,
+            protein,
+            carbs,
+            fat,
+            sodium,
+            sugars,
+            fiber,
+            saturated_fat,
+            trans_fat,
+            calcium
+        FROM food
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 식품 ID로 조회 -->
+    <select id="selectFoodById" resultMap="FoodResultMap">
+        SELECT
+            id,
+            code,
+            name,
+            food_category_major,
+            food_category_minor,
+            calories,
+            protein,
+            carbs,
+            fat,
+            sodium,
+            sugars,
+            fiber,
+            saturated_fat,
+            trans_fat,
+            calcium
+        FROM food
+        WHERE id = #{id}
+    </select>
+
+</mapper>

@@ -4,10 +4,19 @@ import { fetchProducts } from '@/api/productsApi'
 const products = ref([])
 const isLoading = ref(false)
 const errorMessage = ref('')
+const pagination = ref({
+  page: 1,
+  size: 20,
+  totalElements: 0,
+  totalPages: 1,
+  hasNext: false,
+  hasPrevious: false,
+})
 
 const mapProduct = (item) => ({
   id: item.id,
   name: item.name,
+  categoryId: item.categoryId ?? null,
   category: item.categoryName ?? '기타',
   price: item.price,
   image: item.imageUrl ? `http://localhost:8080/api${item.imageUrl}` : item.imageUrl,
@@ -22,15 +31,32 @@ const mapProduct = (item) => ({
 })
 
 export function useProducts() {
-  const loadProducts = async ({ categoryId, keyword } = {}) => {
+  const loadProducts = async ({ page = pagination.value.page, size = pagination.value.size, categoryId, keyword } = {}) => {
     isLoading.value = true
     errorMessage.value = ''
     try {
-      const response = await fetchProducts({ page: 1, size: 20, categoryId, keyword })
+      const response = await fetchProducts({ page, size, categoryId, keyword })
       products.value = (response.content ?? []).map(mapProduct)
+      pagination.value = {
+        page: response.page ?? page,
+        size: response.size ?? size,
+        totalElements: response.totalElements ?? products.value.length,
+        totalPages: response.totalPages ?? 1,
+        hasNext: response.hasNext ?? false,
+        hasPrevious: response.hasPrevious ?? false,
+      }
     } catch (error) {
       console.error(error)
       errorMessage.value = '상품을 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
+      pagination.value = {
+        ...pagination.value,
+        page,
+        size,
+        totalElements: 0,
+        totalPages: 1,
+        hasNext: false,
+        hasPrevious: false,
+      }
     } finally {
       isLoading.value = false
     }
@@ -55,6 +81,7 @@ export function useProducts() {
     products,
     isLoading,
     errorMessage,
+    pagination,
     toggleFavorite,
     getProductById,
     searchProducts,

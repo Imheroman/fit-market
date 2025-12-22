@@ -15,7 +15,7 @@
           </div>
           <div class="flex items-center gap-3 text-sm text-gray-500">
             <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-full font-medium">BEST</span>
-            <span>총 {{ sortedProducts.length }}개</span>
+            <span>총 {{ totalCount }}개</span>
           </div>
         </div>
       </div>
@@ -33,6 +33,42 @@
           @add-to-cart="handleAddToCart"
         />
       </div>
+      <div
+        v-if="!isLoading && !errorMessage && pageCount > 1"
+        class="mt-10 flex items-center justify-between"
+      >
+        <button
+          class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors"
+          :class="currentPage === 1 ? 'border-gray-200 text-gray-300' : 'border-amber-200 text-amber-700 hover:border-amber-300 hover:text-amber-800'"
+          :disabled="currentPage === 1"
+          @click="goToPage(currentPage - 1)"
+        >
+          이전
+        </button>
+        <div class="flex items-center gap-2">
+          <button
+            v-for="page in pageNumbers"
+            :key="page"
+            class="w-9 h-9 rounded-lg text-sm font-semibold border transition-colors"
+            :class="
+              currentPage === page
+                ? 'bg-amber-500 border-amber-500 text-white'
+                : 'border-gray-200 text-gray-600 hover:border-amber-200 hover:text-amber-700'
+            "
+            @click="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+        </div>
+        <button
+          class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors"
+          :class="currentPage === pageCount ? 'border-gray-200 text-gray-300' : 'border-amber-200 text-amber-700 hover:border-amber-300 hover:text-amber-800'"
+          :disabled="currentPage === pageCount"
+          @click="goToPage(currentPage + 1)"
+        >
+          다음
+        </button>
+      </div>
     </main>
 
     <AppFooter />
@@ -40,6 +76,7 @@
 </template>
 
 <script setup>
+import { computed, ref } from 'vue';
 import { Star } from 'lucide-vue-next';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
@@ -48,10 +85,36 @@ import { useCart } from '@/composables/useCart';
 import { useBestProducts } from '@/composables/useBestProducts';
 import { shouldShowErrorAlert } from '@/utils/httpError';
 
-const { products, isLoading, errorMessage, toggleFavorite } = useBestProducts();
+const { products, isLoading, errorMessage, toggleFavorite, loadProducts, pagination } = useBestProducts();
 const { addToCart } = useCart();
 
 const sortedProducts = products;
+const currentPage = ref(1);
+const pageSize = 12;
+
+const totalCount = computed(() => pagination.value.totalElements || sortedProducts.value.length);
+const pageCount = computed(() => Math.max(pagination.value.totalPages || 1, 1));
+
+const pageNumbers = computed(() => {
+  const total = pageCount.value;
+  const current = currentPage.value;
+  const maxButtons = 10;
+  const half = Math.floor(maxButtons / 2);
+  let start = Math.max(1, current - half);
+  let end = Math.min(total, start + maxButtons - 1);
+  if (end - start + 1 < maxButtons) {
+    start = Math.max(1, end - maxButtons + 1);
+  }
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+});
+
+const goToPage = async (page) => {
+  const total = pageCount.value;
+  const nextPage = Math.min(Math.max(page, 1), total);
+  if (nextPage === currentPage.value) return;
+  currentPage.value = nextPage;
+  await loadProducts({ page: nextPage, size: pageSize });
+};
 
 const handleAddToCart = async (productId) => {
   const product = sortedProducts.value.find((p) => p.id === productId);

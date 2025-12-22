@@ -35,10 +35,10 @@
             pc.name AS category_name,
             p.rating,
             p.review_count,
-            COALESCE(CAST(f.calories AS SIGNED), 0) AS calories,
-            COALESCE(CAST(f.protein AS SIGNED), 0) AS protein,
-            COALESCE(CAST(f.carbs AS SIGNED), 0) AS carbs,
-            COALESCE(CAST(f.fat AS SIGNED), 0) AS fat
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.calories, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS calories,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.protein, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS protein,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.carbs, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS carbs,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.fat, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS fat
         FROM products p
         LEFT JOIN product_categories pc ON p.product_category_id = pc.id
         LEFT JOIN food f ON p.food_id = f.id
@@ -52,10 +52,10 @@
             OR p.description LIKE CONCAT('%', #{keyword}, '%')
             OR pc.name LIKE CONCAT('%', #{keyword}, '%')
             OR f.name LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(f.calories AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(f.protein AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(f.carbs AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(f.fat AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.calories, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.protein, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.carbs, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.fat, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
           )
         </if>
         ORDER BY p.created_date DESC
@@ -78,10 +78,10 @@
             OR p.description LIKE CONCAT('%', #{keyword}, '%')
             OR pc.name LIKE CONCAT('%', #{keyword}, '%')
             OR f.name LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(f.calories AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(f.protein AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(f.carbs AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(f.fat AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.calories, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.protein, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.carbs, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.fat, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
           )
         </if>
     </select>
@@ -106,10 +106,10 @@
             p.image_url,
             p.rating,
             p.review_count,
-            COALESCE(CAST(f.calories AS SIGNED), 0) AS calories,
-            COALESCE(CAST(f.protein AS SIGNED), 0) AS protein,
-            COALESCE(CAST(f.carbs AS SIGNED), 0) AS carbs,
-            COALESCE(CAST(f.fat AS SIGNED), 0) AS fat
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.calories, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS calories,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.protein, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS protein,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.carbs, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS carbs,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.fat, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS fat
         FROM products p
         LEFT JOIN product_categories pc ON p.product_category_id = pc.id
         LEFT JOIN food f ON p.food_id = f.id
@@ -125,6 +125,7 @@
             name,
             description,
             price,
+            weight_g,
             stock,
             image_url,
             rating,
@@ -136,6 +137,7 @@
             #{name},
             #{description},
             #{price},
+            #{weightG},
             #{stock},
             #{imageUrl},
             0.0,
@@ -160,12 +162,17 @@
     <!-- 상품 수정 -->
     <update id="updateProduct">
         UPDATE products
-        SET name = #{name},
+        <set>
+            name = #{name},
             product_category_id = #{categoryId},
             price = #{price},
             description = #{description},
+            <if test="weightG != null">
+                weight_g = #{weightG},
+            </if>
             stock = #{stock},
             image_url = #{imageUrl}
+        </set>
         WHERE id = #{productId}
           AND deleted_date IS NULL
     </update>
@@ -191,10 +198,10 @@
             pc.name AS category_name,
             p.rating,
             p.review_count,
-            COALESCE(CAST(f.calories AS SIGNED), 0) AS calories,
-            COALESCE(CAST(f.protein AS SIGNED), 0) AS protein,
-            COALESCE(CAST(f.carbs AS SIGNED), 0) AS carbs,
-            COALESCE(CAST(f.fat AS SIGNED), 0) AS fat
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.calories, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS calories,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.protein, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS protein,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.carbs, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS carbs,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.fat, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS fat
         FROM products p
         LEFT JOIN product_categories pc ON p.product_category_id = pc.id
         LEFT JOIN food f ON p.food_id = f.id
@@ -216,10 +223,10 @@
             pc.name AS category_name,
             p.rating,
             p.review_count,
-            COALESCE(CAST(f.calories AS SIGNED), 0) AS calories,
-            COALESCE(CAST(f.protein AS SIGNED), 0) AS protein,
-            COALESCE(CAST(f.carbs AS SIGNED), 0) AS carbs,
-            COALESCE(CAST(f.fat AS SIGNED), 0) AS fat
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.calories, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS calories,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.protein, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS protein,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.carbs, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS carbs,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.fat, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS fat
         FROM products p
         LEFT JOIN product_categories pc ON p.product_category_id = pc.id
         LEFT JOIN food f ON p.food_id = f.id
@@ -241,10 +248,10 @@
             pc.name AS category_name,
             p.rating,
             p.review_count,
-            COALESCE(CAST(f.calories AS SIGNED), 0) AS calories,
-            COALESCE(CAST(f.protein AS SIGNED), 0) AS protein,
-            COALESCE(CAST(f.carbs AS SIGNED), 0) AS carbs,
-            COALESCE(CAST(f.fat AS SIGNED), 0) AS fat
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.calories, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS calories,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.protein, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS protein,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.carbs, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS carbs,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.fat, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS fat
         FROM products p
         LEFT JOIN product_categories pc ON p.product_category_id = pc.id
         LEFT JOIN food f ON p.food_id = f.id
