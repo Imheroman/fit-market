@@ -114,7 +114,7 @@ const goToSignup = () => {
 const handleSubmit = async () => {
     const session = await submitLogin()
     if (session) {
-        router.push('/mypage')
+        router.push({name: 'home'});
     }
 }
 </script>
