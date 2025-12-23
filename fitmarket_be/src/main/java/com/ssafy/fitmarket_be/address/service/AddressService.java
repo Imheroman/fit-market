@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AddressService {
 
+  private static final int MAX_ADDRESS_COUNT = 5;
+
   private final AddressRepository addressRepository;
   private final AddressDtoMapper addressDtoMapper;
 
@@ -35,10 +37,24 @@ public class AddressService {
     return this.addressDtoMapper.toResponse(address);
   }
 
+  /**
+   * 배송지를 생성하고 사용자와 연결한다.
+   *
+   * @param userId 배송지를 등록하는 사용자 ID
+   * @param request 배송지 생성 요청 DTO
+   * @return 생성된 배송지 ID
+   * @throws IllegalArgumentException 배송지 등록 가능 수를 초과한 경우
+   * @throws IllegalStateException 배송지 저장 또는 연결에 실패한 경우
+   */
   @Transactional
   public Long create(Long userId, AddressCreateRequestDto request) {
+    int addressCount = this.addressRepository.countActiveByUserId(userId);
+    if (addressCount >= MAX_ADDRESS_COUNT) {
+      throw new IllegalArgumentException("배송지는 최대 5개까지 등록할 수 있어요. 기존 배송지를 정리한 뒤 다시 시도해 주세요.");
+    }
+
     Address address = this.addressDtoMapper.toEntity(request);
-//    boolean isFirstAddress = this.addressRepository.countActiveByUserId(userId) == 0;
+    boolean isMain = Boolean.TRUE.equals(request.getMain());
 
     int inserted = this.addressRepository.save(address);
     if (inserted <= 0) {
@@ -47,8 +63,11 @@ public class AddressService {
 
     log.trace("inserted address id: {}, user id: {}", address.getId(), userId);
 
-//    int linked = this.addressRepository.insertUserAddress(userId, address.getId(), isFirstAddress);
-    int linked = this.addressRepository.insertUserAddress(userId, address.getId(), inserted == 1);
+    if (isMain) {
+      this.addressRepository.clearMainByUserId(userId);
+    }
+
+    int linked = this.addressRepository.insertUserAddress(userId, address.getId(), isMain);
     if (linked <= 0) {
       throw new IllegalStateException("배송지 연결 과정에서 문제가 발생했어요. 잠시 후 다시 시도해 주세요.");
     }

@@ -40,9 +40,9 @@
           </div>
           <span
             class="inline-flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-full"
-            :class="getStatusMeta(order.approvalStatus).badgeClass"
+            :class="getOrderStatusMeta(order).badgeClass"
           >
-            {{ getStatusMeta(order.approvalStatus).label }}
+            {{ getOrderStatusMeta(order).label }}
           </span>
         </div>
 
@@ -83,6 +83,7 @@
 </template>
 
 <script setup>
+import { getOrderStatusMeta } from '@/utils/orderStatus';
 
 const props = defineProps({
   filterOptions: {
@@ -119,30 +120,10 @@ const emit = defineEmits(['change-filter', 'select-order', 'delete-order']);
 
 const isDeleting = (orderNumber) => props.deletingOrderNumbers.includes(orderNumber);
 
-const orderStatusMeta = {
-  pending_approval: { label: '승인 대기', badgeClass: 'bg-yellow-100 text-yellow-700' },
-  approved: { label: '승인 완료', badgeClass: 'bg-green-100 text-green-700' },
-  rejected: { label: '승인 거절', badgeClass: 'bg-red-100 text-red-600' },
-  cancelled: { label: '주문 취소', badgeClass: 'bg-red-100 text-red-600' },
-  shipping: { label: '배송 중', badgeClass: 'bg-blue-100 text-blue-700' },
-  delivered: { label: '배송 완료', badgeClass: 'bg-green-100 text-green-700' },
-};
-
-const getStatusMeta = (status) => orderStatusMeta[status] ?? { label: '확인 필요', badgeClass: 'bg-gray-100 text-gray-600' };
-
 const formatOrderDate = (date) => {
   if (!date) return '-';
   return new Date(date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
 const formatCurrency = (value) => `${Number(value ?? 0).toLocaleString()}원`;
-
-const paymentStatusLabel = {
-  PENDING: '결제 대기',
-  PAID: '결제 완료',
-  REFUNDED: '환불 완료',
-  FAILED: '결제 실패',
-};
-
-const getPaymentStatusLabel = (status) => paymentStatusLabel[status] ?? '확인 필요';
 </script>

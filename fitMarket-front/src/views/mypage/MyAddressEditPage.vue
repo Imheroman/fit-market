@@ -19,7 +19,7 @@
       :initial-data="addressFormData"
       :is-submitting="isAddressSubmitting"
       :submit-error="addressSubmitError"
-      :is-main-locked="false"
+      :is-main-locked="isMainLocked"
       @submit="handleSubmitAddress"
       @cancel="handleCancel"
     />
@@ -49,6 +49,7 @@ const { addresses, loadAddresses, editAddress, isMutating: isAddressSubmitting }
 
 const addressFormData = ref(null);
 const addressSubmitError = ref('');
+const isMainLocked = computed(() => addresses.value.length === 1);
 
 onMounted(async () => {
   try {

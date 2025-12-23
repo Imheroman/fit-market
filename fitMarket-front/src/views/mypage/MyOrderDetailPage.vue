@@ -39,11 +39,10 @@
           <div class="flex flex-col gap-2 items-start md:items-end">
             <span
               class="inline-flex items-center gap-2 text-sm font-semibold px-3 py-1 rounded-full"
-              :class="getStatusMeta(orderDetail.approvalStatus).badgeClass"
+              :class="getOrderStatusMeta(orderDetail).badgeClass"
             >
-              {{ getStatusMeta(orderDetail.approvalStatus).label }}
+              {{ getOrderStatusMeta(orderDetail).label }}
             </span>
-            <span class="text-sm text-gray-500">{{ getPaymentStatusLabel(orderDetail.paymentStatus) }}</span>
           </div>
         </div>
 
@@ -64,13 +63,18 @@
 
         <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
           <button
+            v-if="shouldShowRefundAction"
             type="button"
-            class="px-4 py-2 rounded-lg text-sm font-semibold border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+            class="px-4 py-2 rounded-lg text-sm font-semibold border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="isRefunding || !canRefund"
             @click="handleRefundRequest"
           >
             {{ isRefunding ? '환불 요청 중...' : '환불 요청' }}
           </button>
         </div>
+        <p v-if="shouldShowRefundAction && refundBlockMessage" class="text-xs text-gray-500">
+          {{ refundBlockMessage }}
+        </p>
         <p v-if="refundMessage" class="text-sm text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
           {{ refundMessage }}
         </p>
@@ -102,7 +106,8 @@
             <h3 class="text-lg font-semibold text-gray-900">배송지</h3>
             <button
               type="button"
-              class="px-3 py-2 rounded-lg text-sm font-semibold border border-green-200 text-green-700 hover:bg-green-50 transition-colors"
+              class="px-3 py-2 rounded-lg text-sm font-semibold border border-green-200 text-green-700 hover:bg-green-50 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+              :disabled="!canEditAddress"
               @click="toggleAddressEditor"
             >
               배송지 변경
@@ -115,7 +120,8 @@
             <p>{{ orderDetail.address.addressLineDetail }}</p>
             <p v-if="orderDetail.address.memo" class="text-gray-500">메모: {{ orderDetail.address.memo }}</p>
           </div>
-          <div v-if="isAddressEditorOpen" class="border border-dashed border-green-200 rounded-xl p-4 space-y-3">
+          <p v-if="!canEditAddress" class="text-xs text-gray-500">요청이 접수된 주문은 배송지를 바꿀 수 없어요.</p>
+          <div v-if="isAddressEditorOpen && canEditAddress" class="border border-dashed border-green-200 rounded-xl p-4 space-y-3">
             <p class="text-sm text-gray-600">변경할 배송지를 선택해 주세요.</p>
             <div v-if="isAddressLoading" class="text-sm text-gray-500">배송지를 불러오는 중이에요.</div>
             <div v-else-if="addressErrorMessage" class="text-sm text-red-600">
@@ -189,21 +195,125 @@
           </dl>
         </div>
       </section>
+
+      <section class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-4">
+        <div class="space-y-1">
+          <h3 class="text-lg font-semibold text-gray-900">반품 · 교환</h3>
+          <p class="text-sm text-gray-500">필요하면 사유를 선택하고 상세 내용을 입력해 주세요.</p>
+        </div>
+
+        <p
+          v-if="claimBlockMessage"
+          class="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2"
+        >
+          {{ claimBlockMessage }}
+        </p>
+
+        <div class="grid gap-4 md:grid-cols-2">
+          <div class="border border-gray-100 rounded-xl p-4 space-y-3">
+            <h4 class="text-base font-semibold text-gray-900">반품 신청</h4>
+            <label class="flex flex-col gap-2 text-sm font-semibold text-gray-700">
+              사유 선택
+              <select
+                v-model="returnReason"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-100"
+              >
+                <option value="" disabled>사유를 선택해 주세요.</option>
+                <option v-for="reason in claimReasons" :key="reason.value" :value="reason.value">
+                  {{ reason.label }}
+                </option>
+              </select>
+            </label>
+            <label class="flex flex-col gap-2 text-sm font-semibold text-gray-700">
+              상세 내용
+              <textarea
+                v-model="returnDetail"
+                rows="3"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                :placeholder="returnDetailPlaceholder"
+              ></textarea>
+            </label>
+            <div class="flex justify-end">
+              <button
+                type="button"
+                class="px-4 py-2 rounded-lg text-sm font-semibold border border-green-200 text-green-700 hover:bg-green-50 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                :disabled="isReturnSubmitting || !canReturn || !isReturnFormValid"
+                @click="handleReturnRequest"
+              >
+                {{ isReturnSubmitting ? '반품 신청 중...' : '반품 신청' }}
+              </button>
+            </div>
+            <p v-if="returnMessage" class="text-sm text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
+              {{ returnMessage }}
+            </p>
+            <p v-if="returnError" class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              {{ returnError }}
+            </p>
+          </div>
+
+          <div class="border border-gray-100 rounded-xl p-4 space-y-3">
+            <h4 class="text-base font-semibold text-gray-900">교환 신청</h4>
+            <label class="flex flex-col gap-2 text-sm font-semibold text-gray-700">
+              사유 선택
+              <select
+                v-model="exchangeReason"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-100"
+              >
+                <option value="" disabled>사유를 선택해 주세요.</option>
+                <option v-for="reason in claimReasons" :key="reason.value" :value="reason.value">
+                  {{ reason.label }}
+                </option>
+              </select>
+            </label>
+            <label class="flex flex-col gap-2 text-sm font-semibold text-gray-700">
+              상세 내용
+              <textarea
+                v-model="exchangeDetail"
+                rows="3"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                :placeholder="exchangeDetailPlaceholder"
+              ></textarea>
+            </label>
+            <div class="flex justify-end">
+              <button
+                type="button"
+                class="px-4 py-2 rounded-lg text-sm font-semibold border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                :disabled="isExchangeSubmitting || !canExchange || !isExchangeFormValid"
+                @click="handleExchangeRequest"
+              >
+                {{ isExchangeSubmitting ? '교환 신청 중...' : '교환 신청' }}
+              </button>
+            </div>
+            <p v-if="exchangeMessage" class="text-sm text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
+              {{ exchangeMessage }}
+            </p>
+            <p v-if="exchangeError" class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              {{ exchangeError }}
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   </section>
 </template>
 
 <script setup lang="js">
-import { computed, ref, watch } from 'vue';
-import { useRoute, RouterLink } from 'vue-router';
+import { computed, ref, watch, onMounted } from 'vue';
+import { useRoute, RouterLink, useRouter } from 'vue-router';
 import { useOrderDetail } from '@/composables/useOrderDetail';
 import { useAddresses } from '@/composables/useAddresses';
-import { requestOrderAddressChange, requestOrderRefund } from '@/api/ordersApi';
+import { requestOrderAddressChange } from '@/api/ordersApi';
+import { useOrderClaims } from '@/composables/useOrderClaims';
+import { usePaymentCallbacks } from '@/composables/usePaymentCallbacks';
+import { clearPendingOrderRequest, readPendingOrderRequest } from '@/utils/paymentRequestStorage';
+import { getOrderStatusMeta } from '@/utils/orderStatus';
 
 const route = useRoute();
+const router = useRouter();
 const orderNumber = computed(() => route.params.orderNumber ?? '');
 
 const { orderDetail, isLoading, errorMessage, loadOrderDetail } = useOrderDetail(orderNumber);
+const { confirmPaymentFromQuery, confirmErrorMessage } = usePaymentCallbacks();
 const {
   addresses,
   loadAddresses,
@@ -211,23 +321,43 @@ const {
   errorMessage: addressErrorMessage,
 } = useAddresses();
 
-const isRefunding = ref(false);
-const refundMessage = ref('');
-const refundError = ref('');
 const isAddressEditorOpen = ref(false);
 const selectedAddressId = ref('');
 const isChangingAddress = ref(false);
 const addressChangeMessage = ref('');
 const addressChangeError = ref('');
 
-const orderStatusMeta = {
-  pending_approval: { label: '승인 대기', badgeClass: 'bg-yellow-100 text-yellow-700' },
-  approved: { label: '승인 완료', badgeClass: 'bg-green-100 text-green-700' },
-  rejected: { label: '승인 거절', badgeClass: 'bg-red-100 text-red-600' },
-  cancelled: { label: '주문 취소', badgeClass: 'bg-red-100 text-red-600' },
-  shipping: { label: '배송 중', badgeClass: 'bg-blue-100 text-blue-700' },
-  delivered: { label: '배송 완료', badgeClass: 'bg-green-100 text-green-700' },
-};
+const {
+  claimReasons,
+  returnReason,
+  returnDetail,
+  exchangeReason,
+  exchangeDetail,
+  returnDetailPlaceholder,
+  exchangeDetailPlaceholder,
+  canRefund,
+  refundBlockMessage,
+  isRefunding,
+  refundMessage,
+  refundError,
+  claimBlockMessage,
+  canReturn,
+  canExchange,
+  isDelivered,
+  isClaimLocked,
+  isReturnSubmitting,
+  isExchangeSubmitting,
+  isReturnFormValid,
+  isExchangeFormValid,
+  returnMessage,
+  returnError,
+  exchangeMessage,
+  exchangeError,
+  requestRefund,
+  requestReturn,
+  requestExchange,
+  loadRefundEligibility,
+} = useOrderClaims(orderNumber, orderDetail);
 
 const paymentStatusLabel = {
   PENDING: '결제 대기',
@@ -241,8 +371,6 @@ const orderModeLabel = {
   DIRECT: '바로구매',
 };
 
-const getStatusMeta = (status) => orderStatusMeta[status] ?? { label: '확인 필요', badgeClass: 'bg-gray-100 text-gray-600' };
-
 const getPaymentStatusLabel = (status) => paymentStatusLabel[status] ?? '확인 필요';
 
 const getOrderModeLabel = (mode) => orderModeLabel[mode] ?? '확인 필요';
@@ -254,24 +382,73 @@ const formatOrderDate = (date) => {
 
 const formatCurrency = (value) => `${Number(value ?? 0).toLocaleString()}원`;
 
+const shouldShowRefundAction = computed(() => !isClaimLocked.value);
+const canEditAddress = computed(() => !isClaimLocked.value);
+
+const normalizeQueryValue = (value) => (Array.isArray(value) ? value[0] : value);
+
+const getStoredOrderPayload = (orderId) => {
+  if (!orderId) return null;
+  const stored = readPendingOrderRequest();
+  if (!stored || stored.orderId !== orderId) return null;
+  return {
+    orderRequest: stored.orderRequest ?? null,
+    checkoutItems: Array.isArray(stored.checkoutItems) ? stored.checkoutItems : [],
+  };
+};
+
+const processPaymentResult = async () => {
+  const paymentStatusFromQuery = route.query.paymentStatus;
+  const orderIdFromQuery = normalizeQueryValue(route.query.orderId);
+  const normalizedOrderId = orderIdFromQuery ? String(orderIdFromQuery) : '';
+  const hasSuccessParams = Boolean(route.query.paymentKey && route.query.amount !== undefined && normalizedOrderId);
+
+  if (paymentStatusFromQuery === 'fail') {
+    await router.replace({
+      name: 'order-checkout',
+      query: { paymentStatus: 'fail', orderId: normalizedOrderId || orderNumber.value },
+    });
+    return;
+  }
+
+  if (!hasSuccessParams) {
+    if (paymentStatusFromQuery === 'success') {
+      confirmErrorMessage.value = '결제 정보를 찾지 못했어요. 다시 결제를 시작해 주세요.';
+      await router.replace({
+        name: 'order-checkout',
+        query: { paymentStatus: 'fail', orderId: normalizedOrderId || orderNumber.value },
+      });
+    }
+    return;
+  }
+
+  try {
+    const storedPayload = getStoredOrderPayload(normalizedOrderId);
+    const orderRequest = storedPayload?.orderRequest ?? null;
+    await confirmPaymentFromQuery(route.query, { orderRequest });
+    clearPendingOrderRequest();
+    const resolvedOrderId = normalizedOrderId || orderNumber.value;
+    await router.replace({ name: 'my-page-order-detail', params: { orderNumber: resolvedOrderId } });
+    await loadOrderDetail(resolvedOrderId);
+  } catch (error) {
+    console.error(error);
+    await router.replace({
+      name: 'order-checkout',
+      query: { paymentStatus: 'fail', orderId: normalizedOrderId || orderNumber.value },
+    });
+  }
+};
+
 const handleRefundRequest = async () => {
   if (!orderNumber.value || isRefunding.value) return;
 
   const shouldRequest = window.confirm('환불 요청을 접수할까요?');
   if (!shouldRequest) return;
 
-  isRefunding.value = true;
-  refundMessage.value = '';
-  refundError.value = '';
-
-  try {
-    await requestOrderRefund(orderNumber.value);
-    refundMessage.value = '환불 요청을 접수했어요. 진행 상황은 주문 상태에서 확인해 주세요.';
+  const isCompleted = await requestRefund();
+  if (isCompleted) {
     await loadOrderDetail();
-  } catch (error) {
-    refundError.value = error?.message ?? '환불 요청을 접수하지 못했어요. 잠시 후 다시 시도해 주세요.';
-  } finally {
-    isRefunding.value = false;
+    await loadRefundEligibility();
   }
 };
 
@@ -291,6 +468,7 @@ const ensureAddressesLoaded = async () => {
 };
 
 const toggleAddressEditor = async () => {
+  if (!canEditAddress.value) return;
   isAddressEditorOpen.value = !isAddressEditorOpen.value;
   if (!isAddressEditorOpen.value) return;
   await ensureAddressesLoaded();
@@ -320,6 +498,28 @@ const handleChangeAddress = async () => {
   }
 };
 
+const handleReturnRequest = async () => {
+  if (!orderNumber.value || isReturnSubmitting.value) return;
+  const shouldRequest = window.confirm('반품 신청을 접수할까요?');
+  if (!shouldRequest) return;
+
+  const isCompleted = await requestReturn();
+  if (isCompleted) {
+    await loadOrderDetail();
+  }
+};
+
+const handleExchangeRequest = async () => {
+  if (!orderNumber.value || isExchangeSubmitting.value) return;
+  const shouldRequest = window.confirm('교환 신청을 접수할까요?');
+  if (!shouldRequest) return;
+
+  const isCompleted = await requestExchange();
+  if (isCompleted) {
+    await loadOrderDetail();
+  }
+};
+
 watch(
   () => orderDetail.value?.address?.id,
   (value) => {
@@ -340,4 +540,16 @@ watch(
     }
   },
 );
+
+watch(
+  () => canEditAddress.value,
+  (value) => {
+    if (value) return;
+    closeAddressEditor();
+  },
+);
+
+onMounted(() => {
+  processPaymentResult().catch((error) => console.error(error));
+});
 </script>

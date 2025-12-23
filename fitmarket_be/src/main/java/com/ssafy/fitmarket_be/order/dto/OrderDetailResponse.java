@@ -18,6 +18,10 @@ import java.util.List;
  * @param merchandiseAmount 상품 합계 금액
  * @param shippingFee       배송비
  * @param discountAmount    할인 금액
+ * @param refundable        환불 가능 여부
+ * @param returnable        반품 가능 여부
+ * @param exchangeable      교환 가능 여부
+ * @param returnExchange    반품/교환/환불 진행 상태
  * @param orderedAt         주문 일시
  * @param comment           주문 메모
  * @param address           배송지 스냅샷
@@ -33,6 +37,10 @@ public record OrderDetailResponse(
     Long merchandiseAmount,
     Long shippingFee,
     Long discountAmount,
+    boolean refundable,
+    boolean returnable,
+    boolean exchangeable,
+    OrderReturnExchangeStatusResponse returnExchange,
     LocalDateTime orderedAt,
     String comment,
     OrderAddressSnapshot address,

@@ -42,7 +42,7 @@ public class UserService {
     Optional<User> existUser = this.userRepository.findByEmail(request.getEmail());
 
     if (existUser.isPresent()) {
-      throw new RuntimeException("이미 존재하는 회원입니다.");
+      throw new IllegalArgumentException("이미 존재하는 회원입니다.");
     }
 
     String pw = this.passwordEncoder.encode(request.getPassword());
