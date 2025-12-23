@@ -19,7 +19,7 @@ const mapProduct = (item) => ({
   categoryId: item.categoryId ?? null,
   category: item.categoryName ?? '기타',
   price: item.price,
-  image: item.imageUrl ? `http://localhost:8080/api${item.imageUrl}` : item.imageUrl,
+  image: item.imageUrl ? `/api${item.imageUrl}` : item.imageUrl,
   rating: item.rating ?? 0,
   reviews: item.reviewCount ?? 0,
   // 백엔드에서 평탄화된 구조로 전달됨

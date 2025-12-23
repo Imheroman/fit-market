@@ -75,7 +75,7 @@ public class FoodVectorStoreService {
         this.vectorStore = new SimpleVectorStore(embeddingModel);
 
         // 2. 모든 Food 불변 객체 로드 (DB에서 1회 조회)
-        List<Food> allFoods = foodMapper.selectAllFoods(50);
+        List<Food> allFoods = foodMapper.selectAllFoods(null);
         log.info("Food 데이터 로딩 완료: {}건", allFoods.size());
 
         // 3. Food ID -> Food 불변 객체 캐시 생성

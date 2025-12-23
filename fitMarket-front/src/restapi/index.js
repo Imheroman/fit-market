@@ -9,7 +9,7 @@ import { useSessionStore } from '@/stores/sessionStore';
 
 // axios 인스턴스 생성: 동적으로 memberStore에서 accessToken을 가져올 수 없으므로 인터셉터에서 처리
 const fitmarket = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: '/api',
   timeout: 1000 * 3,
   withCredentials: true,
   // headers: {
