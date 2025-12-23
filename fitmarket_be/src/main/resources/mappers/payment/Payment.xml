@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.fitmarket_be.payment.repository.PaymentRepository">
+
+  <insert id="upsert" parameterType="com.ssafy.fitmarket_be.payment.domain.Payment">
+    INSERT INTO payments (
+      order_id,
+      payment_key,
+      provider,
+      method,
+      status,
+      amount,
+      approved_at,
+      failed_code,
+      failed_message,
+      raw_response
+    ) VALUES (
+      #{orderId},
+      #{paymentKey},
+      #{provider},
+      #{method},
+      #{status, javaType=com.ssafy.fitmarket_be.payment.domain.PaymentStatus, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+      #{amount},
+      #{approvedAt},
+      #{failedCode},
+      #{failedMessage},
+      #{rawResponse}
+    )
+    ON DUPLICATE KEY UPDATE
+      payment_key   = VALUES(payment_key),
+      provider      = VALUES(provider),
+      method        = VALUES(method),
+      status        = VALUES(status),
+      amount        = VALUES(amount),
+      approved_at   = VALUES(approved_at),
+      failed_code   = VALUES(failed_code),
+      failed_message= VALUES(failed_message),
+      raw_response  = VALUES(raw_response),
+      modified_date = CURRENT_TIMESTAMP
+  </insert>
+
+  <update id="updateStatusByOrderId">
+    UPDATE payments
+    SET status = #{status, javaType=com.ssafy.fitmarket_be.payment.domain.PaymentStatus, typeHandler=org.apache.ibatis.type.EnumTypeHandler},
+        modified_date = CURRENT_TIMESTAMP
+    WHERE order_id = #{orderId}
+      AND deleted_date IS NULL
+  </update>
+
+  <select id="findApprovedAtByOrderId" resultType="java.time.LocalDateTime">
+    SELECT approved_at
+    FROM payments
+    WHERE order_id = #{orderId}
+      AND deleted_date IS NULL
+    LIMIT 1
+  </select>
+</mapper>

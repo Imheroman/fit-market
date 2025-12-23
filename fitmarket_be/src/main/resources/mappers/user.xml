@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.fitmarket_be.user.repository.UserRepository">
+
+  <select id="findByEmail" resultMap="userMap">
+    SELECT * FROM users
+    where email = #{email}
+  </select>
+
+  <select id="findBy" resultMap="userMap">
+    SELECT * FROM users
+    where id = #{id}
+  </select>
+
+  <insert id="save" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO users ( name, email, password, phone )
+    VALUES ( #{name}, #{email}, #{password}, #{phone} )
+  </insert>
+
+  <update id="update">
+    UPDATE users
+    <set>
+      <choose>
+        <when test="column == 'name'">
+          name = #{value}
+        </when>
+        <when test="column == 'phone'">
+          phone = #{value}
+        </when>
+        <when test="column == 'password'">
+          password = #{value}
+        </when>
+        <otherwise>
+        </otherwise>
+      </choose>
+    </set>
+    <where>
+      id = #{id}
+    </where>
+  </update>
+
+  <update id="delete">
+    UPDATE users
+    <set>deleted_date = NOW()</set>
+    <where>
+      id = #{id}
+    </where>
+  </update>
+
+  <update id="updateRole">
+    UPDATE users
+    SET role = #{role}
+    WHERE id = #{id}
+      AND deleted_date IS NULL
+  </update>
+
+  <resultMap id="userMap" type="Users">
+    <id property="id" column="id"/>
+
+    <result property="name" column="name"/>
+    <result property="email" column="email"/>
+    <result property="password" column="password"/>
+    <result property="phone" column="phone"/>
+    <result property="role" column="role"/>
+
+    <result property="createdDate" column="created_date"/>
+    <result property="modifiedDate" column="modified_date"/>
+    <result property="deletedDate" column="deleted_date"/>
+  </resultMap>
+</mapper>

@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  --background: oklch(0.99 0.01 142);
+  --foreground: oklch(0.15 0.02 142);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.02 142);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.02 142);
+  --primary: oklch(0.55 0.18 145);
+  --primary-foreground: oklch(0.99 0.01 145);
+  --secondary: oklch(0.95 0.03 145);
+  --secondary-foreground: oklch(0.2 0.02 145);
+  --muted: oklch(0.96 0.02 145);
+  --muted-foreground: oklch(0.5 0.02 145);
+  --accent: oklch(0.94 0.04 145);
+  --accent-foreground: oklch(0.25 0.03 145);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.99 0.01 145);
+  --border: oklch(0.9 0.02 145);
+  --input: oklch(0.9 0.02 145);
+  --ring: oklch(0.55 0.18 145);
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: oklch(0.12 0.02 145);
+  --foreground: oklch(0.98 0.01 145);
+  --card: oklch(0.15 0.02 145);
+  --card-foreground: oklch(0.98 0.01 145);
+  --popover: oklch(0.15 0.02 145);
+  --popover-foreground: oklch(0.98 0.01 145);
+  --primary: oklch(0.65 0.18 145);
+  --primary-foreground: oklch(0.12 0.02 145);
+  --secondary: oklch(0.22 0.02 145);
+  --secondary-foreground: oklch(0.98 0.01 145);
+  --muted: oklch(0.22 0.02 145);
+  --muted-foreground: oklch(0.6 0.02 145);
+  --accent: oklch(0.25 0.03 145);
+  --accent-foreground: oklch(0.98 0.01 145);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.98 0.01 145);
+  --border: oklch(0.22 0.02 145);
+  --input: oklch(0.22 0.02 145);
+  --ring: oklch(0.65 0.18 145);
+}
+
+* {
+  @apply border-gray-200;
+}
+
+body {
+  @apply bg-white text-gray-900;
+  font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

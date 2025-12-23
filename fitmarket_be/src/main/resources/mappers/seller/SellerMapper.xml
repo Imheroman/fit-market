@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.fitmarket_be.seller.infrastructure.mybatis.SellerMapper">
+
+    <resultMap id="SellerMap" type="com.ssafy.fitmarket_be.seller.domain.Seller">
+        <constructor>
+            <idArg column="id" javaType="long"/>
+            <arg column="user_id" javaType="long"/>
+            <arg column="business_name" javaType="string"/>
+            <arg column="business_number" javaType="string"/>
+            <arg column="business_type"
+                 javaType="com.ssafy.fitmarket_be.seller.domain.BusinessType"
+                 typeHandler="com.ssafy.fitmarket_be.seller.infrastructure.mybatis.BusinessTypeTypeHandler"/>
+            <arg column="contact_phone" javaType="string"/>
+            <arg column="business_address" javaType="string"/>
+            <arg column="introduction" javaType="string"/>
+            <arg column="status"
+                 javaType="com.ssafy.fitmarket_be.seller.domain.SellerStatus"
+                 typeHandler="com.ssafy.fitmarket_be.seller.infrastructure.mybatis.SellerStatusTypeHandler"/>
+            <arg column="review_note" javaType="string"/>
+            <arg column="reviewed_by" javaType="long"/>
+            <arg column="created_date" javaType="java.time.LocalDateTime"/>
+            <arg column="modified_date" javaType="java.time.LocalDateTime"/>
+            <arg column="deleted_date" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <select id="findActiveByUserId" resultMap="SellerMap">
+        SELECT *
+        FROM sellers
+        WHERE user_id = #{userId}
+          AND deleted_date IS NULL
+        LIMIT 1
+    </select>
+
+    <select id="findActiveById" resultMap="SellerMap">
+        SELECT *
+        FROM sellers
+        WHERE id = #{id}
+          AND deleted_date IS NULL
+        LIMIT 1
+    </select>
+
+    <select id="findByStatus" resultMap="SellerMap">
+        SELECT *
+        FROM sellers
+        WHERE deleted_date IS NULL
+          AND status = #{status,javaType=com.ssafy.fitmarket_be.seller.domain.SellerStatus,typeHandler=com.ssafy.fitmarket_be.seller.infrastructure.mybatis.SellerStatusTypeHandler}
+        ORDER BY created_date DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sellers (
+            user_id,
+            business_name,
+            business_number,
+            business_type,
+            contact_phone,
+            business_address,
+            introduction,
+            status
+        ) VALUES (
+            #{userId},
+            #{businessName},
+            #{businessNumber},
+            #{businessType},
+            #{contactPhone},
+            #{businessAddress},
+            #{introduction},
+            #{status,javaType=com.ssafy.fitmarket_be.seller.domain.SellerStatus,typeHandler=com.ssafy.fitmarket_be.seller.infrastructure.mybatis.SellerStatusTypeHandler}
+        )
+    </insert>
+
+    <update id="updateForReapply">
+        UPDATE sellers
+        SET business_name = #{businessName},
+            business_number = #{businessNumber},
+            business_type = #{businessType,javaType=com.ssafy.fitmarket_be.seller.domain.BusinessType,typeHandler=com.ssafy.fitmarket_be.seller.infrastructure.mybatis.BusinessTypeTypeHandler},
+            contact_phone = #{contactPhone},
+            business_address = #{businessAddress},
+            introduction = #{introduction},
+            status = #{status,javaType=com.ssafy.fitmarket_be.seller.domain.SellerStatus,typeHandler=com.ssafy.fitmarket_be.seller.infrastructure.mybatis.SellerStatusTypeHandler},
+            review_note = NULL,
+            reviewed_by = NULL,
+            modified_date = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+          AND deleted_date IS NULL
+    </update>
+
+    <update id="updateStatus">
+        UPDATE sellers
+        SET status = #{status,javaType=com.ssafy.fitmarket_be.seller.domain.SellerStatus,typeHandler=com.ssafy.fitmarket_be.seller.infrastructure.mybatis.SellerStatusTypeHandler},
+            review_note = #{reviewNote},
+            reviewed_by = #{reviewedBy}
+        WHERE id = #{id}
+          AND deleted_date IS NULL
+    </update>
+
+</mapper>
