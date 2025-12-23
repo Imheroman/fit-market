@@ -1,73 +1,81 @@
-import { reactive, ref } from 'vue'
-import { loginUser } from '@/api/authApi'
-import { useAuth } from '@/composables/useAuth'
+import { reactive, ref } from 'vue';
+import { loginUser } from '@/api/authApi';
+import { useAuth } from '@/composables/useAuth';
 
 const createDefaultForm = () => ({
   email: '',
   password: '',
-})
+});
 
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const resolveLoginErrorMessage = (error) => {
+  const message = error?.message ?? '';
+  if (message.toLowerCase().includes('unauthorized')) {
+    return '로그인 정보가 올바르지 않습니다. 다시 시도해주세요.';
+  }
+  return message || '로그인에 실패했어요. 잠시 후 다시 시도해주세요.';
+};
 
 export function useLoginForm() {
-  const { login } = useAuth()
+  const { login } = useAuth();
 
-  const form = reactive(createDefaultForm())
+  const form = reactive(createDefaultForm());
   const errors = reactive({
     email: '',
     password: '',
-  })
-  const isSubmitting = ref(false)
-  const serverError = ref('')
-  const successMessage = ref('')
+  });
+  const isSubmitting = ref(false);
+  const serverError = ref('');
+  const successMessage = ref('');
 
   const resetErrors = () => {
     Object.keys(errors).forEach((key) => {
-      errors[key] = ''
-    })
-  }
+      errors[key] = '';
+    });
+  };
 
   const validate = () => {
-    resetErrors()
-    let isValid = true
+    resetErrors();
+    let isValid = true;
 
     if (!form.email.trim() || !emailPattern.test(form.email)) {
-      errors.email = '올바른 이메일을 입력해주세요.'
-      isValid = false
+      errors.email = '올바른 이메일을 입력해주세요.';
+      isValid = false;
     }
 
     if (!form.password.trim()) {
-      errors.password = '비밀번호를 입력해주세요.'
-      isValid = false
+      errors.password = '비밀번호를 입력해주세요.';
+      isValid = false;
     }
 
-    return isValid
-  }
+    return isValid;
+  };
 
   const submitLogin = async () => {
     if (!validate()) {
-      serverError.value = ''
-      successMessage.value = ''
-      return null
+      serverError.value = '';
+      successMessage.value = '';
+      return null;
     }
 
-    isSubmitting.value = true
-    serverError.value = ''
-    successMessage.value = ''
+    isSubmitting.value = true;
+    serverError.value = '';
+    successMessage.value = '';
 
     try {
-      const session = await loginUser({ ...form })
-      login(session)
-      successMessage.value = '안전하게 로그인되었어요.'
-      return session
+      const session = await loginUser({ ...form });
+      login(session);
+      successMessage.value = '안전하게 로그인되었어요.';
+      return session;
     } catch (error) {
-      console.error(error)
-      serverError.value = error.message ?? '로그인에 실패했어요. 잠시 후 다시 시도해주세요.'
-      return null
+      console.error(error);
+      serverError.value = resolveLoginErrorMessage(error);
+      return null;
     } finally {
-      isSubmitting.value = false
+      isSubmitting.value = false;
     }
-  }
+  };
 
   return {
     form,
@@ -76,5 +84,5 @@ export function useLoginForm() {
     serverError,
     successMessage,
     submitLogin,
-  }
+  };
 }

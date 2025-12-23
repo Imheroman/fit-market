@@ -8,6 +8,7 @@ const isLoading = ref(false);
 const isMutating = ref(false);
 const errorMessage = ref('');
 const hasLoaded = ref(false);
+const MAX_ADDRESS_COUNT = 5;
 let loadPromise = null;
 
 const buildAddressPayload = (payload) => {
@@ -50,6 +51,8 @@ const markMain = (list, mainId) => {
     main: addr.id === mainId,
   }));
 };
+
+const findFirstNonTarget = (list, targetId) => list.find((addr) => addr.id !== targetId) ?? null;
 
 const syncSelection = () => {
   const mainId = findMainId(savedAddresses.value);
@@ -98,6 +101,12 @@ const ensureLoaded = () => {
 };
 
 const addAddress = async (payload) => {
+  if (savedAddresses.value.length >= MAX_ADDRESS_COUNT) {
+    const limitError = new Error('배송지는 최대 5개까지 등록할 수 있어요.');
+    errorMessage.value = limitError.message;
+    throw limitError;
+  }
+
   isMutating.value = true;
   errorMessage.value = '';
 
@@ -187,9 +196,16 @@ const removeAddress = async (addressId) => {
   errorMessage.value = '';
 
   try {
+    const isMainAddress = savedAddresses.value.some((addr) => addr.id === addressId && addr.main);
+    const nextMainCandidate = isMainAddress ? findFirstNonTarget(savedAddresses.value, addressId) : null;
+
+    if (nextMainCandidate?.id) {
+      await setMainAddress(nextMainCandidate.id);
+    }
+
     await deleteAddress(addressId);
     const nextList = savedAddresses.value.filter((addr) => addr.id !== addressId);
-    const nextMainId = findMainId(nextList) ?? nextList[0]?.id ?? null;
+    const nextMainId = nextMainCandidate?.id ?? findMainId(nextList) ?? nextList[0]?.id ?? null;
 
     savedAddresses.value = markMain(nextList, nextMainId);
     syncSelection();
@@ -206,6 +222,8 @@ export function useAddresses() {
   ensureLoaded();
 
   const addresses = computed(() => savedAddresses.value);
+  const isAddressLimitReached = computed(() => savedAddresses.value.length >= MAX_ADDRESS_COUNT);
+  const remainingAddressCount = computed(() => Math.max(0, MAX_ADDRESS_COUNT - savedAddresses.value.length));
 
   const defaultAddress = computed(() => savedAddresses.value.find((addr) => addr.main) ?? null);
 
@@ -223,6 +241,9 @@ export function useAddresses() {
 
   return {
     addresses,
+    maxAddressCount: MAX_ADDRESS_COUNT,
+    isAddressLimitReached,
+    remainingAddressCount,
     defaultAddress,
     selectedAddress,
     selectedAddressId,

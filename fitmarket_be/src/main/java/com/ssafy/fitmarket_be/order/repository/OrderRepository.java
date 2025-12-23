@@ -3,6 +3,7 @@ package com.ssafy.fitmarket_be.order.repository;
 import com.ssafy.fitmarket_be.entity.Order;
 import com.ssafy.fitmarket_be.order.domain.OrderPaymentContext;
 import com.ssafy.fitmarket_be.order.domain.OrderProductEntity;
+import com.ssafy.fitmarket_be.order.domain.OrderReturnExchangeEntity;
 import com.ssafy.fitmarket_be.order.domain.OrderView;
 import com.ssafy.fitmarket_be.order.domain.OrderAddress;
 import com.ssafy.fitmarket_be.payment.domain.PaymentStatus;
@@ -192,4 +193,28 @@ public interface OrderRepository {
    * @return 변경된 행 수
    */
   int clearItemsSnapshot(@Param("orderId") Long orderId);
+
+  /**
+   * 주문 반품/교환/환불 요청을 저장한다.
+   *
+   * @param request 요청 엔티티
+   * @return 생성된 행 수
+   */
+  int insertOrderReturnExchange(@Param("request") OrderReturnExchangeEntity request);
+
+  /**
+   * 주문에 반품/교환/환불 요청이 존재하는지 확인한다.
+   *
+   * @param orderId 주문 식별자
+   * @return 요청 건수
+   */
+  int countOrderReturnExchanges(@Param("orderId") Long orderId);
+
+  /**
+   * 주문 반품/교환/환불 요청 단건을 조회한다.
+   *
+   * @param orderId 주문 식별자
+   * @return 반품/교환/환불 요청
+   */
+  Optional<OrderReturnExchangeEntity> findOrderReturnExchangeByOrderId(@Param("orderId") Long orderId);
 }

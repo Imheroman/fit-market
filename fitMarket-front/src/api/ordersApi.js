@@ -1,6 +1,11 @@
 import { fitmarket } from '@/restapi';
 
 const extractPayload = (response) => response?.data?.data ?? response?.data?.result ?? response?.data ?? [];
+const buildClaimPayload = (type, payload) => ({
+  type,
+  reason: payload?.reason ?? payload?.reasonCode ?? '',
+  detail: payload?.detail ?? '',
+});
 
 const buildError = (error, fallback) => {
   const message = error?.response?.data?.message ?? error?.response?.data?.error ?? fallback;
@@ -117,6 +122,55 @@ export async function requestOrderRefund(orderNumber) {
     return payload || null;
   } catch (error) {
     throw buildError(error, '환불 요청을 접수하지 못했어요. 잠시 후 다시 시도해 주세요.');
+  }
+}
+
+export async function fetchRefundEligibility(orderNumber) {
+  if (!orderNumber) {
+    throw new Error('주문번호가 비어 있어요.');
+  }
+
+  try {
+    const response = await fitmarket.get(`/orders/${orderNumber}/refund/eligibility`, { withCredentials: true });
+    return extractPayload(response) ?? null;
+  } catch (error) {
+    throw buildError(error, '환불 가능 여부를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.');
+  }
+}
+
+export async function requestOrderReturn(orderNumber, payload) {
+  if (!orderNumber) {
+    throw new Error('주문번호가 비어 있어요.');
+  }
+
+  try {
+    const response = await fitmarket.post(
+      `/orders/${orderNumber}/return-exchange`,
+      buildClaimPayload('RETURN', payload),
+      { withCredentials: true },
+    );
+    const responsePayload = extractPayload(response);
+    return responsePayload ?? null;
+  } catch (error) {
+    throw buildError(error, '반품 요청을 접수하지 못했어요. 잠시 후 다시 시도해 주세요.');
+  }
+}
+
+export async function requestOrderExchange(orderNumber, payload) {
+  if (!orderNumber) {
+    throw new Error('주문번호가 비어 있어요.');
+  }
+
+  try {
+    const response = await fitmarket.post(
+      `/orders/${orderNumber}/return-exchange`,
+      buildClaimPayload('EXCHANGE', payload),
+      { withCredentials: true },
+    );
+    const responsePayload = extractPayload(response);
+    return responsePayload ?? null;
+  } catch (error) {
+    throw buildError(error, '교환 요청을 접수하지 못했어요. 잠시 후 다시 시도해 주세요.');
   }
 }
 

@@ -4,6 +4,8 @@
       :addresses="addresses"
       :is-loading="isAddressLoading"
       :error-message="addressErrorMessage"
+      :is-limit-reached="isAddressLimitReached"
+      :max-count="maxAddressCount"
       @set-default="handleSetDefault"
       @remove-address="handleRemoveAddress"
     />
@@ -25,6 +27,8 @@ const {
   removeAddress,
   isLoading: isAddressLoading,
   errorMessage: addressErrorMessage,
+  isAddressLimitReached,
+  maxAddressCount,
 } = useAddresses();
 
 onMounted(async () => {

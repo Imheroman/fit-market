@@ -13,7 +13,6 @@ import UserEditPage from "@/views/UserEditPage.vue"
 import ChangeNamePage from "@/views/account/ChangeNamePage.vue"
 import ChangePhonePage from "@/views/account/ChangePhonePage.vue"
 import ChangePasswordPage from "@/views/account/ChangePasswordPage.vue"
-import OrderCompletePage from "@/views/OrderCompletePage.vue"
 import OrderCheckoutPage from "@/views/OrderCheckoutPage.vue"
 import SellerApplicationPage from "@/views/SellerApplicationPage.vue"
 import SellerProductRegisterPage from "@/views/SellerProductRegisterPage.vue"
@@ -65,11 +64,6 @@ const router = createRouter({
       path: "/order/checkout",
       name: "order-checkout",
       component: OrderCheckoutPage,
-    },
-    {
-      path: "/order/complete",
-      name: "order-complete",
-      component: OrderCompletePage,
     },
     {
       path: "/mypage",
