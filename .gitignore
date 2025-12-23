@@ -502,6 +502,7 @@ Temporary Items
 *.icloud
 
 ### VisualStudioCode ###
+**/.vscode/*
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -779,3 +780,20 @@ gradle-app.setting
 
 .idea
 *.jar
+
+**/ai_request.md
+**/ai_response.md
+**/cli_rules.md
+**/cli_request.md
+
+/fitmarket_be/**/application-prod.yaml
+
+# 김영웅 개발 관련 문서 ignore
+**/work_summary
+**/summary
+**/docs_desc.md
+
+
+# Backend specific
+fitmarket_be/uploads/
+fitmarket_be/src/main/generated/

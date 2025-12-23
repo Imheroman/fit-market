@@ -1,0 +1,33 @@
+server:
+  servlet:
+    context-path: /api
+  port: 8080
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/fitmarket?serverTimezone=UTC
+    username: ssafy
+    password: ssafy
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+logging:
+  level:
+    com.ssafy.fitmarket_be: info
+
+mybatis:
+  type-aliases-package: com.ssafy.fitmarket_be
+  mapper-locations: classpath:/mappers/**/*.xml
+
+jwt:
+  access-expiration-time: 43200000
+  refresh-expiration-time: 43200000
+  secret: YXNkc2FmZGFzZmFzZGZhZHNmYWRzZmFzZGFzZmFzZGYxMjM=
+
+# 파일 업로드 설정
+file:
+  upload-dir: uploads

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.fitmarket_be.address.repository.AddressRepository">
+
+  <resultMap id="AddressResultMap" type="Address">
+    <id property="id" column="id"/>
+    <result property="postalCode" column="postal_code"/>
+    <result property="addressLine" column="address_line"/>
+    <result property="addressLineDetail" column="address_line_detail"/>
+    <result property="main" column="is_main"/>
+    <result property="createdDate" column="created_date"/>
+    <result property="modifiedDate" column="modified_date"/>
+    <result property="deletedDate" column="deleted_date"/>
+  </resultMap>
+
+  <select id="findAllByUserId" resultMap="AddressResultMap">
+    SELECT a.id,
+           a.name,
+           a.recipient,
+           a.phone,
+           a.postal_code,
+           a.address_line,
+           a.address_line_detail,
+           ua.is_main,
+           a.created_date,
+           a.modified_date,
+           a.deleted_date
+    FROM address a
+           JOIN user_address ua ON a.id = ua.address_id
+    WHERE ua.user_id = #{userId}
+      AND a.deleted_date IS NULL
+      AND ua.deleted_date IS NULL
+    ORDER BY a.created_date DESC
+  </select>
+
+  <select id="findByIdAndUserId" resultMap="AddressResultMap">
+    SELECT
+      a.id,
+      a.name,
+      a.recipient,
+      a.phone,
+      a.memo,
+      a.postal_code,
+      a.address_line,
+      a.address_line_detail,
+      ua.is_main,
+      a.created_date,
+      a.modified_date,
+      a.deleted_date
+    FROM address a
+    JOIN user_address ua ON a.id = ua.address_id
+    WHERE a.id = #{id}
+      AND ua.user_id = #{userId}
+      AND a.deleted_date IS NULL
+      AND ua.deleted_date IS NULL
+  </select>
+
+  <insert id="save" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO address (name,
+                         recipient,
+                         phone,
+                         memo,
+                         postal_code,
+                         address_line,
+                         address_line_detail)
+    VALUES (#{name}, #{recipient}, #{phone}, #{memo}, #{postalCode},
+            #{addressLine},
+            #{addressLineDetail})
+  </insert>
+
+  <insert id="insertUserAddress">
+    INSERT INTO user_address (
+      user_id,
+      address_id,
+      is_main
+    ) VALUES (
+      #{userId},
+      #{addressId},
+      #{isMain}
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE address a
+    JOIN user_address ua ON a.id = ua.address_id
+    <set>
+      <if test="dto.name != null">
+        name = #{dto.name},
+      </if>
+      <if test="dto.recipient != null">
+        recipient = #{dto.recipient},
+      </if>
+      <if test="dto.memo != null">
+        memo = #{dto.memo},
+      </if>
+      <if test="dto.phone != null">
+        phone = #{dto.phone},
+      </if>
+      <if test="dto.postalCode != null">
+        postal_code = #{dto.postalCode},
+      </if>
+      <if test="dto.addressLine != null">
+        address_line = #{dto.addressLine},
+      </if>
+      <if test="dto.addressLineDetail != null">
+        address_line_detail = #{dto.addressLineDetail},
+      </if>
+    </set>
+    WHERE a.id = #{id}
+      AND ua.user_id = #{userId}
+      AND a.deleted_date IS NULL
+      AND ua.deleted_date IS NULL
+  </update>
+
+  <update id="delete">
+    UPDATE address a
+    JOIN user_address ua ON a.id = ua.address_id
+    SET a.deleted_date = CURRENT_TIMESTAMP,
+        ua.deleted_date = CURRENT_TIMESTAMP
+    WHERE a.id = #{id}
+      AND ua.user_id = #{userId}
+      AND a.deleted_date IS NULL
+      AND ua.deleted_date IS NULL
+  </update>
+
+  <select id="countActiveByUserId" resultType="int">
+    SELECT COUNT(1)
+    FROM user_address ua
+    JOIN address a ON ua.address_id = a.id
+    WHERE ua.user_id = #{userId}
+      AND ua.deleted_date IS NULL
+      AND a.deleted_date IS NULL
+  </select>
+
+  <update id="clearMainByUserId">
+    UPDATE user_address
+    SET is_main = 0,
+        modified_date = CURRENT_TIMESTAMP
+    WHERE user_id = #{userId}
+      AND deleted_date IS NULL
+  </update>
+
+  <update id="setMainByUserIdAndAddressId">
+    UPDATE user_address
+    SET is_main = 1,
+        modified_date = CURRENT_TIMESTAMP
+    WHERE user_id = #{userId}
+      AND address_id = #{addressId}
+      AND deleted_date IS NULL
+  </update>
+
+  <select id="findSingleActiveAddressId" resultType="long">
+    SELECT ua.address_id
+    FROM user_address ua
+    JOIN address a ON ua.address_id = a.id
+    WHERE ua.user_id = #{userId}
+      AND ua.deleted_date IS NULL
+      AND a.deleted_date IS NULL
+    ORDER BY ua.created_date DESC
+    LIMIT 1
+  </select>
+</mapper>
