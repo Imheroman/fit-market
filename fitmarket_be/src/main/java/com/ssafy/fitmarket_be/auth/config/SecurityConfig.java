@@ -97,7 +97,7 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() { // Changed
     CorsConfiguration config = new CorsConfiguration();
-    config.setAllowedOrigins(List.of("http://localhost:5173"));
+    config.setAllowedOrigins(List.of("http://localhost:5173", "https://fitmarket.duckdns.org"));
     config.setAllowedMethods(List.of("GET", "POST", "PUT", "OPTIONS", "PATCH", "DELETE"));
     config.setAllowedHeaders(List.of("*"));
     config.setAllowCredentials(true);
