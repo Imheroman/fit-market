@@ -157,7 +157,7 @@ export function useSellerProducts() {
         category: form.category,
         price: response.price,
         description: form.description,
-        image: response.imageUrl ? `http://localhost:8080/api${response.imageUrl}` : response.imageUrl,
+        image: response.imageUrl ? `/api${response.imageUrl}` : response.imageUrl,
         weight: Number(form.weight),
         stock: createdStock,
         calories: response.calories,
@@ -255,7 +255,7 @@ export function useSellerProducts() {
       const existingProduct = sellerProducts.value.find((p) => p.id === editingProductId.value)
 
       // 이미지 업로드
-      let imageUrl = existingProduct.image?.replace('http://localhost:8080/api', '') || existingProduct.image
+      let imageUrl = existingProduct.image?.replace(/^\/api/, '') || existingProduct.image
       if (form.imageFile) {
         try {
           imageUrl = await uploadImage(form.imageFile)
@@ -288,7 +288,7 @@ export function useSellerProducts() {
           category: form.category,
           price: response?.price ?? Number(form.price),
           description: form.description,
-          image: response?.imageUrl ? `http://localhost:8080/api${response.imageUrl}` : sellerProducts.value[productIndex].image,
+          image: response?.imageUrl ? `/api${response.imageUrl}` : sellerProducts.value[productIndex].image,
           weight: Number(form.weight),
           stock: updatedStock,
           calories: response?.calories ?? sellerProducts.value[productIndex].calories,
@@ -336,7 +336,7 @@ export function useSellerProducts() {
           category: categoryObj?.value || 'lunchbox',
           price: p.price,
           description: p.description ?? '',
-          image: p.imageUrl ? `http://localhost:8080/api${p.imageUrl}` : p.imageUrl,
+          image: p.imageUrl ? `/api${p.imageUrl}` : p.imageUrl,
           weight: 0, // 백엔드 응답에 weight 없음
           stock: p.stock ?? 0,
           calories: p.calories,

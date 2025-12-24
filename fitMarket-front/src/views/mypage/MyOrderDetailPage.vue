@@ -14,7 +14,15 @@
       </RouterLink>
     </header>
 
-    <div v-if="isLoading" class="text-sm text-gray-500">주문 정보를 불러오고 있어요.</div>
+    <div v-if="isLoading || isAwaitingOrder || isPaymentCallback" class="text-sm text-gray-500">
+      {{
+        isAwaitingOrder
+          ? '결제 승인 후 주문을 확인 중이에요. 잠시만 기다려 주세요.'
+          : isPaymentCallback
+            ? '결제 확인 중이에요. 잠시만 기다려 주세요.'
+            : '주문 정보를 불러오고 있어요.'
+      }}
+    </div>
 
     <div v-else-if="errorMessage" class="space-y-4">
       <div class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-4">
@@ -302,6 +310,7 @@ import { computed, ref, watch, onMounted } from 'vue';
 import { useRoute, RouterLink, useRouter } from 'vue-router';
 import { useOrderDetail } from '@/composables/useOrderDetail';
 import { useAddresses } from '@/composables/useAddresses';
+import { useCart } from '@/composables/useCart';
 import { requestOrderAddressChange } from '@/api/ordersApi';
 import { useOrderClaims } from '@/composables/useOrderClaims';
 import { usePaymentCallbacks } from '@/composables/usePaymentCallbacks';
@@ -313,6 +322,7 @@ const router = useRouter();
 const orderNumber = computed(() => route.params.orderNumber ?? '');
 
 const { orderDetail, isLoading, errorMessage, loadOrderDetail } = useOrderDetail(orderNumber);
+const { loadCart } = useCart();
 const { confirmPaymentFromQuery, confirmErrorMessage } = usePaymentCallbacks();
 const {
   addresses,
@@ -326,6 +336,7 @@ const selectedAddressId = ref('');
 const isChangingAddress = ref(false);
 const addressChangeMessage = ref('');
 const addressChangeError = ref('');
+const isAwaitingOrder = ref(false);
 
 const {
   claimReasons,
@@ -386,6 +397,13 @@ const shouldShowRefundAction = computed(() => !isClaimLocked.value);
 const canEditAddress = computed(() => !isClaimLocked.value);
 
 const normalizeQueryValue = (value) => (Array.isArray(value) ? value[0] : value);
+const isPaymentCallback = computed(() => {
+  const paymentStatusFromQuery = route.query.paymentStatus;
+  const orderIdFromQuery = normalizeQueryValue(route.query.orderId);
+  const normalizedOrderId = orderIdFromQuery ? String(orderIdFromQuery) : '';
+  const hasSuccessParams = Boolean(route.query.paymentKey && route.query.amount !== undefined && normalizedOrderId);
+  return paymentStatusFromQuery === 'success' && hasSuccessParams;
+});
 
 const getStoredOrderPayload = (orderId) => {
   if (!orderId) return null;
@@ -395,6 +413,31 @@ const getStoredOrderPayload = (orderId) => {
     orderRequest: stored.orderRequest ?? null,
     checkoutItems: Array.isArray(stored.checkoutItems) ? stored.checkoutItems : [],
   };
+};
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const waitForOrderDetail = async (targetOrderId) => {
+  if (!targetOrderId) return false;
+
+  const retryDelays = [500, 800, 1200, 1600, 2000];
+  isAwaitingOrder.value = true;
+  errorMessage.value = '';
+
+  try {
+    for (let attempt = 0; attempt <= retryDelays.length; attempt += 1) {
+      await loadOrderDetail(targetOrderId);
+      if (orderDetail.value) return true;
+
+      if (attempt < retryDelays.length) {
+        errorMessage.value = '';
+        await sleep(retryDelays[attempt]);
+      }
+    }
+    return false;
+  } finally {
+    isAwaitingOrder.value = false;
+  }
 };
 
 const processPaymentResult = async () => {
@@ -429,7 +472,11 @@ const processPaymentResult = async () => {
     clearPendingOrderRequest();
     const resolvedOrderId = normalizedOrderId || orderNumber.value;
     await router.replace({ name: 'my-page-order-detail', params: { orderNumber: resolvedOrderId } });
-    await loadOrderDetail(resolvedOrderId);
+    const refreshCartPromise = loadCart({ force: true }).catch((refreshError) => {
+      console.error('Failed to refresh cart after payment confirmation.', refreshError);
+    });
+    await waitForOrderDetail(resolvedOrderId);
+    await refreshCartPromise;
   } catch (error) {
     console.error(error);
     await router.replace({

@@ -18,7 +18,7 @@ const resolveLoginErrorMessage = (error) => {
 };
 
 export function useLoginForm() {
-  const { login } = useAuth();
+  const { login, loadUserProfile } = useAuth();
 
   const form = reactive(createDefaultForm());
   const errors = reactive({
@@ -66,6 +66,11 @@ export function useLoginForm() {
     try {
       const session = await loginUser({ ...form });
       login(session);
+      try {
+        await loadUserProfile();
+      } catch (error) {
+        console.warn('Failed to load user profile after login', error);
+      }
       successMessage.value = '안전하게 로그인되었어요.';
       return session;
     } catch (error) {

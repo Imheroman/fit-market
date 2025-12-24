@@ -2,7 +2,7 @@ import { formatPhoneNumber, sanitizePhoneDigits } from '@/utils/phone';
 import { fitmarket } from '@/restapi';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const API_BASE_URL = 'http://localhost:8080/api'
+const API_BASE_URL = '/api'
 const jsonHeaders = {
   'Content-Type': 'application/json',
 }
