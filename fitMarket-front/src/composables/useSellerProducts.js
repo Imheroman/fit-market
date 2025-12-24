@@ -255,7 +255,7 @@ export function useSellerProducts() {
       const existingProduct = sellerProducts.value.find((p) => p.id === editingProductId.value)
 
       // 이미지 업로드
-      let imageUrl = existingProduct.image?.replace('/api', '') || existingProduct.image
+      let imageUrl = existingProduct.image?.replace(/^\/api/, '') || existingProduct.image
       if (form.imageFile) {
         try {
           imageUrl = await uploadImage(form.imageFile)

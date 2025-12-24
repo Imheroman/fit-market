@@ -31,7 +31,7 @@ const mapCartItem = (item) => ({
   category: item?.categoryName ?? item?.category ?? '',
   price: toNumber(item?.price),
   quantity: clampQuantity(item?.quantity ?? MIN_QUANTITY),
-  image: item?.imageUrl ?? item?.image ?? '',
+  image: item?.imageUrl ? `/api${item.imageUrl}` : item?.image ?? '',
   calories: toNumber(item?.nutrition?.calories ?? item?.calories),
   protein: toNumber(item?.nutrition?.protein ?? item?.protein),
   carbs: toNumber(item?.nutrition?.carbs ?? item?.carbs),
