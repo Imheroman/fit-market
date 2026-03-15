@@ -33,14 +33,14 @@ class ProductApiTest {
     @Test
     @DisplayName("인증없이_상품목록조회_200반환")
     void 인증없이_상품목록조회_200반환() throws Exception {
-        mockMvc.perform(get("/api/products"))
+        mockMvc.perform(get("/products"))
                 .andExpect(status().isOk());
     }
 
     @Test
     @DisplayName("인증없이_상품상세조회_200반환")
     void 인증없이_상품상세조회_200반환() throws Exception {
-        mockMvc.perform(get("/api/products/1"))
+        mockMvc.perform(get("/products/1"))
                 .andExpect(status().isOk());
     }
 
@@ -59,7 +59,7 @@ class ProductApiTest {
                 )
         );
 
-        mockMvc.perform(post("/api/products")
+        mockMvc.perform(post("/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isUnauthorized());
@@ -68,7 +68,7 @@ class ProductApiTest {
     @Test
     @DisplayName("인증없이_상품삭제_401반환")
     void 인증없이_상품삭제_401반환() throws Exception {
-        mockMvc.perform(delete("/api/products/1"))
+        mockMvc.perform(delete("/products/1"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -88,7 +88,7 @@ class ProductApiTest {
                 )
         );
 
-        mockMvc.perform(put("/api/products/1")
+        mockMvc.perform(put("/products/1")
                         .cookie(TestFixture.sellerCookie())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -110,7 +110,7 @@ class ProductApiTest {
                 )
         );
 
-        mockMvc.perform(put("/api/products/1")
+        mockMvc.perform(put("/products/1")
                         .cookie(TestFixture.userCookie())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))

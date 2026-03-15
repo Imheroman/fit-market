@@ -44,7 +44,7 @@ class UserApiTest {
                 )
         );
 
-        mockMvc.perform(post("/api/users/signup")
+        mockMvc.perform(post("/users/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk());
@@ -53,7 +53,7 @@ class UserApiTest {
     @Test
     @DisplayName("인증없이_내정보조회하면_401반환")
     void 인증없이_내정보조회하면_401반환() throws Exception {
-        mockMvc.perform(get("/api/users"))
+        mockMvc.perform(get("/users"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -68,7 +68,7 @@ class UserApiTest {
                 )
         );
 
-        mockMvc.perform(patch("/api/users/password")
+        mockMvc.perform(patch("/users/password")
                         .cookie(TestFixture.userCookie())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -79,7 +79,7 @@ class UserApiTest {
     @Transactional
     @DisplayName("인증된_사용자가_회원탈퇴하면_200반환")
     void 인증된_사용자가_회원탈퇴하면_200반환() throws Exception {
-        mockMvc.perform(delete("/api/users")
+        mockMvc.perform(delete("/users")
                         .cookie(TestFixture.userCookie()))
                 .andExpect(status().isOk());
     }

@@ -29,7 +29,7 @@ class POST_specs {
     @DisplayName("주문취소_성공_204반환")
     void 주문취소_성공_204반환() throws Exception {
         // test-data.sql: ORD-001 은 userId=1 소유, PENDING_APPROVAL 상태
-        mockMvc.perform(post("/api/orders/ORD-001/cancel")
+        mockMvc.perform(post("/orders/ORD-001/cancel")
                         .cookie(TestFixture.userCookie()))
                 .andExpect(status().isNoContent());
     }
@@ -39,7 +39,7 @@ class POST_specs {
     @DisplayName("주문삭제_성공_204반환")
     void 주문삭제_성공_204반환() throws Exception {
         // test-data.sql: ORD-003 은 userId=1 소유 (softDelete 전용)
-        mockMvc.perform(delete("/api/orders/ORD-003")
+        mockMvc.perform(delete("/orders/ORD-003")
                         .cookie(TestFixture.userCookie()))
                 .andExpect(status().isNoContent());
     }

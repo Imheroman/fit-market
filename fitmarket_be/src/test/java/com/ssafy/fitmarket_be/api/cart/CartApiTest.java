@@ -32,7 +32,7 @@ class CartApiTest {
     @Test
     @DisplayName("인증없이_장바구니조회하면_401반환")
     void 인증없이_장바구니조회하면_401반환() throws Exception {
-        mockMvc.perform(get("/api/cart"))
+        mockMvc.perform(get("/cart"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -42,7 +42,7 @@ class CartApiTest {
     void 상품담기_성공() throws Exception {
         String body = objectMapper.writeValueAsString(Map.of("quantity", 2));
 
-        mockMvc.perform(post("/api/cart/1")
+        mockMvc.perform(post("/cart/1")
                         .cookie(TestFixture.userCookie())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -54,7 +54,7 @@ class CartApiTest {
     void 수량0으로_상품담기하면_400반환() throws Exception {
         String body = objectMapper.writeValueAsString(Map.of("quantity", 0));
 
-        mockMvc.perform(post("/api/cart/1")
+        mockMvc.perform(post("/cart/1")
                         .cookie(TestFixture.userCookie())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -65,7 +65,7 @@ class CartApiTest {
     @Transactional
     @DisplayName("장바구니상품_삭제성공")
     void 장바구니상품_삭제성공() throws Exception {
-        mockMvc.perform(delete("/api/cart/1")
+        mockMvc.perform(delete("/cart/1")
                         .cookie(TestFixture.userCookie()))
                 .andExpect(status().isOk());
     }

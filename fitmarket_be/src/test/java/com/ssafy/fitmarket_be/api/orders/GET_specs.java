@@ -25,14 +25,14 @@ class GET_specs {
     @Test
     @DisplayName("인증없이_주문목록조회하면_401반환")
     void 인증없이_주문목록조회하면_401반환() throws Exception {
-        mockMvc.perform(get("/api/orders"))
+        mockMvc.perform(get("/orders"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     @DisplayName("인증된_사용자_주문목록조회_200반환")
     void 인증된_사용자_주문목록조회_200반환() throws Exception {
-        mockMvc.perform(get("/api/orders")
+        mockMvc.perform(get("/orders")
                         .cookie(TestFixture.userCookie()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());

@@ -38,7 +38,7 @@ class POST_specs {
                 Map.of("email", "user@test.com", "password", "password123")
         );
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk())
@@ -54,7 +54,7 @@ class POST_specs {
                 Map.of("email", "user@test.com", "password", "wrongpw")
         );
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isUnauthorized());
@@ -67,7 +67,7 @@ class POST_specs {
                 Map.of("email", "notexist@test.com", "password", "password123")
         );
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isUnauthorized());
@@ -79,7 +79,7 @@ class POST_specs {
         // CustomLoginFilter는 POST 이외의 메서드에서 AuthenticationServiceException을 던지고
         // unsuccessfulAuthentication 핸들러에 의해 401이 반환된다.
         // Spring Security 필터 기반 처리라 405 대신 401이 반환될 수 있음.
-        mockMvc.perform(get("/api/auth/login"))
+        mockMvc.perform(get("/auth/login"))
                 .andExpect(status().is4xxClientError());
     }
 }

@@ -34,7 +34,7 @@ class PATCH_specs {
         // test-data.sql: ORD-002 는 userId=1 소유, SHIPPING 상태 → 배송지 수정 불가
         String body = objectMapper.writeValueAsString(Map.of("addressId", 1));
 
-        mockMvc.perform(patch("/api/orders/ORD-002/address")
+        mockMvc.perform(patch("/orders/ORD-002/address")
                         .cookie(TestFixture.userCookie())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))

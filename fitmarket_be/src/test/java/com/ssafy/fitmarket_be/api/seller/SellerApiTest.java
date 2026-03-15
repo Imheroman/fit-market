@@ -23,7 +23,7 @@ class SellerApiTest {
     @Test
     @DisplayName("ADMIN이_아닌_사용자가_판매자목록조회시_403반환")
     void ADMIN이_아닌_사용자가_판매자목록조회시_403반환() throws Exception {
-        mockMvc.perform(get("/api/seller")
+        mockMvc.perform(get("/seller")
                         .cookie(TestFixture.userCookie()))
                 .andExpect(status().isForbidden());
     }
@@ -31,7 +31,7 @@ class SellerApiTest {
     @Test
     @DisplayName("ADMIN이_판매자목록조회_200반환")
     void ADMIN이_판매자목록조회_200반환() throws Exception {
-        mockMvc.perform(get("/api/seller")
+        mockMvc.perform(get("/seller")
                         .cookie(TestFixture.adminCookie()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());

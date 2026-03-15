@@ -36,7 +36,7 @@ class POST_specs {
                 Map.of("paymentKey", "pk", "orderId", "ord-001", "amount", 10000)
         );
 
-        mockMvc.perform(post("/api/payments/success")
+        mockMvc.perform(post("/payments/success")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isUnauthorized());
@@ -45,7 +45,7 @@ class POST_specs {
     @Test
     @DisplayName("결제실패_콜백_400반환")
     void 결제실패_콜백_400반환() throws Exception {
-        mockMvc.perform(get("/api/payments/fail")
+        mockMvc.perform(get("/payments/fail")
                         .param("errorCode", "PAY_PROCESS_CANCELED")
                         .param("errorReason", "사용자취소"))
                 .andExpect(status().isBadRequest())

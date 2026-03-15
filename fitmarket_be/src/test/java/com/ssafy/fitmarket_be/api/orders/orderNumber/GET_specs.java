@@ -26,7 +26,7 @@ class GET_specs {
     @DisplayName("인증된_사용자_주문상세조회_200반환")
     void 인증된_사용자_주문상세조회_200반환() throws Exception {
         // test-data.sql: ORD-001 은 userId=1 소유, PENDING_APPROVAL 상태
-        mockMvc.perform(get("/api/orders/ORD-001")
+        mockMvc.perform(get("/orders/ORD-001")
                         .cookie(TestFixture.userCookie()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.orderNumber").isNotEmpty());
