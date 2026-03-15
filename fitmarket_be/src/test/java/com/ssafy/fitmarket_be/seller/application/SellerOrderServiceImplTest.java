@@ -21,11 +21,16 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import com.ssafy.fitmarket_be.order.domain.OrderApprovalStatus;
+import com.ssafy.fitmarket_be.order.dto.OrderStatusUpdateRequest;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 /**
  * SellerOrderServiceImpl 단위 테스트.
@@ -175,6 +180,130 @@ class SellerOrderServiceImplTest {
 
         // Assert
         assertThat(result).isEmpty();
+    }
+
+    // ===== updateOrderStatus() =====
+
+    @Test
+    @DisplayName("updateOrderStatus: APPROVED 상태에서 SHIPPING으로 변경에 성공한다")
+    void updateOrderStatus_APPROVED에서SHIPPING_성공() {
+        // Arrange
+        Long sellerId = 1L;
+        String orderNumber = "ORD-010";
+        OrderView order = buildOrderView(orderNumber, 0L, 0L);
+        order.setApprovalStatus(OrderApprovalStatus.APPROVED.dbValue());
+
+        given(sellerOrderMapper.findOrderByNumberAndSellerId(orderNumber, sellerId))
+            .willReturn(Optional.of(order));
+        given(sellerOrderMapper.updateApprovalStatus(order.getId(), OrderApprovalStatus.SHIPPING.dbValue()))
+            .willReturn(1);
+
+        OrderStatusUpdateRequest request = new OrderStatusUpdateRequest(OrderApprovalStatus.SHIPPING.dbValue());
+
+        // Act
+        sellerOrderService.updateOrderStatus(sellerId, orderNumber, request);
+
+        // Assert
+        verify(sellerOrderMapper).updateApprovalStatus(order.getId(), OrderApprovalStatus.SHIPPING.dbValue());
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: APPROVED에서 DELIVERED로 변경 시도 시 IllegalStateException을 던진다")
+    void updateOrderStatus_APPROVED에서DELIVERED_IllegalStateException() {
+        // Arrange
+        Long sellerId = 1L;
+        String orderNumber = "ORD-011";
+        OrderView order = buildOrderView(orderNumber, 0L, 0L);
+        order.setApprovalStatus(OrderApprovalStatus.APPROVED.dbValue());
+
+        given(sellerOrderMapper.findOrderByNumberAndSellerId(orderNumber, sellerId))
+            .willReturn(Optional.of(order));
+
+        OrderStatusUpdateRequest request = new OrderStatusUpdateRequest(OrderApprovalStatus.DELIVERED.dbValue());
+
+        // Act & Assert
+        assertThatThrownBy(() -> sellerOrderService.updateOrderStatus(sellerId, orderNumber, request))
+            .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: SHIPPING 상태에서 DELIVERED로 변경에 성공한다")
+    void updateOrderStatus_SHIPPING에서DELIVERED_성공() {
+        // Arrange
+        Long sellerId = 1L;
+        String orderNumber = "ORD-012";
+        OrderView order = buildOrderView(orderNumber, 0L, 0L);
+        order.setApprovalStatus(OrderApprovalStatus.SHIPPING.dbValue());
+
+        given(sellerOrderMapper.findOrderByNumberAndSellerId(orderNumber, sellerId))
+            .willReturn(Optional.of(order));
+        given(sellerOrderMapper.updateApprovalStatus(order.getId(), OrderApprovalStatus.DELIVERED.dbValue()))
+            .willReturn(1);
+
+        OrderStatusUpdateRequest request = new OrderStatusUpdateRequest(OrderApprovalStatus.DELIVERED.dbValue());
+
+        // Act
+        sellerOrderService.updateOrderStatus(sellerId, orderNumber, request);
+
+        // Assert
+        verify(sellerOrderMapper).updateApprovalStatus(order.getId(), OrderApprovalStatus.DELIVERED.dbValue());
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: CANCELLED 상태로 변경 시도 시 IllegalArgumentException을 던진다")
+    void updateOrderStatus_CANCELLED설정시도_IllegalArgumentException() {
+        // Arrange
+        Long sellerId = 1L;
+        String orderNumber = "ORD-013";
+        OrderView order = buildOrderView(orderNumber, 0L, 0L);
+        order.setApprovalStatus(OrderApprovalStatus.APPROVED.dbValue());
+
+        given(sellerOrderMapper.findOrderByNumberAndSellerId(orderNumber, sellerId))
+            .willReturn(Optional.of(order));
+
+        OrderStatusUpdateRequest request = new OrderStatusUpdateRequest(OrderApprovalStatus.CANCELLED.dbValue());
+
+        // Act & Assert
+        assertThatThrownBy(() -> sellerOrderService.updateOrderStatus(sellerId, orderNumber, request))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("판매자는 배송/거절 상태만 변경할 수 있어요.");
+    }
+
+    @Test
+    @DisplayName("updateOrderStatus: 현재와 동일한 상태로 변경 시 updateApprovalStatus가 호출되지 않는다")
+    void updateOrderStatus_동일상태_조기종료() {
+        // Arrange
+        Long sellerId = 1L;
+        String orderNumber = "ORD-014";
+        OrderView order = buildOrderView(orderNumber, 0L, 0L);
+        order.setApprovalStatus(OrderApprovalStatus.SHIPPING.dbValue());
+
+        given(sellerOrderMapper.findOrderByNumberAndSellerId(orderNumber, sellerId))
+            .willReturn(Optional.of(order));
+
+        OrderStatusUpdateRequest request = new OrderStatusUpdateRequest(OrderApprovalStatus.SHIPPING.dbValue());
+
+        // Act
+        sellerOrderService.updateOrderStatus(sellerId, orderNumber, request);
+
+        // Assert
+        verify(sellerOrderMapper, never()).updateApprovalStatus(any(), any());
+    }
+
+    @Test
+    @DisplayName("getOrderDetail: 다른 판매자의 주문 조회 시 IllegalArgumentException을 던진다")
+    void getOrderDetail_타인주문_IllegalArgumentException() {
+        // Arrange
+        Long differentSellerId = 99L;
+        String orderNumber = "ORD-015";
+
+        given(sellerOrderMapper.findOrderByNumberAndSellerId(orderNumber, differentSellerId))
+            .willReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> sellerOrderService.getOrderDetail(differentSellerId, orderNumber))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("주문을 찾을 수 없어요.");
     }
 
     // ===== 테스트 픽스처 =====
