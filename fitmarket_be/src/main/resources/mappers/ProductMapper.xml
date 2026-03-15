@@ -260,4 +260,14 @@
         LIMIT #{size} OFFSET #{offset}
     </select>
 
+
+    <!-- 상품 소유권 확인 (상품 ID + 판매자 userId) -->
+    <select id="existsByIdAndUserId" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM products
+        WHERE id = #{productId}
+          AND user_id = #{userId}
+          AND deleted_date IS NULL
+    </select>
+
 </mapper>

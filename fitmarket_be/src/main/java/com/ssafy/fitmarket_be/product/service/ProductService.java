@@ -103,8 +103,14 @@ public class ProductService {
      * 상품 수정.
      */
     @Transactional
-    public ProductUpdateResponse updateProduct(Long productId, ProductUpdateRequest request) {
-        // 상품 수정
+    public ProductUpdateResponse updateProduct(Long userId, Long productId, ProductUpdateRequest request) {
+        Product product = productMapper.selectProductById(productId);
+        if (product == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다.");
+        }
+        if (!productMapper.existsByIdAndUserId(productId, userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "해당 상품을 수정할 권한이 없습니다.");
+        }
         productMapper.updateProduct(
             productId,
             request.name(),
@@ -115,18 +121,22 @@ public class ProductService {
             request.stock(),
             request.imageUrl()
         );
-
-        // 수정된 상품 조회
-        Product product = productMapper.selectProductById(productId);
-
-        return ProductUpdateResponse.from(product);
+        Product updated = productMapper.selectProductById(productId);
+        return ProductUpdateResponse.from(updated);
     }
 
     /**
      * 상품 삭제 (소프트 삭제).
      */
     @Transactional
-    public void deleteProduct(Long productId) {
+    public void deleteProduct(Long userId, Long productId) {
+        Product product = productMapper.selectProductById(productId);
+        if (product == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다.");
+        }
+        if (!productMapper.existsByIdAndUserId(productId, userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "해당 상품을 삭제할 권한이 없습니다.");
+        }
         productMapper.deleteProduct(productId);
     }
 

@@ -113,4 +113,9 @@ public interface ProductMapper {
      * 신상품 조회 (최신순, 제한 개수).
      */
     List<Product> selectNewProducts(@Param("limit") Integer limit);
+
+    /**
+     * 상품 소유권 확인 (상품 ID + 판매자 userId).
+     */
+    boolean existsByIdAndUserId(@Param("productId") Long productId, @Param("userId") Long userId);
 }

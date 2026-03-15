@@ -54,10 +54,11 @@ public class ProductController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<ProductUpdateResponse> updateProduct(
+        @AuthenticationPrincipal(expression = "id") Long userId,
         @PathVariable Long id,
         @Valid @RequestBody ProductUpdateRequest request
     ) {
-        ProductUpdateResponse response = productService.updateProduct(id, request);
+        ProductUpdateResponse response = productService.updateProduct(userId, id, request);
         return ResponseEntity.ok(response);
     }
 
@@ -74,8 +75,11 @@ public class ProductController {
      * 상품 삭제.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        productService.deleteProduct(id);
+    public ResponseEntity<Void> deleteProduct(
+        @AuthenticationPrincipal(expression = "id") Long userId,
+        @PathVariable Long id
+    ) {
+        productService.deleteProduct(userId, id);
         return ResponseEntity.noContent().build();
     }
 
