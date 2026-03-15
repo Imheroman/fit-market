@@ -48,6 +48,8 @@ dependencies {
     testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.5'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'com.h2database:h2'
+    testImplementation 'org.wiremock:wiremock-standalone:3.3.1'
 
     // mysql
     runtimeOnly 'com.mysql:mysql-connector-j'
