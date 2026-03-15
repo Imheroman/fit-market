@@ -26,7 +26,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 주문 생성 엔드포인트를 제공한다.
+ * 주문 조회, 상태 변경, 환불/반품/교환 엔드포인트를 제공한다.
+ * 주문 생성은 결제 승인 콜백(POST /payments/success)에서 처리된다.
  */
 @RestController
 @RequestMapping("/orders")
@@ -67,22 +68,6 @@ public class OrderController {
     OrderDetailResponse response = orderService.getOrderDetail(userId, orderNumber);
     return ResponseEntity.status(HttpStatus.OK).body(response);
   }
-
-//  /**
-//   * 장바구니/바로구매 요청을 받아 주문을 생성한다.
-//   *
-//   * @param userId  인증된 사용자 식별자
-//   * @param request 주문 생성 요청
-//   * @return 생성된 주문 정보
-//   */
-//  @PostMapping
-//  public ResponseEntity<OrderCreateResponse> createOrder(
-//      @AuthenticationPrincipal(expression = "id") Long userId,
-//      @Valid @RequestBody OrderCreateRequest request
-//  ) {
-//    OrderCreateResponse response = orderService.createOrder(userId, request);
-//    return ResponseEntity.status(HttpStatus.CREATED).body(response);
-//  }
 
   /**
    * 주문 배송지를 수정한다.

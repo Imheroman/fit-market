@@ -196,8 +196,10 @@ public class OrderService {
         .orElse(null);
     boolean hasReturnExchangeRequest = returnExchange != null;
     RefundEligibility refundEligibility = evaluateRefundEligibility(order, hasReturnExchangeRequest);
-    ReturnExchangeEligibility returnExchangeEligibility =
-        evaluateReturnExchangeEligibility(order, hasReturnExchangeRequest);
+    ReturnExchangeEligibility returnEligibility =
+        evaluateReturnEligibility(order, hasReturnExchangeRequest);
+    ReturnExchangeEligibility exchangeEligibility =
+        evaluateExchangeEligibility(order, hasReturnExchangeRequest);
 
     return new OrderDetailResponse(
         order.getOrderNumber(),
@@ -210,8 +212,8 @@ public class OrderService {
         order.getShippingFee(),
         order.getDiscountAmount(),
         refundEligibility.eligible(),
-        returnExchangeEligibility.eligible(),
-        returnExchangeEligibility.eligible(),
+        returnEligibility.eligible(),
+        exchangeEligibility.eligible(),
         returnExchange == null ? null : toReturnExchangeStatusResponse(returnExchange),
         order.getOrderDate(),
         order.getComment(),
@@ -420,6 +422,18 @@ public class OrderService {
       return new ReturnExchangeEligibility(false, "배송 완료 후 7일이 지나 반품/교환할 수 없어요.");
     }
     return new ReturnExchangeEligibility(true, "반품/교환이 가능해요.");
+  }
+
+  private ReturnExchangeEligibility evaluateReturnEligibility(
+      OrderView order, boolean hasReturnExchangeRequest
+  ) {
+    return evaluateReturnExchangeEligibility(order, hasReturnExchangeRequest);
+  }
+
+  private ReturnExchangeEligibility evaluateExchangeEligibility(
+      OrderView order, boolean hasReturnExchangeRequest
+  ) {
+    return evaluateReturnExchangeEligibility(order, hasReturnExchangeRequest);
   }
 
   private boolean hasReturnExchangeRequest(Long orderId) {
