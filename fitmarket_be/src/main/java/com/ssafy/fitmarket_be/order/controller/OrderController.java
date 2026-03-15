@@ -6,7 +6,6 @@ import com.ssafy.fitmarket_be.order.dto.OrderRefundEligibilityResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderRefundRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeResponse;
-import com.ssafy.fitmarket_be.order.dto.OrderStatusUpdateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderSummaryResponse;
 import com.ssafy.fitmarket_be.order.domain.OrderSearchPeriod;
 import com.ssafy.fitmarket_be.order.service.OrderService;
@@ -104,21 +103,19 @@ public class OrderController {
   }
 
   /**
-   * 주문 승인 상태를 변경한다.
+   * 주문을 취소한다.
    *
    * @param userId      인증된 사용자 식별자
    * @param orderNumber 주문 번호
-   * @param request     상태 변경 요청
-   * @return HTTP 200
+   * @return HTTP 204
    */
-  @PatchMapping("/{orderNumber}/status")
-  public ResponseEntity<Void> updateOrderStatus(
+  @PostMapping("/{orderNumber}/cancel")
+  public ResponseEntity<Void> cancelOrder(
       @AuthenticationPrincipal(expression = "id") Long userId,
-      @PathVariable String orderNumber,
-      @Valid @RequestBody OrderStatusUpdateRequest request
+      @PathVariable String orderNumber
   ) {
-    orderService.updateApprovalStatus(userId, orderNumber, request);
-    return ResponseEntity.status(HttpStatus.OK).build();
+    orderService.cancelOrder(userId, orderNumber);
+    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
   }
 
   /**

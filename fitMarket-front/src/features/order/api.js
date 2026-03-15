@@ -70,23 +70,20 @@ export async function fetchSellerOrderDetail(orderNumber) {
   }
 }
 
-export async function updateOrderStatus(orderNumber, approvalStatus) {
+export async function cancelOrder(orderNumber) {
   if (!orderNumber) {
     throw new Error('주문번호가 비어 있어요.');
   }
-  if (!approvalStatus) {
-    throw new Error('변경할 주문 상태가 없어요.');
-  }
 
   try {
-    const response = await fitmarket.patch(
-      `/orders/${orderNumber}/status`,
-      { approvalStatus },
+    const response = await fitmarket.post(
+      `/orders/${orderNumber}/cancel`,
+      {},
       { withCredentials: true },
     );
     return response?.data ?? null;
   } catch (error) {
-    throw buildError(error, '주문 상태를 변경하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    throw buildError(error, '주문 취소에 실패했어요. 잠시 후 다시 시도해 주세요.');
   }
 }
 

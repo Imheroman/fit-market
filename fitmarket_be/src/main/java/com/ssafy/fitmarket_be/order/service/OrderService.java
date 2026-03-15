@@ -27,7 +27,6 @@ import com.ssafy.fitmarket_be.order.dto.OrderRefundRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeStatusResponse;
-import com.ssafy.fitmarket_be.order.dto.OrderStatusUpdateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderSummaryResponse;
 import com.ssafy.fitmarket_be.order.repository.OrderRepository;
 import com.ssafy.fitmarket_be.payment.domain.PaymentStatus;
@@ -262,23 +261,27 @@ public class OrderService {
   }
 
   /**
-   * 주문 상태를 변경한다.
+   * 주문을 취소한다.
+   * 사용자는 PENDING_APPROVAL 상태의 주문만 취소할 수 있다.
    *
    * @param userId      사용자 식별자
    * @param orderNumber 주문 번호
-   * @param request     상태 변경 요청
    */
   @Transactional
-  public void updateApprovalStatus(Long userId, String orderNumber, OrderStatusUpdateRequest request) {
+  public void cancelOrder(Long userId, String orderNumber) {
     OrderView order = findOwnedOrder(userId, orderNumber);
-    OrderApprovalStatus newStatus = OrderApprovalStatus.from(request.approvalStatus());
     OrderApprovalStatus currentStatus = OrderApprovalStatus.from(order.getApprovalStatus());
-    if (currentStatus == newStatus) {
-      return;
+
+    if (currentStatus.isTerminal()) {
+      throw new IllegalStateException("이미 종료된 주문은 변경할 수 없어요.");
     }
-    int updated = orderRepository.updateApprovalStatus(order.getId(), newStatus.dbValue());
+    if (currentStatus != OrderApprovalStatus.PENDING_APPROVAL) {
+      throw new IllegalStateException("취소할 수 없는 주문 상태예요. 현재 상태: " + currentStatus.dbValue());
+    }
+
+    int updated = orderRepository.updateApprovalStatus(order.getId(), OrderApprovalStatus.CANCELLED.dbValue());
     if (updated <= 0) {
-      throw new IllegalStateException("주문 상태를 변경하지 못했어요. 잠시 후 다시 시도해 주세요.");
+      throw new IllegalStateException("주문 취소 처리 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
     }
   }
 
