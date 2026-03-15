@@ -2,7 +2,7 @@ package com.ssafy.fitmarket_be.order.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.ssafy.fitmarket_be.entity.Order;
+import com.ssafy.fitmarket_be.order.entity.Order;
 import com.ssafy.fitmarket_be.order.domain.OrderApprovalStatus;
 import com.ssafy.fitmarket_be.order.domain.OrderMode;
 import com.ssafy.fitmarket_be.order.domain.OrderView;

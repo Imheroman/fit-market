@@ -2,7 +2,7 @@ package com.ssafy.fitmarket_be.user.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.ssafy.fitmarket_be.entity.User;
+import com.ssafy.fitmarket_be.user.entity.User;
 import com.ssafy.fitmarket_be.user.repository.UserRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +45,7 @@ class UserRepositoryTest {
     @Test
     @DisplayName("updateName_성공_반영확인")
     void updateName_성공_반영확인() {
-        int affected = userRepository.update(1L, "name", "변경이름");
+        int affected = userRepository.updateName(1L, "변경이름");
 
         assertThat(affected).isEqualTo(1);
         Optional<User> found = userRepository.findBy(1L);
@@ -56,7 +56,7 @@ class UserRepositoryTest {
     @Test
     @DisplayName("updatePhone_성공_반영확인")
     void updatePhone_성공_반영확인() {
-        int affected = userRepository.update(1L, "phone", "01099998888");
+        int affected = userRepository.updatePhone(1L, "01099998888");
 
         assertThat(affected).isEqualTo(1);
         Optional<User> found = userRepository.findBy(1L);
@@ -67,7 +67,7 @@ class UserRepositoryTest {
     @Test
     @DisplayName("updatePassword_성공_반영확인")
     void updatePassword_성공_반영확인() {
-        int affected = userRepository.update(1L, "password", "newEncodedPw");
+        int affected = userRepository.updatePassword(1L, "newEncodedPw");
 
         assertThat(affected).isEqualTo(1);
         Optional<User> found = userRepository.findBy(1L);

@@ -3,7 +3,7 @@ package com.ssafy.fitmarket_be.cart.mapper;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.ssafy.fitmarket_be.cart.repository.ShoppingCartRepository;
-import com.ssafy.fitmarket_be.entity.ShoppingCartProduct;
+import com.ssafy.fitmarket_be.cart.entity.ShoppingCartProduct;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

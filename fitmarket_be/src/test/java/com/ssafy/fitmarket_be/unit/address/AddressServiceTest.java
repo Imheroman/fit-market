@@ -5,7 +5,7 @@ import com.ssafy.fitmarket_be.address.dto.AddressUpdateRequestDto;
 import com.ssafy.fitmarket_be.address.mapper.AddressDtoMapper;
 import com.ssafy.fitmarket_be.address.repository.AddressRepository;
 import com.ssafy.fitmarket_be.address.service.AddressService;
-import com.ssafy.fitmarket_be.entity.Address;
+import com.ssafy.fitmarket_be.address.entity.Address;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
