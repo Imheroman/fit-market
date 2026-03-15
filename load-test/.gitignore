@@ -1,0 +1,10 @@
+# 시드 데이터 (대용량, gitignore)
+**/data/*.csv
+**/data/*.sql
+
+# 테스트 결과 (대용량, gitignore)
+**/results/*.json
+**/results/*.log
+
+# .gitkeep은 유지
+!**/.gitkeep

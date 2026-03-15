@@ -1,0 +1,41 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: fitmarket-loadtest-db
+    ports:
+      - "3307:3306"         # 개발 DB(3306)와 포트 분리 — 실운영 영향 없음
+    environment:
+      MYSQL_ROOT_PASSWORD: loadtest
+      MYSQL_DATABASE: fitmarket_loadtest
+      MYSQL_USER: loadtest
+      MYSQL_PASSWORD: loadtest
+    tmpfs:
+      - /var/lib/mysql:size=2g   # 메모리 저장: 빠른 I/O, 컨테이너 종료 시 초기화
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --max-connections=300
+      --local-infile=1
+      --innodb-buffer-pool-size=512M
+      --innodb-flush-log-at-trx-commit=0
+      --innodb-doublewrite=0
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "loadtest", "-ploadtest"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: fitmarket-loadtest-redis
+    profiles:
+      - redis        # docker-compose --profile redis up 으로만 실행
+    ports:
+      - "6380:6379"  # 운영 Redis(6379)와 포트 분리
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

@@ -1,0 +1,77 @@
+# ===================================================================
+# 부하 테스트 전용 프로파일 (application-loadtest.yaml)
+# ===================================================================
+# 목적: 실운영 DB(3306)와 완전히 분리된 Docker MySQL(3307) 사용
+# 실행: ./gradlew bootRun --args='--spring.profiles.active=loadtest'
+# ===================================================================
+
+server:
+  servlet:
+    context-path: /api
+  port: 8080
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # Docker MySQL (port 3307) — 실운영 DB와 분리
+    url: jdbc:mysql://localhost:3307/fitmarket_loadtest?serverTimezone=UTC&allowLoadLocalInfile=true&characterEncoding=UTF-8
+    username: loadtest
+    password: loadtest
+    hikari:
+      maximum-pool-size: 20        # 커넥션 풀 크기 (풀 고갈 관찰 가능)
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: LoadTestHikariPool
+
+  # ---------------------------------------------------------------
+  # Phase 1 (Before Redis): cache.type=none (캐시 비활성화)
+  # Phase 2 (After Redis):  cache.type=redis 로 변경
+  # ---------------------------------------------------------------
+  cache:
+    type: none    # Phase 1: 비활성화. Phase 2에서 redis로 변경
+
+  data:
+    redis:
+      host: localhost
+      port: 6380   # Docker Redis (Phase 2용, 운영 Redis 6379와 분리)
+      timeout: 3000ms
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+  # Spring AI (부하 테스트에서는 AI 기능 비활성화)
+  ai:
+    openai:
+      api-key: "dummy-key-for-loadtest"
+      chat:
+        options:
+          model: "gpt-4o-mini"
+
+mybatis:
+  type-aliases-package: com.ssafy.fitmarket_be
+  mapper-locations: classpath:/mappers/**/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl  # SQL 로그 활성화
+
+jwt:
+  access-expiration-time: 43200000
+  refresh-expiration-time: 43200000
+  secret: YXNkc2FmZGFzZmFzZGZhZHNmYWRzZmFzZGFzZmFzZGYxMjM=
+
+file:
+  upload-dir: uploads
+
+logging:
+  level:
+    com.ssafy.fitmarket_be: DEBUG      # SQL 쿼리 포함 상세 로그
+    org.springframework.cache: DEBUG   # 캐시 히트/미스 로그 (Phase 2)
+    com.zaxxer.hikari: INFO            # HikariCP 풀 상태 로그
+  file:
+    name: load-test/product-cache/results/spring-boot.log
+  pattern:
+    file: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5level %pid --- [%thread] %logger{36} : %msg%n"
