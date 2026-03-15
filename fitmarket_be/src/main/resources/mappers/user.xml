@@ -20,26 +20,25 @@
     VALUES ( #{name}, #{email}, #{password}, #{phone} )
   </insert>
 
-  <update id="update">
+  <update id="updateName">
     UPDATE users
-    <set>
-      <choose>
-        <when test="column == 'name'">
-          name = #{value}
-        </when>
-        <when test="column == 'phone'">
-          phone = #{value}
-        </when>
-        <when test="column == 'password'">
-          password = #{value}
-        </when>
-        <otherwise>
-        </otherwise>
-      </choose>
-    </set>
-    <where>
-      id = #{id}
-    </where>
+    SET name = #{name}, modified_date = NOW()
+    WHERE id = #{id}
+      AND deleted_date IS NULL
+  </update>
+
+  <update id="updatePhone">
+    UPDATE users
+    SET phone = #{phone}, modified_date = NOW()
+    WHERE id = #{id}
+      AND deleted_date IS NULL
+  </update>
+
+  <update id="updatePassword">
+    UPDATE users
+    SET password = #{password}, modified_date = NOW()
+    WHERE id = #{id}
+      AND deleted_date IS NULL
   </update>
 
   <update id="delete">

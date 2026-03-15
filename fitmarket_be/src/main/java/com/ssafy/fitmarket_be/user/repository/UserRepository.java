@@ -16,9 +16,11 @@ public interface UserRepository {
 
   int delete(Long id);
 
-  int update(@Param("id") Long id,
-      @Param("column") String column,
-      @Param("value") String value);
+  int updateName(@Param("id") Long id, @Param("name") String name);
+
+  int updatePhone(@Param("id") Long id, @Param("phone") String phone);
+
+  int updatePassword(@Param("id") Long id, @Param("password") String password);
 
   int updateRole(@Param("id") Long id, @Param("role") String role);
 }
