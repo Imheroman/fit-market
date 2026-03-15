@@ -30,11 +30,9 @@ class JwtUtilTest {
     // Base64 인코딩된 32바이트 이상의 테스트용 시크릿 키
     private static final String TEST_SECRET =
             "dGVzdHNlY3JldGtleWZvcmpXdFRlc3RpbmdQdXJwb3NlT25seU5vdFByb2Q=";
-    private static final long TEST_EXPIRATION_TIME = 3600000L; // 1시간
-
     @BeforeEach
     void setUp() {
-        jwtUtil = new JwtUtil(TEST_SECRET, TEST_EXPIRATION_TIME);
+        jwtUtil = new JwtUtil(TEST_SECRET);
     }
 
     @Test

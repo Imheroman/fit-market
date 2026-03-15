@@ -2,7 +2,7 @@ package com.ssafy.fitmarket_be.user.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.ssafy.fitmarket_be.user.entity.User;
+import com.ssafy.fitmarket_be.entity.User;
 import com.ssafy.fitmarket_be.user.repository.UserRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;

@@ -1,6 +1,6 @@
 package com.ssafy.fitmarket_be.seller.application;
 
-import com.ssafy.fitmarket_be.user.entity.User;
+import com.ssafy.fitmarket_be.entity.User;
 import com.ssafy.fitmarket_be.seller.api.dto.SellerCreateRequest;
 import com.ssafy.fitmarket_be.seller.api.dto.SellerResponse;
 import com.ssafy.fitmarket_be.seller.api.dto.SellerReviewRequest;

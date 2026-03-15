@@ -3,8 +3,8 @@ package com.ssafy.fitmarket_be.order.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.fitmarket_be.address.repository.AddressRepository;
 import com.ssafy.fitmarket_be.cart.repository.ShoppingCartRepository;
-import com.ssafy.fitmarket_be.address.entity.Address;
-import com.ssafy.fitmarket_be.cart.entity.ShoppingCartProduct;
+import com.ssafy.fitmarket_be.entity.Address;
+import com.ssafy.fitmarket_be.entity.ShoppingCartProduct;
 import com.ssafy.fitmarket_be.order.domain.OrderApprovalStatus;
 import com.ssafy.fitmarket_be.order.domain.OrderMode;
 import com.ssafy.fitmarket_be.order.domain.OrderReturnExchangeReason;
@@ -253,9 +253,9 @@ class OrderServiceTest {
         given(productMapper.selectProductById(1L)).willReturn(product);
 
         given(orderRepository.insertOrder(any())).willAnswer(invocation -> {
-            com.ssafy.fitmarket_be.order.entity.Order order = invocation.getArgument(0);
+            com.ssafy.fitmarket_be.entity.Order order = invocation.getArgument(0);
             // MyBatis useGeneratedKeys 시뮬레이션: reflection으로 id 설정
-            java.lang.reflect.Field idField = com.ssafy.fitmarket_be.order.entity.Order.class.getDeclaredField("id");
+            java.lang.reflect.Field idField = com.ssafy.fitmarket_be.entity.Order.class.getDeclaredField("id");
             idField.setAccessible(true);
             idField.set(order, ORDER_ID);
             return 1;
@@ -301,8 +301,8 @@ class OrderServiceTest {
         given(shoppingCartRepository.findByIds(USER_ID, cartItemIds)).willReturn(cartItems);
 
         given(orderRepository.insertOrder(any())).willAnswer(invocation -> {
-            com.ssafy.fitmarket_be.order.entity.Order order = invocation.getArgument(0);
-            java.lang.reflect.Field idField = com.ssafy.fitmarket_be.order.entity.Order.class.getDeclaredField("id");
+            com.ssafy.fitmarket_be.entity.Order order = invocation.getArgument(0);
+            java.lang.reflect.Field idField = com.ssafy.fitmarket_be.entity.Order.class.getDeclaredField("id");
             idField.setAccessible(true);
             idField.set(order, ORDER_ID);
             return 1;

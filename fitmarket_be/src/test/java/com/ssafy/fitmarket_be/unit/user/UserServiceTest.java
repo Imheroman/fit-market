@@ -1,6 +1,6 @@
 package com.ssafy.fitmarket_be.unit.user;
 
-import com.ssafy.fitmarket_be.user.entity.User;
+import com.ssafy.fitmarket_be.entity.User;
 import com.ssafy.fitmarket_be.user.dto.UserPasswordUpdateRequestDto;
 import com.ssafy.fitmarket_be.user.dto.UserSignupRequestDto;
 import com.ssafy.fitmarket_be.user.dto.UserUpdateResponseDto;
