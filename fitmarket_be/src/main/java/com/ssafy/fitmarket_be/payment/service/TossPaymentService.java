@@ -64,6 +64,14 @@ public class TossPaymentService {
     validatePaymentStatus(paymentContext);
     validateAmountAgainstOrder(request, paymentContext);
 
+    // 멱등성 체크: 동일 paymentKey로 이미 저장된 결제가 있으면 로그만 남기고 진행
+    if (request.paymentKey() != null) {
+      paymentRepository.findByPaymentKey(request.paymentKey()).ifPresent(existing ->
+          log.warn("[PAYMENT_DUPLICATE] paymentKey={} already saved. orderId={}. proceeding idempotently.",
+              request.paymentKey(), existing.getOrderId())
+      );
+    }
+
     TossPaymentResponse response = requestPaymentApproval(request);
     ensureSuccessPayment(response);
     validatePaymentAmounts(request, response);
@@ -173,34 +181,43 @@ public class TossPaymentService {
     }
 
     TransactionTemplate template = new TransactionTemplate(transactionManager);
-    template.executeWithoutResult(status -> {
-      ensureOrderProducts(paymentContext);
-      int paymentUpdated = orderRepository.updatePaymentStatus(paymentContext.orderId(), PaymentStatus.PAID);
-      if (paymentUpdated <= 0) {
-        throw new IllegalStateException("주문 결제 상태를 갱신하지 못했어요.");
-      }
-      int approvalUpdated = orderRepository.updateApprovalStatus(paymentContext.orderId(),
-          OrderApprovalStatus.APPROVED.dbValue());
-      if (approvalUpdated <= 0) {
-        throw new IllegalStateException("주문 승인 상태를 갱신하지 못했어요.");
-      }
+    try {
+      template.executeWithoutResult(status -> {
+        ensureOrderProducts(paymentContext);
+        int paymentUpdated = orderRepository.updatePaymentStatus(paymentContext.orderId(), PaymentStatus.PAID);
+        if (paymentUpdated <= 0) {
+          throw new IllegalStateException("주문 결제 상태를 갱신하지 못했어요.");
+        }
+        int approvalUpdated = orderRepository.updateApprovalStatus(paymentContext.orderId(),
+            OrderApprovalStatus.APPROVED.dbValue());
+        if (approvalUpdated <= 0) {
+          throw new IllegalStateException("주문 승인 상태를 갱신하지 못했어요.");
+        }
 
-      Payment payment = Payment.builder()
-          .orderId(paymentContext.orderId())
-          .paymentKey(request.paymentKey())
-          .provider("toss")
-          .method(response.method())
-          .status(PaymentStatus.PAID)
-          .amount(response.totalAmount())
-          .approvedAt(resolveApprovedAt(response))
-          .rawResponse(writeRawResponse(response))
-          .build();
-      paymentRepository.upsert(payment);
+        Payment payment = Payment.builder()
+            .orderId(paymentContext.orderId())
+            .paymentKey(request.paymentKey())
+            .provider("toss")
+            .method(response.method())
+            .status(PaymentStatus.PAID)
+            .amount(response.totalAmount())
+            .approvedAt(resolveApprovedAt(response))
+            .rawResponse(writeRawResponse(response))
+            .build();
+        paymentRepository.upsert(payment);
 
-      if (paymentContext.orderMode() == OrderMode.CART) {
-        deletePurchasedCartItems(paymentContext);
-      }
-    });
+        if (paymentContext.orderMode() == OrderMode.CART) {
+          deletePurchasedCartItems(paymentContext);
+        }
+      });
+    } catch (Exception e) {
+      log.error("[PAYMENT_SAVE_FAILED] orderId={}, paymentKey={}, amount={}, error={}",
+          paymentContext.orderId(),
+          request.paymentKey(),
+          request.amount(),
+          e.getMessage(), e);
+      throw e;
+    }
   }
 
   private void ensureOrderProducts(OrderPaymentContext paymentContext) {
