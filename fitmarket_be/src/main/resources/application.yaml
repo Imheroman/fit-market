@@ -37,3 +37,7 @@ openai:
 #mybatis:
 #  type-aliases-package: com.ssafy.fitmarket_be.dto
 #  mapper-locations: classpath:/mappers/**/*.xml
+
+cors:
+  allowed-origins:
+    - http://localhost:5173
