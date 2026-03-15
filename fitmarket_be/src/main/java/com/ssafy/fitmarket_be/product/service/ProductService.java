@@ -135,11 +135,11 @@ public class ProductService {
      */
     @Transactional
     public ProductDetailResponse getProductDetail(Long productId) {
-        productMapper.incrementReviewCount(productId);
         Product product = productMapper.selectProductById(productId);
         if (product == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다: " + productId);
         }
+        productMapper.incrementReviewCount(productId);
         return ProductDetailResponse.from(product);
     }
 
