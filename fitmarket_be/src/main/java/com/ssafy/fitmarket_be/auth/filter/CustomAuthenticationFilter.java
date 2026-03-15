@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -57,23 +58,26 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
     // 2. try-catch로 감싸서 토큰 오류가 나도 요청을 죽이지 않음
     try {
-      String token = CookieUtils.find(request, "token");
-      if (token != null && !jwtUtil.isExpired(token)) {
-        Long id = this.jwtUtil.getId(token);
-        String role = this.jwtUtil.getRole(token);
+      Optional<String> tokenOpt = CookieUtils.find(request, "token");
+      if (tokenOpt.isPresent()) {
+        String token = tokenOpt.get();
+        if (!jwtUtil.isExpired(token)) {
+          Long id = this.jwtUtil.getId(token);
+          String role = this.jwtUtil.getRole(token);
 
-        AuthUserPrincipal principal = new AuthUserPrincipal(id, role);
-        SecurityContextHolder.getContext()
-            .setAuthentication(new UsernamePasswordAuthenticationToken(
-                principal, null, principal.getAuthorities()
-            ));
+          AuthUserPrincipal principal = new AuthUserPrincipal(id, role);
+          SecurityContextHolder.getContext()
+              .setAuthentication(new UsernamePasswordAuthenticationToken(
+                  principal, null, principal.getAuthorities()
+              ));
 
-        String newToken = jwtUtil.create(principal.getId(), jwtUtil.getUsername(token), principal.getAuthorities());
+          String newToken = jwtUtil.create(principal.getId(), jwtUtil.getUsername(token), principal.getAuthorities());
 
-        // 새로운 토큰을 쿠키에 설정 (기존 토큰 덮어쓰기)
+          // 새로운 토큰을 쿠키에 설정 (기존 토큰 덮어쓰기)
 
-        Cookie cookie = CookieUtils.create("token", newToken);
-        response.addCookie(cookie);
+          Cookie cookie = CookieUtils.create("token", newToken);
+          response.addCookie(cookie);
+        }
       }
     } catch (Exception e) {
       // ★ 핵심: 토큰 파싱 중에 에러가 나도(만료, 위조 등)

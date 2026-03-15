@@ -1,16 +1,15 @@
 package com.ssafy.fitmarket_be.auth;
 
-import com.ssafy.fitmarket_be.auth.exception.UnauthenticatedException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 public class CookieUtils {
   private static final String TOKEN_NAME = "token";
   private static final int EXPIRATION = 0;
-//  private static final int THIRTY_MINUTES = 60 * 30;  // 30분
-private static final int THIRTY_MINUTES = 60 * 60;  // 30분
+  private static final int THIRTY_MINUTES = 60 * 30;  // 30분 = 1800초
 
   private CookieUtils() {
   }
@@ -39,17 +38,16 @@ private static final int THIRTY_MINUTES = 60 * 60;  // 30분
     return create(TOKEN_NAME, null, EXPIRATION);
   }
 
-  public static String find(final HttpServletRequest request, String name) {
+  public static Optional<String> find(final HttpServletRequest request, String name) {
     final Cookie[] cookies = request.getCookies();
 
     if (Objects.isNull(cookies)) {
-      throw new UnauthenticatedException();
+      return Optional.empty();
     }
 
     return Arrays.stream(cookies)
         .filter(c -> c.getName().equals(name))
         .findFirst()
-        .map(Cookie::getValue)
-        .orElseThrow(UnauthenticatedException::new);
+        .map(Cookie::getValue);
   }
 }
