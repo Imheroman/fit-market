@@ -2,6 +2,7 @@ package com.ssafy.fitmarket_be.api.payments.success;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.fitmarket_be.api.FitmarketApiTest;
+import com.ssafy.fitmarket_be.api.TestFixture;
 import org.apache.ibatis.type.Alias;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,9 @@ class POST_specs {
     @Test
     @DisplayName("결제실패_콜백_400반환")
     void 결제실패_콜백_400반환() throws Exception {
+        // /payments/fail 는 인증된 사용자만 접근 가능 (security config: anyRequest().authenticated())
         mockMvc.perform(get("/payments/fail")
+                        .cookie(TestFixture.userCookie())
                         .param("errorCode", "PAY_PROCESS_CANCELED")
                         .param("errorReason", "사용자취소"))
                 .andExpect(status().isBadRequest())

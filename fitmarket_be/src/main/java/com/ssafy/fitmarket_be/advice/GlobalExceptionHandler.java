@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -44,6 +45,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   public ResponseEntity<Object> handleIllegalStateException(IllegalStateException e) {
     log.warn("비즈니스 규칙 위반: {}", e.getMessage());
     return ResponseEntity.badRequest().body(e.getMessage());
+  }
+
+  /**
+   * 메서드 보안 접근 거부 처리
+   *
+   * @param e AccessDeniedException
+   * @return 403
+   */
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<Object> handleAccessDeniedException(final AccessDeniedException e) {
+    log.warn("접근 거부: {}", e.getMessage());
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorResponse("접근 권한이 없습니다."));
   }
 
   /**

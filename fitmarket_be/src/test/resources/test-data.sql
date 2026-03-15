@@ -45,3 +45,9 @@ VALUES
 (1, 'ORD-001', 'DIRECT', 1, 1, '{"recipient":"테스트수령인","phone":"010-1234-5678","postalCode":"12345","addressLine":"서울시 강남구","addressLineDetail":"101호","memo":null}', '[]', 1, 10000, 0, 0, 10000, 'PAID'),
 (2, 'ORD-002', 'DIRECT', 5, 1, '{"recipient":"테스트수령인","phone":"010-1234-5678","postalCode":"12345","addressLine":"서울시 강남구","addressLineDetail":"101호","memo":null}', '[]', 1, 10000, 0, 0, 10000, 'PAID'),
 (3, 'ORD-003', 'DIRECT', 1, 1, '{"recipient":"테스트수령인","phone":"010-1234-5678","postalCode":"12345","addressLine":"서울시 강남구","addressLineDetail":"101호","memo":null}', '[]', 1, 10000, 0, 0, 10000, 'PAID');
+
+-- payments (ORD-001, ORD-002 에 대한 결제 승인 내역 - evaluateRefundEligibility 에서 approved_at 조회)
+INSERT INTO payments (id, order_id, payment_key, provider, method, status, amount, approved_at)
+VALUES
+(1, 1, 'PAY-KEY-001', 'TOSS', 'CARD', 'DONE', 10000, '2026-03-15 00:00:00'),
+(2, 2, 'PAY-KEY-002', 'TOSS', 'CARD', 'DONE', 10000, '2026-03-15 00:00:00');
