@@ -48,21 +48,28 @@ public class FileStorageService {
         // 1. 파일 검증
         validateFile(file);
 
-        // 2. 파일명 생성 (UUID + 원본 파일명)
+        // 2. 파일명 안전화: 경로 구분자 제거 후 UUID.확장자 형태로만 구성
         String originalFilename = file.getOriginalFilename();
-        String extension = getFileExtension(originalFilename);
-        String storedFilename = UUID.randomUUID() + "_" + originalFilename;
+        String safeOriginalFilename = Paths.get(originalFilename).getFileName().toString();
+        String extension = getFileExtension(safeOriginalFilename);
+        String storedFilename = UUID.randomUUID() + "." + extension;
 
         // 3. 파일 저장
         try {
-            Path targetPath = uploadPath.resolve(storedFilename);
+            Path targetPath = uploadPath.resolve(storedFilename).normalize();
+
+            // 4. 최종 경로가 업로드 디렉터리 하위인지 검증
+            if (!targetPath.startsWith(uploadPath)) {
+                throw new IllegalArgumentException("잘못된 파일 경로입니다.");
+            }
+
             Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
             log.info("파일 저장 완료: {}", storedFilename);
 
-            // 4. URL 반환 (/uploads/파일명)
+            // 5. URL 반환 (/uploads/파일명)
             return "/uploads/" + storedFilename;
         } catch (IOException e) {
-            throw new RuntimeException("파일 저장에 실패했습니다: " + originalFilename, e);
+            throw new RuntimeException("파일 저장에 실패했습니다.", e);
         }
     }
 
