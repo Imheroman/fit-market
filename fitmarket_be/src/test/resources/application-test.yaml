@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:fitmarket;MODE=MySQL;NON_KEYWORDS=VALUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:h2/schema-h2.sql
+      data-locations: classpath:h2/test-data.sql
+
+mybatis:
+  type-aliases-package: com.ssafy.fitmarket_be
+  mapper-locations: classpath:/mappers/**/*.xml
+
+jwt:
+  access-expiration-time: 43200000
+  refresh-expiration-time: 43200000
+  secret: YXNkc2FmZGFzZmFzZGZhZHNmYWRzZmFzZGFzZmFzZGYxMjM=
+
+file:
+  upload-dir: uploads
