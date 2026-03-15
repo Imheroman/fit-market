@@ -54,10 +54,11 @@ public enum OrderApprovalStatus {
 
   /**
    * 주문이 종료 상태인지 확인한다.
+   * DELIVERED는 반품/교환이 가능하므로 terminal에서 제외한다.
    *
-   * @return 취소/거절/배송완료 여부
+   * @return 취소/거절 여부
    */
   public boolean isTerminal() {
-    return this == CANCELLED || this == REJECTED || this == DELIVERED;
+    return this == CANCELLED || this == REJECTED;
   }
 }

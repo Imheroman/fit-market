@@ -150,7 +150,8 @@ public class ProductService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다: " + productId);
         }
         productMapper.incrementReviewCount(productId);
-        return ProductDetailResponse.from(product);
+        Product updated = productMapper.selectProductById(productId);
+        return ProductDetailResponse.from(updated);
     }
 
     /**

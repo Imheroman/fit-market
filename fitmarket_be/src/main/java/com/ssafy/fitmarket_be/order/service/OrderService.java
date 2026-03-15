@@ -385,6 +385,9 @@ public class OrderService {
     if (status.isTerminal()) {
       return new RefundEligibility(false, "이미 종료된 주문이라 환불할 수 없어요.");
     }
+    if (status == OrderApprovalStatus.DELIVERED) {
+      return new RefundEligibility(false, "배송 완료된 주문은 반품/교환을 이용해 주세요.");
+    }
     if (status.isShippingOrLater()) {
       return new RefundEligibility(false, "배송이 시작된 주문은 환불할 수 없어요.");
     }
