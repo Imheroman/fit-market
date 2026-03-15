@@ -38,7 +38,7 @@ public class UserController {
   }
 
   @PostMapping("/signup")
-  public ResponseEntity<Void> signup(@RequestBody UserSignupRequestDto requestDto) {
+  public ResponseEntity<Void> signup(@Valid @RequestBody UserSignupRequestDto requestDto) {
     this.userService.signup(requestDto);
     log.trace("회원가입 성공 이메일: {}", requestDto.getEmail());
 
