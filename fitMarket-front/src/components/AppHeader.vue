@@ -56,8 +56,8 @@
 import { computed, onMounted, watch } from 'vue';
 import { Leaf } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
-import { useCart } from '@/composables/useCart';
-import { useAuth } from '@/composables/useAuth';
+import { useCart } from '@/features/cart/composables/useCart';
+import { useAuth } from '@/features/auth/composables/useAuth';
 import { shouldShowErrorAlert } from '@/utils/httpError';
 import AppHeaderLoggedInActions from '@/components/header/AppHeaderLoggedInActions.vue';
 import AppHeaderLoggedOutActions from '@/components/header/AppHeaderLoggedOutActions.vue';

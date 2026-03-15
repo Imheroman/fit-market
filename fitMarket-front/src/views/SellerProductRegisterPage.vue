@@ -475,12 +475,12 @@ import { ref, onMounted, computed } from 'vue'
 import { CheckCircle2, AlertCircle, Loader2, Package, Upload } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
-import { useSellerProducts, PRODUCT_CATEGORIES } from '@/composables/useSellerProducts'
+import { useSellerProducts, PRODUCT_CATEGORIES } from '@/features/seller/composables/useSellerProducts'
 import {
   fetchSellerOrders,
   fetchSellerOrderDetail,
   updateSellerOrderStatus as updateOrderStatusApi,
-} from '@/api/ordersApi'
+} from '@/features/order/api'
 
 const activeTab = ref('register')
 const categories = PRODUCT_CATEGORIES

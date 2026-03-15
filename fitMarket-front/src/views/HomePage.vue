@@ -344,10 +344,10 @@ import { Search, Flame, Leaf, ShoppingCart, ArrowRight, ArrowUp, ArrowDown, Chev
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
 import ProductCard from '@/components/ProductCard.vue';
-import { useProducts } from '@/composables/useProducts';
-import { useCart } from '@/composables/useCart';
+import { useProducts } from '@/features/product/composables/useProducts';
+import { useCart } from '@/features/cart/composables/useCart';
 import { shouldShowErrorAlert } from '@/utils/httpError';
-import { fetchCategories } from '@/api/categoriesApi';
+import { fetchCategories } from '@/features/product/api';
 
 const { products, isLoading, errorMessage, toggleFavorite, loadProducts, pagination } = useProducts();
 const { addToCart } = useCart();

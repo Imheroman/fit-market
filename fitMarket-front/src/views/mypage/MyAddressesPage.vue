@@ -15,8 +15,8 @@
 <script setup>
 import { onMounted } from 'vue';
 import MyAddressesSection from '@/components/mypage/MyAddressesSection.vue';
-import { useAuth } from '@/composables/useAuth';
-import { useAddresses } from '@/composables/useAddresses';
+import { useAuth } from '@/features/auth/composables/useAuth';
+import { useAddresses } from '@/features/address/composables/useAddresses';
 import { shouldShowErrorAlert } from '@/utils/httpError';
 
 const { loadUserProfile } = useAuth();

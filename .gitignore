@@ -797,3 +797,9 @@ gradle-app.setting
 # Backend specific
 fitmarket_be/uploads/
 fitmarket_be/src/main/generated/
+
+# kimyoungwoong
+
+.claude
+doc
+CLAUDE.md

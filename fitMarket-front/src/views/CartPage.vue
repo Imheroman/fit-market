@@ -172,8 +172,8 @@ import {Minus, Plus, Trash2, Flame} from 'lucide-vue-next';
 import {useRouter} from 'vue-router';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
-import {useCart} from '@/composables/useCart';
-import {useCartSelection} from '@/composables/useCartSelection';
+import {useCart} from '@/features/cart/composables/useCart';
+import {useCartSelection} from '@/features/cart/composables/useCartSelection';
 import {shouldShowErrorAlert} from '@/utils/httpError';
 
 const router = useRouter();

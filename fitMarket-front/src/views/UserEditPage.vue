@@ -108,7 +108,7 @@
 import {computed, onMounted} from 'vue';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
-import {useAuth} from '@/composables/useAuth';
+import {useAuth} from '@/features/auth/composables/useAuth';
 import {formatPhoneNumber} from '@/utils/phone';
 
 const {user, isAuthenticated, loadUserProfile, isProfileLoading, profileError} = useAuth();

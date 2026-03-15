@@ -97,8 +97,8 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
-import { useAuth } from '@/composables/useAuth';
-import { useChangePhone } from '@/composables/useChangePhone';
+import { useAuth } from '@/features/auth/composables/useAuth';
+import { useChangePhone } from '@/features/user/composables/useChangePhone';
 
 const router = useRouter();
 const { user, loadUserProfile, isProfileLoading, profileError } = useAuth();

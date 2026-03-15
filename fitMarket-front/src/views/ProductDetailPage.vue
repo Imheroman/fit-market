@@ -177,8 +177,8 @@ import {useRouter, useRoute} from 'vue-router'
 import {Star, Flame, ShoppingCart, ChevronRight, Minus, Plus} from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
-import {useCart} from '@/composables/useCart'
-import {useProductDetail} from '@/composables/useProductDetail'
+import {useCart} from '@/features/cart/composables/useCart'
+import {useProductDetail} from '@/features/product/composables/useProductDetail'
 import {shouldShowErrorAlert} from '@/utils/httpError'
 
 const router = useRouter()

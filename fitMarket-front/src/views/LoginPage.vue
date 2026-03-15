@@ -83,7 +83,7 @@ import {onMounted} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
-import {useLoginForm} from '@/composables/useLoginForm'
+import {useLoginForm} from '@/features/auth/composables/useLoginForm'
 
 const router = useRouter()
 const route = useRoute()

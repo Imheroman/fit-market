@@ -136,7 +136,7 @@
 import {useRouter} from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
-import {useRegisterForm} from '@/composables/useRegisterForm'
+import {useRegisterForm} from '@/features/auth/composables/useRegisterForm'
 
 const router = useRouter()
 const {

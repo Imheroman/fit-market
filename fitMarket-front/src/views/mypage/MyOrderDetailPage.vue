@@ -300,11 +300,11 @@
 <script setup lang="js">
 import { computed, ref, watch, onMounted } from 'vue';
 import { useRoute, RouterLink, useRouter } from 'vue-router';
-import { useOrderDetail } from '@/composables/useOrderDetail';
-import { useAddresses } from '@/composables/useAddresses';
-import { requestOrderAddressChange } from '@/api/ordersApi';
-import { useOrderClaims } from '@/composables/useOrderClaims';
-import { usePaymentCallbacks } from '@/composables/usePaymentCallbacks';
+import { useOrderDetail } from '@/features/order/composables/useOrderDetail';
+import { useAddresses } from '@/features/address/composables/useAddresses';
+import { requestOrderAddressChange } from '@/features/order/api';
+import { useOrderClaims } from '@/features/order/composables/useOrderClaims';
+import { usePaymentCallbacks } from '@/features/payment/composables/usePaymentCallbacks';
 import { clearPendingOrderRequest, readPendingOrderRequest } from '@/utils/paymentRequestStorage';
 import { getOrderStatusMeta } from '@/utils/orderStatus';
 
