@@ -32,8 +32,8 @@ public class LLMService {
     @Value("${openai.model:gpt-4o-mini}")
     private String model;
 
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
 
     /**
      * RAG로 추출된 후보 중 가장 유사한 상품을 최종 선택한다.
