@@ -3,7 +3,6 @@ package com.ssafy.fitmarket_be.api.orders.orderNumber.address;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.fitmarket_be.api.FitmarketApiTest;
 import com.ssafy.fitmarket_be.api.TestFixture;
-import org.apache.ibatis.type.Alias;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +15,6 @@ import java.util.Map;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Alias("OrderAddress_PATCH_specs")
 @FitmarketApiTest
 @AutoConfigureMockMvc
 @DisplayName("PATCH /api/orders/{orderNumber}/address — 배송지 수정")

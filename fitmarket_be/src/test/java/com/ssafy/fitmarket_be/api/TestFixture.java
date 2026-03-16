@@ -10,8 +10,8 @@ import java.util.Date;
 
 public class TestFixture {
 
-    private static final String SECRET = "dGVzdHNlY3JldGtleWZvcmpXdFRlc3RpbmdQdXJwb3NlT25seU5vdFByb2Q=";
-    private static final SecretKey KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET));
+    public static final String TEST_JWT_SECRET = "dGVzdHNlY3JldGtleWZvcmpXdFRlc3RpbmdQdXJwb3NlT25seU5vdFByb2Q=";
+    private static final SecretKey KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(TEST_JWT_SECRET));
     private static final long EXPIRATION_MS = 1000L * 60 * 30; // 30분
 
     public static final String VALID_USER_TOKEN = buildToken("1", "user@test.com", "ROLE_USER", EXPIRATION_MS);

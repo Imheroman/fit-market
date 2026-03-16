@@ -2,7 +2,6 @@ package com.ssafy.fitmarket_be.api.auth.login;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.fitmarket_be.api.FitmarketApiTest;
-import org.apache.ibatis.type.Alias;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +18,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Alias("AuthLogin_POST_specs")
 @FitmarketApiTest
 @AutoConfigureMockMvc
 @DisplayName("POST /api/auth/login")

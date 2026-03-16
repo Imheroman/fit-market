@@ -3,7 +3,6 @@ package com.ssafy.fitmarket_be.api.payments.success;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.fitmarket_be.api.FitmarketApiTest;
 import com.ssafy.fitmarket_be.api.TestFixture;
-import org.apache.ibatis.type.Alias;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +17,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Alias("PaymentsSuccess_POST_specs")
 @FitmarketApiTest
 @AutoConfigureMockMvc
 @DisplayName("POST /api/payments/success — 결제 승인 API")

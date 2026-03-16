@@ -2,7 +2,6 @@ package com.ssafy.fitmarket_be.api.orders.orderNumber.refund;
 
 import com.ssafy.fitmarket_be.api.FitmarketApiTest;
 import com.ssafy.fitmarket_be.api.TestFixture;
-import org.apache.ibatis.type.Alias;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,7 +14,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Alias("OrderCancel_POST_specs")
 @FitmarketApiTest
 @AutoConfigureMockMvc
 @DisplayName("POST /api/orders/{orderNumber}/cancel — 주문 취소 및 삭제")
