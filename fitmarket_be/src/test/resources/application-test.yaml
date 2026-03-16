@@ -11,7 +11,7 @@ spring:
       data-locations: classpath:h2/test-data.sql
 
 mybatis:
-  type-aliases-package: com.ssafy.fitmarket_be
+  type-aliases-package: com.ssafy.fitmarket_be.entity
   mapper-locations: classpath:/mappers/**/*.xml
 
 jwt:

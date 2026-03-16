@@ -25,9 +25,16 @@ VALUES (1, 'FD-001', '테스트식품', '300', '15', '30', '10', '400', '5', '3'
 INSERT INTO products (id, user_id, product_category_id, name, description, price, stock, food_id)
 VALUES (1, 3, 1, '테스트상품', '테스트 상품 설명', 10000, 100, 1);
 
+INSERT INTO products (id, user_id, product_category_id, name, description, price, stock, food_id)
+VALUES (2, 3, 1, '테스트상품2', '테스트 상품 설명2', 9000, 50, 1);
+
 -- shopping_cart_products (장바구니 통합 테스트용: userId=1, productId=1)
 INSERT INTO shopping_cart_products (id, user_id, product_id, quantity)
 VALUES (1, 1, 1, 2);
+
+-- cart item id=2: userId=1, productId=2 (countCartItems=2 검증용)
+INSERT INTO shopping_cart_products (id, user_id, product_id, quantity)
+VALUES (2, 1, 2, 3);
 
 -- address
 INSERT INTO address (id, name, recipient, phone, memo, postal_code, address_line, address_line_detail)
