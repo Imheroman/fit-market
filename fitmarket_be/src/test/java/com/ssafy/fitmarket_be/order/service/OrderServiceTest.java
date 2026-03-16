@@ -37,6 +37,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.test.util.ReflectionTestUtils;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -230,7 +232,7 @@ class OrderServiceTest {
 
     @Test
     @DisplayName("DIRECT 모드 정상 주문 생성 시 OrderCreateResponse가 반환된다")
-    void createOrderInternal_DIRECT모드_정상() throws Exception {
+    void createOrderInternal_DIRECT모드_정상() {
         // given
         Long addressId = 10L;
         Address address = Address.builder()
@@ -254,10 +256,8 @@ class OrderServiceTest {
 
         given(orderRepository.insertOrder(any())).willAnswer(invocation -> {
             com.ssafy.fitmarket_be.entity.Order order = invocation.getArgument(0);
-            // MyBatis useGeneratedKeys 시뮬레이션: reflection으로 id 설정
-            java.lang.reflect.Field idField = com.ssafy.fitmarket_be.entity.Order.class.getDeclaredField("id");
-            idField.setAccessible(true);
-            idField.set(order, ORDER_ID);
+            // MyBatis useGeneratedKeys 시뮬레이션: Spring ReflectionTestUtils로 id 주입
+            ReflectionTestUtils.setField(order, "id", ORDER_ID);
             return 1;
         });
         given(orderRepository.insertOrderProducts(anyLong(), any())).willReturn(1);
@@ -279,7 +279,7 @@ class OrderServiceTest {
 
     @Test
     @DisplayName("CART 모드 정상 주문 생성 시 OrderCreateResponse가 반환된다")
-    void createOrderInternal_CART모드_정상() throws Exception {
+    void createOrderInternal_CART모드_정상() {
         // given
         Long addressId = 10L;
         Address address = Address.builder()

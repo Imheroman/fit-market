@@ -51,6 +51,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
+// mockTransactionTemplate()이 여러 stub을 중첩 설정하여 strict 모드에서 오탐 발생
+// → TransactionTemplate 시뮬레이션 헬퍼 패턴에 LENIENT 필요
 @MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("TossPaymentService")
 class TossPaymentServiceTest {

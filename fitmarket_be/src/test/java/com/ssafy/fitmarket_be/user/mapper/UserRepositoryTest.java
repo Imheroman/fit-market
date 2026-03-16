@@ -28,8 +28,12 @@ class UserRepositoryTest {
     @Test
     @DisplayName("findByEmail_존재하는이메일_User반환")
     void findByEmail_존재하는이메일_User반환() {
+        // given — test-data: user@test.com 존재
+
+        // when
         Optional<User> result = userRepository.findByEmail("user@test.com");
 
+        // then
         assertThat(result).isPresent();
         assertThat(result.get().getEmail()).isEqualTo("user@test.com");
     }
@@ -37,16 +41,24 @@ class UserRepositoryTest {
     @Test
     @DisplayName("findByEmail_없는이메일_Optional빈값")
     void findByEmail_없는이메일_Optional빈값() {
+        // given — none@test.com 은 test-data에 없음
+
+        // when
         Optional<User> result = userRepository.findByEmail("none@test.com");
 
+        // then
         assertThat(result).isEmpty();
     }
 
     @Test
     @DisplayName("updateName_성공_반영확인")
     void updateName_성공_반영확인() {
+        // given — test-data: userId=1 존재
+
+        // when
         int affected = userRepository.updateName(1L, "변경이름");
 
+        // then
         assertThat(affected).isEqualTo(1);
         Optional<User> found = userRepository.findBy(1L);
         assertThat(found).isPresent();
@@ -56,8 +68,12 @@ class UserRepositoryTest {
     @Test
     @DisplayName("updatePhone_성공_반영확인")
     void updatePhone_성공_반영확인() {
+        // given — test-data: userId=1 존재
+
+        // when
         int affected = userRepository.updatePhone(1L, "01099998888");
 
+        // then
         assertThat(affected).isEqualTo(1);
         Optional<User> found = userRepository.findBy(1L);
         assertThat(found).isPresent();
@@ -67,8 +83,12 @@ class UserRepositoryTest {
     @Test
     @DisplayName("updatePassword_성공_반영확인")
     void updatePassword_성공_반영확인() {
+        // given — test-data: userId=1 존재
+
+        // when
         int affected = userRepository.updatePassword(1L, "newEncodedPw");
 
+        // then
         assertThat(affected).isEqualTo(1);
         Optional<User> found = userRepository.findBy(1L);
         assertThat(found).isPresent();

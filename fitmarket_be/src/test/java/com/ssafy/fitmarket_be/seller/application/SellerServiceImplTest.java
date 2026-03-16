@@ -34,6 +34,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
+// buildMockSeller()가 여러 테스트에서 공유되어 테스트별로 사용되는 스텁의 부분집합이 달라짐
+// → 헬퍼 메서드 기반 픽스처 패턴에서는 클래스 레벨 LENIENT가 적합
 @MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("SellerServiceImpl")
 class SellerServiceImplTest {

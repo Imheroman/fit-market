@@ -1,5 +1,6 @@
 package com.ssafy.fitmarket_be.unit.auth;
 
+import com.ssafy.fitmarket_be.api.TestFixture;
 import com.ssafy.fitmarket_be.auth.jwt.JwtUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -27,9 +28,8 @@ class JwtUtilTest {
 
     private JwtUtil jwtUtil;
 
-    // Base64 인코딩된 32바이트 이상의 테스트용 시크릿 키
-    private static final String TEST_SECRET =
-            "dGVzdHNlY3JldGtleWZvcmpXdFRlc3RpbmdQdXJwb3NlT25seU5vdFByb2Q=";
+    // TestFixture와 동일한 시크릿 키를 공유하여 중복 제거
+    private static final String TEST_SECRET = TestFixture.TEST_JWT_SECRET;
     @BeforeEach
     void setUp() {
         jwtUtil = new JwtUtil(TEST_SECRET);
