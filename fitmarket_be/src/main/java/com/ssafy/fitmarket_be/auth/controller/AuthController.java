@@ -1,73 +1,69 @@
-/**
- * 나중에 참고용 ..
- */
-//package com.ssafy.fitmarket_be.auth.controller;
-//
-//import com.ssafy.fitmarket_be.auth.CookieUtils;
-//import com.ssafy.fitmarket_be.auth.dto.CustomUserDetails;
-//import com.ssafy.fitmarket_be.auth.jwt.JwtUtil;
-//import jakarta.servlet.http.Cookie;
-//import jakarta.servlet.http.HttpServletResponse;
-//import lombok.AllArgsConstructor;
-//import lombok.Getter;
-//import lombok.NoArgsConstructor;
-//import lombok.RequiredArgsConstructor;
-//import lombok.Setter;
-//import lombok.ToString;
-//import lombok.extern.slf4j.Slf4j;
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.security.authentication.AuthenticationManager;
-//import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-//import org.springframework.security.core.Authentication;
-//import org.springframework.web.bind.annotation.PostMapping;
-//import org.springframework.web.bind.annotation.RequestBody;
-//import org.springframework.web.bind.annotation.RequestMapping;
-//import org.springframework.web.bind.annotation.RestController;
-//
-//@RestController
-//@RequiredArgsConstructor
-//@Slf4j
-//@RequestMapping("/auth")
-//public class AuthController {
-//
-//  private final AuthenticationManager authenticationManager;
-//  private final JwtUtil jwtUtil;
-////  private final CartService cartService;
-//
-//@PostMapping("/login")
-//public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request,
-//    HttpServletResponse response) {
-//  log.trace("attempt login email: {}", request.getEmail());
-//
-//  UsernamePasswordAuthenticationToken authToken =
-//      new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword());
-//
-//  Authentication authentication = this.authenticationManager.authenticate(authToken);
-//  CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
-//
-//  String token = this.jwtUtil.create(user.getId(), user.getUsername(), user.getAuthorities());
-//  Cookie cookie = CookieUtils.create("token", token);
-//  response.addCookie(cookie);
-//
-//  log.trace("login success email: {}, token: {}", request.getEmail(), token);
-////    int cartCount = cartService.countByUserId(user.getId());
-//  int cartCount = 0;
-//  return ResponseEntity.ok(new LoginResponse(user.getName(), cartCount));                                                // Changed
-//}
-//
-//  @NoArgsConstructor
-//  @Getter
-//  @Setter
-//  @ToString
-//  public static class LoginRequest {
-//    private String email;
-//    private String password;
-//  }
-//
-//  @AllArgsConstructor
-//  @Getter
-//  public static class LoginResponse {
-//    private String name;
-//    private int cartCount;
-//  }
-//}
+package com.ssafy.fitmarket_be.auth.controller;
+
+import com.ssafy.fitmarket_be.auth.CookieUtils;
+import com.ssafy.fitmarket_be.auth.jwt.JwtUtil;
+import com.ssafy.fitmarket_be.auth.service.RedisRefreshTokenService;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/auth")
+@RequiredArgsConstructor
+@Slf4j
+public class AuthController {
+
+    private final JwtUtil jwtUtil;
+    private final RedisRefreshTokenService refreshTokenService;
+
+    @PostMapping("/refresh")
+    public ResponseEntity<Void> refresh(
+            @CookieValue(name = "refresh_token", required = false) String refreshToken,
+            HttpServletResponse response) {
+
+        if (refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        try {
+            if (jwtUtil.isExpired(refreshToken)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        if (!"refresh".equals(jwtUtil.getTokenType(refreshToken))) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Long userId = jwtUtil.getId(refreshToken);
+        if (!refreshTokenService.validate(userId, refreshToken)) {
+            refreshTokenService.delete(userId);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        // RT에서 정보 추출하여 새 AT + RT 생성 (DB 조회 불필요)
+        String username = jwtUtil.getUsername(refreshToken);
+        String role = jwtUtil.getRole(refreshToken);
+        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
+
+        String newAccessToken = jwtUtil.createAccessToken(userId, username, authorities);
+        String newRefreshToken = jwtUtil.createRefreshToken(userId, username, authorities);
+
+        refreshTokenService.save(userId, newRefreshToken);
+
+        response.addCookie(CookieUtils.createAccessTokenCookie(newAccessToken));
+        response.addCookie(CookieUtils.createRefreshTokenCookie(newRefreshToken));
+
+        return ResponseEntity.ok().build();
+    }
+}
