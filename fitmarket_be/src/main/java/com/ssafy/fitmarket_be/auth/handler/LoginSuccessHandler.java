@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.fitmarket_be.auth.CookieUtils;
 import com.ssafy.fitmarket_be.auth.dto.CustomUserDetails;
 import com.ssafy.fitmarket_be.auth.jwt.JwtUtil;
+import com.ssafy.fitmarket_be.auth.service.RedisRefreshTokenService;
 import com.ssafy.fitmarket_be.cart.service.ShoppingCartService;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -29,21 +29,27 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
   private final JwtUtil jwtUtil;
   private final ObjectMapper objectMapper;
   private final ShoppingCartService shoppingCartService;
+  private final RedisRefreshTokenService refreshTokenService;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
       Authentication authentication) throws IOException, ServletException {
     CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
-    String token = jwtUtil.create(user.getId(), user.getUsername(), user.getAuthorities());
 
-    Cookie cookie = CookieUtils.create("token", token);
-    response.addCookie(cookie);
+    // AT + RT 생성
+    String accessToken = jwtUtil.createAccessToken(user.getId(), user.getUsername(), user.getAuthorities());
+    String refreshToken = jwtUtil.createRefreshToken(user.getId(), user.getUsername(), user.getAuthorities());
 
-    // 4. Cart 정보 조회 (서비스 호출)
+    // 쿠키 설정
+    response.addCookie(CookieUtils.createAccessTokenCookie(accessToken));
+    response.addCookie(CookieUtils.createRefreshTokenCookie(refreshToken));
+
+    // RT를 Redis에 저장
+    refreshTokenService.save(user.getId(), refreshToken);
+
     int cartCount = shoppingCartService.countCartItems(user.getId());
     log.info("로그인 성공: userId={}, cartCount={}", user.getId(), cartCount);
 
-    // 5. JSON 응답 생성
     sendJsonResponse(response, user.getName(), cartCount);
   }
 

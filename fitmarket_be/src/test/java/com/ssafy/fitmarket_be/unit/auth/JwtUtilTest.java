@@ -32,22 +32,41 @@ class JwtUtilTest {
     private static final String TEST_SECRET = TestFixture.TEST_JWT_SECRET;
     @BeforeEach
     void setUp() {
-        jwtUtil = new JwtUtil(TEST_SECRET);
+        jwtUtil = new JwtUtil(TEST_SECRET, 900000L, 604800000L);
     }
 
     @Test
-    @DisplayName("정상 토큰 생성 시 클레임이 일치한다")
-    void create_정상토큰생성_클레임일치() {
+    @DisplayName("정상 AT 생성 시 클레임이 일치한다")
+    void createAccessToken_정상토큰생성_클레임일치() {
         // given
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
 
         // when
-        String token = jwtUtil.create(1L, "user@test.com", authorities);
+        String token = jwtUtil.createAccessToken(1L, "user@test.com", authorities);
 
         // then
         assertThat(jwtUtil.getId(token)).isEqualTo(1L);
         assertThat(jwtUtil.getUsername(token)).isEqualTo("user@test.com");
         assertThat(jwtUtil.getRole(token)).isEqualTo("ROLE_USER");
+        assertThat(jwtUtil.getTokenType(token)).isEqualTo("access");
+        assertThat(jwtUtil.getJti(token)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("정상 RT 생성 시 클레임이 일치한다")
+    void createRefreshToken_정상토큰생성_클레임일치() {
+        // given
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+
+        // when
+        String token = jwtUtil.createRefreshToken(1L, "user@test.com", authorities);
+
+        // then
+        assertThat(jwtUtil.getId(token)).isEqualTo(1L);
+        assertThat(jwtUtil.getUsername(token)).isEqualTo("user@test.com");
+        assertThat(jwtUtil.getRole(token)).isEqualTo("ROLE_USER");
+        assertThat(jwtUtil.getTokenType(token)).isEqualTo("refresh");
+        assertThat(jwtUtil.getJti(token)).isNotNull();
     }
 
     @Test
@@ -55,7 +74,7 @@ class JwtUtilTest {
     void isExpired_유효한토큰_false반환() {
         // given
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
-        String token = jwtUtil.create(1L, "user@test.com", authorities);
+        String token = jwtUtil.createAccessToken(1L, "user@test.com", authorities);
 
         // when
         Boolean expired = jwtUtil.isExpired(token);
@@ -74,6 +93,7 @@ class JwtUtilTest {
                 .subject("1")
                 .claim("username", "user@test.com")
                 .claim("role", "ROLE_USER")
+                .claim("type", "access")
                 .issuedAt(new Date(System.currentTimeMillis() - 10000))
                 .expiration(new Date(System.currentTimeMillis() - 5000))  // 이미 만료된 시각
                 .signWith(key)
@@ -98,7 +118,7 @@ class JwtUtilTest {
     void getAuthentication_정상토큰_UsernamePasswordToken() {
         // given
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
-        String token = jwtUtil.create(1L, "user@test.com", authorities);
+        String token = jwtUtil.createAccessToken(1L, "user@test.com", authorities);
 
         // when
         Authentication auth = jwtUtil.getAuthentication(token);
@@ -110,7 +130,7 @@ class JwtUtilTest {
 
     @Test
     @DisplayName("다중 권한은 콤마로 구분하여 role 클레임에 저장된다")
-    void create_다중권한_콤마구분_반환() {
+    void createAccessToken_다중권한_콤마구분_반환() {
         // given
         List<GrantedAuthority> authorities = List.of(
                 new SimpleGrantedAuthority("ROLE_USER"),
@@ -118,9 +138,23 @@ class JwtUtilTest {
         );
 
         // when
-        String token = jwtUtil.create(1L, "user@test.com", authorities);
+        String token = jwtUtil.createAccessToken(1L, "user@test.com", authorities);
 
         // then
         assertThat(jwtUtil.getRole(token)).isEqualTo("ROLE_USER,ROLE_SELLER");
+    }
+
+    @Test
+    @DisplayName("getRemainingExpiration은 양수를 반환한다")
+    void getRemainingExpiration_유효토큰_양수반환() {
+        // given
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        String token = jwtUtil.createAccessToken(1L, "user@test.com", authorities);
+
+        // when
+        long remaining = jwtUtil.getRemainingExpiration(token);
+
+        // then
+        assertThat(remaining).isGreaterThan(0);
     }
 }

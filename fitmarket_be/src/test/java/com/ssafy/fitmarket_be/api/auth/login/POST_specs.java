@@ -41,7 +41,7 @@ class POST_specs {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Set-Cookie"))
-                .andExpect(cookie().exists("token"))
+                .andExpect(cookie().exists("access_token"))
                 .andExpect(jsonPath("$.name").isNotEmpty());
     }
 

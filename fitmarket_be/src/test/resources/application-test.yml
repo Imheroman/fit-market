@@ -11,6 +11,8 @@ spring:
       data-locations: classpath:test-data.sql
 
 jwt:
+  access-expiration-time: 900000
+  refresh-expiration-time: 604800000
   secret: dGVzdHNlY3JldGtleWZvcmpXdFRlc3RpbmdQdXJwb3NlT25seU5vdFByb2Q=
 
 openai:
