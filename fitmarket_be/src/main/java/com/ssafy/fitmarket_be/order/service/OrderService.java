@@ -136,6 +136,17 @@ public class OrderService {
     }
 
     saveOrderProducts(order.getId(), orderProducts);
+
+    // 주문 상품별 재고 차감
+    for (OrderProductEntity item : orderProducts) {
+      int affected = productMapper.decreaseStock(item.getProductId(), item.getQuantity());
+      if (affected == 0) {
+        throw new IllegalStateException(
+            "재고가 부족해요. 상품: " + item.getProductName()
+        );
+      }
+    }
+
     saveOrderAddressHistory(order.getId(), address);
 
     int updatedApproval = orderRepository.updateApprovalStatus(order.getId(),
@@ -285,6 +296,7 @@ public class OrderService {
     if (updated <= 0) {
       throw new IllegalStateException("주문 취소 처리 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
     }
+    restoreStock(order.getId());
   }
 
   /**
@@ -328,6 +340,7 @@ public class OrderService {
       log.info("payment row not found while refunding order {}", orderNumber);
     }
     orderRepository.updateApprovalStatus(order.getId(), OrderApprovalStatus.CANCELLED.dbValue());
+    restoreStock(order.getId());
 
     saveReturnExchangeRequest(
         order.getId(),
@@ -502,6 +515,16 @@ public class OrderService {
     orderRepository.softDeleteOrderProducts(order.getId());
   }
 
+  private void restoreStock(Long orderId) {
+    List<OrderProductEntity> items = orderRepository.findOrderProductsByOrderIds(List.of(orderId))
+        .stream()
+        .filter(item -> item.getOrderId().equals(orderId))
+        .toList();
+    for (OrderProductEntity item : items) {
+      productMapper.increaseStock(item.getProductId(), item.getQuantity());
+    }
+  }
+
   private void saveOrderProducts(Long orderId, List<OrderProductEntity> orderProducts) {
     int insertedProducts = orderRepository.insertOrderProducts(orderId, orderProducts);
     if (insertedProducts != orderProducts.size()) {
@@ -549,6 +572,15 @@ public class OrderService {
     List<OrderProductEntity> orderProducts = new ArrayList<>();
     for (ShoppingCartProduct cartProduct : cartProducts) {
       validateQuantityLimit(cartProduct.getQuantity());
+
+      // 재고 확인
+      Product product = productMapper.selectProductById(cartProduct.getProductId());
+      if (product == null || product.getStock() < cartProduct.getQuantity()) {
+        throw new IllegalArgumentException(
+            "재고가 부족해요. 상품: " + cartProduct.getProductName()
+        );
+      }
+
       long totalPrice = cartProduct.getPrice() * cartProduct.getQuantity();
       orderProducts.add(OrderProductEntity.builder()
           .productId(cartProduct.getProductId())

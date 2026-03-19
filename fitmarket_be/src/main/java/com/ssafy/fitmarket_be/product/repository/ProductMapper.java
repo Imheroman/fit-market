@@ -118,4 +118,17 @@ public interface ProductMapper {
      * 상품 소유권 확인 (상품 ID + 판매자 userId).
      */
     boolean existsByIdAndUserId(@Param("productId") Long productId, @Param("userId") Long userId);
+
+    /**
+     * 재고를 원자적으로 차감한다.
+     * stock >= quantity 조건으로 오버셀링 방지.
+     * @return 업데이트된 행 수 (0이면 재고 부족)
+     */
+    int decreaseStock(@Param("productId") Long productId, @Param("quantity") int quantity);
+
+    /**
+     * 환불/취소 시 재고를 복원한다.
+     * @return 업데이트된 행 수
+     */
+    int increaseStock(@Param("productId") Long productId, @Param("quantity") int quantity);
 }

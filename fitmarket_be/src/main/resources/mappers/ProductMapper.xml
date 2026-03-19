@@ -270,4 +270,21 @@
           AND deleted_date IS NULL
     </select>
 
+    <!-- 재고 원자적 차감 (오버셀링 방지) -->
+    <update id="decreaseStock">
+        UPDATE products
+        SET stock = stock - #{quantity}
+        WHERE id = #{productId}
+          AND stock >= #{quantity}
+          AND deleted_date IS NULL
+    </update>
+
+    <!-- 환불/취소 시 재고 복원 -->
+    <update id="increaseStock">
+        UPDATE products
+        SET stock = stock + #{quantity}
+        WHERE id = #{productId}
+          AND deleted_date IS NULL
+    </update>
+
 </mapper>
