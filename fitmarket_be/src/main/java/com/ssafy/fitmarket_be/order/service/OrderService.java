@@ -33,6 +33,7 @@ import com.ssafy.fitmarket_be.payment.domain.PaymentStatus;
 import com.ssafy.fitmarket_be.payment.repository.PaymentRepository;
 import com.ssafy.fitmarket_be.product.domain.Product;
 import com.ssafy.fitmarket_be.product.repository.ProductMapper;
+import com.ssafy.fitmarket_be.ranking.service.ProductRankingService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,6 +68,7 @@ public class OrderService {
   private final AddressRepository addressRepository;
   private final PaymentRepository paymentRepository;
   private final ObjectMapper objectMapper;
+  private final ProductRankingService rankingService;
 
   /**
    * 선결제 후 주문 생성 플로우를 위해, 프런트에서 전달한 주문 번호를 그대로 사용해 주문을 생성한다.
@@ -148,6 +150,10 @@ public class OrderService {
     }
 
     saveOrderAddressHistory(order.getId(), address);
+
+    for (OrderProductEntity item : orderProducts) {
+      rankingService.incrementScore(item.getProductId(), 10.0);
+    }
 
     int updatedApproval = orderRepository.updateApprovalStatus(order.getId(),
         OrderApprovalStatus.PENDING_APPROVAL.dbValue());

@@ -3,6 +3,7 @@ package com.ssafy.fitmarket_be.product.controller;
 import com.ssafy.fitmarket_be.global.dto.PageResponse;
 import com.ssafy.fitmarket_be.product.dto.*;
 import com.ssafy.fitmarket_be.product.service.ProductService;
+import com.ssafy.fitmarket_be.ranking.service.ProductRankingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductRankingService rankingService;
 
     /**
      * 상품 목록 조회 (페이징, 필터링).
@@ -68,6 +70,7 @@ public class ProductController {
     @GetMapping("/{id:[0-9]+}")
     public ResponseEntity<ProductDetailResponse> getProductDetail(@PathVariable Long id) {
         ProductDetailResponse response = productService.getProductDetail(id);
+        rankingService.incrementScore(id, 1.0);
         return ResponseEntity.ok(response);
     }
 

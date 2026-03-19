@@ -4,6 +4,7 @@ import com.ssafy.fitmarket_be.cart.mapper.ShoppingCartMapper;
 import com.ssafy.fitmarket_be.entity.ShoppingCartProduct;
 import com.ssafy.fitmarket_be.cart.dto.CartItemResponse;
 import com.ssafy.fitmarket_be.cart.repository.ShoppingCartRepository;
+import com.ssafy.fitmarket_be.ranking.service.ProductRankingService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ public class ShoppingCartService {
 
   private final ShoppingCartRepository shoppingCartRepository;
   private final ShoppingCartMapper shoppingCartMapper;
+  private final ProductRankingService rankingService;
 
   /**
    * 사용자 장바구니 수를 조회한다.
@@ -61,6 +63,7 @@ public class ShoppingCartService {
 
     int updated = this.shoppingCartRepository.incrementQuantity(userId, productId, normalizedQuantity);
     if (updated > 0) {
+      rankingService.incrementScore(productId, 3.0);
       log.debug(
           "update cart item for product {} increased by {} for user {}",
           productId,
@@ -75,6 +78,7 @@ public class ShoppingCartService {
       throw new IllegalArgumentException("장바구니에 상품을 담지 못했어요. 잠시 후 다시 시도해 주세요.");
     }
 
+    rankingService.incrementScore(productId, 3.0);
     log.debug("insert product {} added to cart for user {} with quantity {}", productId, userId,
         normalizedQuantity);
     return true;
