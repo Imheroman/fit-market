@@ -799,6 +799,7 @@ gradle-app.setting
 # Backend specific
 fitmarket_be/uploads/
 fitmarket_be/src/main/generated/
+fitmarket_be/load-test/
 
 # kimyoungwoong
 
@@ -806,7 +807,5 @@ fitmarket_be/src/main/generated/
 doc
 CLAUDE.md
 
-### Load Test - 생성 데이터 및 결과 (대용량/런타임 생성) ###
-load-test/*/data/
-load-test/*/results/
-load-test/*/seed-data.sql
+### Load Test ###
+load-test/
