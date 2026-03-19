@@ -8,6 +8,9 @@ import com.ssafy.fitmarket_be.product.dto.*;
 import com.ssafy.fitmarket_be.product.repository.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,6 +31,9 @@ public class ProductService {
      * 상품 목록 조회 (페이징, 필터링).
      * categoryId와 keyword를 동시에 적용 가능합니다.
      */
+    @Cacheable(value = "products",
+               key = "#categoryId + ':' + #keyword + ':' + #page + ':' + #size",
+               sync = true)
     public PageResponse<ProductListResponse> getProducts(Integer page, Integer size, Long categoryId, String keyword) {
         int safePage = (page == null || page < 1) ? 1 : page;
         int safeSize = (size == null || size < 1) ? 20 : size;
@@ -70,6 +76,7 @@ public class ProductService {
      * 상품 등록.
      * RAG를 사용하여 상품명과 유사한 식품 후보를 찾고, LLM으로 최종 매칭합니다.
      */
+    @CacheEvict(value = {"products", "best-products", "new-products", "categories"}, allEntries = true)
     @Transactional
     public ProductCreateResponse createProduct(Long userId, ProductCreateRequest request) {
         // RAG: 벡터 검색으로 상위 50개 유사 식품 추출 (토큰 대폭 절감!)
@@ -102,6 +109,10 @@ public class ProductService {
     /**
      * 상품 수정.
      */
+    @Caching(evict = {
+        @CacheEvict(value = {"products", "best-products", "new-products"}, allEntries = true),
+        @CacheEvict(value = "product-detail", key = "#productId")
+    })
     @Transactional
     public ProductUpdateResponse updateProduct(Long userId, Long productId, ProductUpdateRequest request) {
         Product product = productMapper.selectProductById(productId);
@@ -128,6 +139,10 @@ public class ProductService {
     /**
      * 상품 삭제 (소프트 삭제).
      */
+    @Caching(evict = {
+        @CacheEvict(value = {"products", "best-products", "new-products", "categories"}, allEntries = true),
+        @CacheEvict(value = "product-detail", key = "#productId")
+    })
     @Transactional
     public void deleteProduct(Long userId, Long productId) {
         Product product = productMapper.selectProductById(productId);
@@ -143,6 +158,7 @@ public class ProductService {
     /**
      * 상품 상세 조회 (조회 시 review_count + 1).
      */
+    @Cacheable(value = "product-detail", key = "#productId")
     @Transactional
     public ProductDetailResponse getProductDetail(Long productId) {
         Product product = productMapper.selectProductById(productId);
@@ -167,6 +183,9 @@ public class ProductService {
     /**
      * 베스트 상품 조회 (평점/리뷰순).
      */
+    @Cacheable(value = "best-products",
+               key = "#page + ':' + #size",
+               sync = true)
     public PageResponse<ProductListResponse> getBestProducts(Integer page, Integer size) {
         int safePage = (page == null || page < 1) ? 1 : page;
         int safeSize = (size == null || size < 1) ? 12 : size;
@@ -196,6 +215,9 @@ public class ProductService {
     /**
      * 신상품 조회 (최신순).
      */
+    @Cacheable(value = "new-products",
+               key = "#page + ':' + #size",
+               sync = true)
     public PageResponse<ProductListResponse> getNewProducts(Integer page, Integer size) {
         int safePage = (page == null || page < 1) ? 1 : page;
         int safeSize = (size == null || size < 1) ? 12 : size;

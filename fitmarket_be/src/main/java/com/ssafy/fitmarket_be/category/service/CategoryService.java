@@ -4,6 +4,7 @@ import com.ssafy.fitmarket_be.category.domain.ProductCategory;
 import com.ssafy.fitmarket_be.category.dto.CategoryResponse;
 import com.ssafy.fitmarket_be.category.repository.CategoryMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +18,7 @@ public class CategoryService {
     /**
      * 모든 카테고리 조회 (상품 개수 포함).
      */
+    @Cacheable(value = "categories", key = "'all'")
     public List<CategoryResponse> getAllCategories() {
         List<ProductCategory> categories = categoryMapper.selectAllCategoriesWithProductCount();
         return categories.stream()
