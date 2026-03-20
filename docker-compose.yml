@@ -1,4 +1,29 @@
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: fitmarket-dev-db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: fitmarket
+      MYSQL_USER: ssafy
+      MYSQL_PASSWORD: ssafy
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./fitmarket_be/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --local-infile=1
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "ssafy", "-pssafy"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     container_name: fitmarket-redis
@@ -10,4 +35,5 @@ services:
     restart: unless-stopped
 
 volumes:
+  mysql-data:
   redis-data:
