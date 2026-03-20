@@ -809,3 +809,6 @@ CLAUDE.md
 
 ### Load Test ###
 load-test/
+
+### Mock Data ###
+mock-data/
