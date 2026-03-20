@@ -27,6 +27,9 @@ public class ProductService {
     private final LLMService llmService;
     private final com.ssafy.fitmarket_be.ai.service.FoodVectorStoreService foodVectorStoreService;
 
+    @org.springframework.beans.factory.annotation.Value("${app.ai.enabled:true}")
+    private boolean aiEnabled;
+
     /**
      * 상품 목록 조회 (페이징, 필터링).
      * categoryId와 keyword를 동시에 적용 가능합니다.
@@ -79,12 +82,15 @@ public class ProductService {
     @CacheEvict(value = {"products", "best-products", "new-products", "categories"}, allEntries = true)
     @Transactional
     public ProductCreateResponse createProduct(Long userId, ProductCreateRequest request) {
-        // RAG: 벡터 검색으로 상위 50개 유사 식품 추출 (토큰 대폭 절감!)
-        List<Food> similarFoods =
-            foodVectorStoreService.searchSimilarFoods(request.name(), 50);
+        Long foodId = null;
+        if (aiEnabled) {
+            // RAG: 벡터 검색으로 상위 50개 유사 식품 추출 (토큰 대폭 절감!)
+            List<Food> similarFoods =
+                foodVectorStoreService.searchSimilarFoods(request.name(), 50);
 
-        // LLM으로 최종 매칭 (50개만 전달하므로 토큰 99% 절감)
-        Long foodId = llmService.findBestMatch(request.name(), similarFoods);
+            // LLM으로 최종 매칭 (50개만 전달하므로 토큰 99% 절감)
+            foodId = llmService.findBestMatch(request.name(), similarFoods);
+        }
 
         // 상품 등록
         productMapper.insertProduct(

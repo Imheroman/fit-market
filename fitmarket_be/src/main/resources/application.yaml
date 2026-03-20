@@ -38,6 +38,10 @@ openai:
 #  type-aliases-package: com.ssafy.fitmarket_be.dto
 #  mapper-locations: classpath:/mappers/**/*.xml
 
+app:
+  ai:
+    enabled: false  # true로 변경하면 AI 식품 매칭 활성화
+
 cors:
   allowed-origins:
     - http://localhost:5173
