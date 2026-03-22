@@ -1,5 +1,5 @@
 import {defineStore} from 'pinia';
-import {addCartItem, deleteCartItem, fetchCartItems, updateCartItemQuantity} from '../api';
+import {addCartItem, deleteCartItem, fetchCartItems, updateCartItemQuantity} from './api';
 
 const MIN_QUANTITY = 1;
 const MAX_QUANTITY = 100;
