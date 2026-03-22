@@ -812,3 +812,6 @@ load-test/
 
 ### Mock Data ###
 mock-data/
+
+### Claude Code Worktree ###
+.claire/
