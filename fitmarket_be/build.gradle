@@ -76,6 +76,12 @@ dependencies {
 
     // Redis (Lettuce 클라이언트 기본 포함)
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // Elasticsearch (Spring Data Elasticsearch)
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+
+    // Spring Retry (ES 동기화 재시도용)
+    implementation 'org.springframework.retry:spring-retry'
 }
 
 tasks.withType(JavaCompile).configureEach {

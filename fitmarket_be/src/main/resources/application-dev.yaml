@@ -4,6 +4,10 @@ server:
   port: 8080
 
 spring:
+  elasticsearch:
+    uris: http://localhost:9200
+    connection-timeout: 5s
+    socket-timeout: 30s
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/fitmarket?serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
@@ -44,3 +48,8 @@ jwt:
 # 파일 업로드 설정
 file:
   upload-dir: uploads
+
+# ES 초기 인덱싱 설정
+search:
+  elasticsearch:
+    init-index: true  # false로 변경하면 초기 인덱싱 비활성화

@@ -1,0 +1,38 @@
+{
+  "number_of_shards": 1,
+  "number_of_replicas": 0,
+  "analysis": {
+    "tokenizer": {
+      "nori_user_dict": {
+        "type": "nori_tokenizer",
+        "decompound_mode": "mixed",
+        "user_dictionary_rules": [
+          "프로틴바", "닭가슴살", "저탄고지", "고단백",
+          "저칼로리", "무설탕", "비건", "글루텐프리"
+        ]
+      }
+    },
+    "analyzer": {
+      "korean_analyzer": {
+        "type": "custom",
+        "tokenizer": "nori_user_dict",
+        "filter": [
+          "nori_readingform",
+          "nori_part_of_speech_basic",
+          "lowercase"
+        ]
+      }
+    },
+    "filter": {
+      "nori_part_of_speech_basic": {
+        "type": "nori_part_of_speech",
+        "stoptags": [
+          "E", "IC", "J", "MAG", "MAJ", "MM",
+          "NNB", "SP", "SSC", "SSO", "SC", "SE",
+          "XPN", "XSA", "XSN", "XSV",
+          "UNA", "NA", "VSV"
+        ]
+      }
+    }
+  }
+}
