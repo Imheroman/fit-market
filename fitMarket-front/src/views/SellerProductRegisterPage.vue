@@ -282,6 +282,7 @@
                       :src="product.image"
                       :alt="product.name"
                       class="w-24 h-24 object-cover rounded-lg"
+                      @error="onImageError"
                     />
                     <div class="flex-1">
                       <div class="flex items-start justify-between">
@@ -475,6 +476,7 @@ import { ref, onMounted, computed } from 'vue'
 import { CheckCircle2, AlertCircle, Loader2, Package, Upload } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
+import { useImageFallback } from '@/composables/useImageFallback'
 import { useSellerProducts, PRODUCT_CATEGORIES } from '@/features/seller/composables/useSellerProducts'
 import {
   fetchSellerOrders,
@@ -482,6 +484,7 @@ import {
   updateSellerOrderStatus as updateOrderStatusApi,
 } from '@/features/order/api'
 
+const {onImageError} = useImageFallback()
 const activeTab = ref('register')
 const categories = PRODUCT_CATEGORIES
 const imagePreview = ref(null)

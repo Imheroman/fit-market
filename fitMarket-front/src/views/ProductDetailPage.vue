@@ -20,7 +20,7 @@
                     <!-- Product Image -->
                     <div class="space-y-4">
                         <div class="relative aspect-square bg-green-50 rounded-2xl overflow-hidden">
-                            <img :src="product.image" :alt="product.name" class="w-full h-full object-cover"/>
+                            <img :src="product.image" :alt="product.name" class="w-full h-full object-cover" @error="onImageError"/>
                         </div>
                     </div>
 
@@ -180,9 +180,11 @@ import AppFooter from '@/components/AppFooter.vue'
 import {useCart} from '@/features/cart/composables/useCart'
 import {useProductDetail} from '@/features/product/composables/useProductDetail'
 import {shouldShowErrorAlert} from '@/utils/httpError'
+import {useImageFallback} from '@/composables/useImageFallback'
 
 const router = useRouter()
 const route = useRoute()
+const {onImageError} = useImageFallback()
 const {addToCart} = useCart()
 
 const MIN_QUANTITY = 1

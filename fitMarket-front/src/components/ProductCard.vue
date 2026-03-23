@@ -8,6 +8,7 @@
           :src="product.image"
           :alt="product.name"
           class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          @error="onImageError"
       />
       <span class="absolute top-3 left-3 px-3 py-1 bg-green-500 text-white text-sm font-medium rounded-full">
         {{ product.category }}
@@ -62,8 +63,10 @@
 import {computed} from 'vue'
 import {useRouter} from 'vue-router'
 import {Star, ShoppingCart} from 'lucide-vue-next'
+import {useImageFallback} from '@/composables/useImageFallback'
 
 const router = useRouter()
+const {onImageError} = useImageFallback()
 
 const props = defineProps({
   product: {

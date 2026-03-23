@@ -227,7 +227,8 @@
                             @click="navigateToProduct(item.productId || item.id)"
                         >
                             <img :src="item.image" :alt="item.name"
-                                 class="w-20 h-20 rounded-xl object-cover bg-green-50"/>
+                                 class="w-20 h-20 rounded-xl object-cover bg-green-50"
+                                 @error="onImageError"/>
                             <div class="flex-1">
                                 <p class="font-semibold">{{ item.name }}</p>
                                 <p class="text-sm text-gray-500">{{ item.category }} · {{
@@ -264,9 +265,11 @@ import {useProductDetail} from '@/features/product/composables/useProductDetail'
 import {formatPhoneNumber, sanitizePhoneDigits} from '@/utils/phone';
 import {savePendingOrderRequest} from '@/utils/paymentRequestStorage';
 import {shouldShowErrorAlert} from '@/utils/httpError';
+import {useImageFallback} from '@/composables/useImageFallback';
 
 const router = useRouter();
 const route = useRoute();
+const {onImageError} = useImageFallback();
 const MAX_VISIBLE_ADDRESSES = 3;
 const MIN_QUANTITY = 1;
 const MAX_QUANTITY = 100;

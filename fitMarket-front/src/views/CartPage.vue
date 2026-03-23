@@ -50,7 +50,8 @@
                                 />
                             </label>
                             <img :src="item.image" :alt="item.name"
-                                 class="w-24 h-24 object-cover rounded-lg bg-green-50"/>
+                                 class="w-24 h-24 object-cover rounded-lg bg-green-50"
+                                 @error="onImageError"/>
 
                             <div class="flex-1">
                                 <h3 class="font-semibold text-lg mb-2">{{ item.name }}</h3>
@@ -175,8 +176,10 @@ import AppFooter from '@/components/AppFooter.vue';
 import {useCart} from '@/features/cart/composables/useCart';
 import {useCartSelection} from '@/features/cart/composables/useCartSelection';
 import {shouldShowErrorAlert} from '@/utils/httpError';
+import {useImageFallback} from '@/composables/useImageFallback';
 
 const router = useRouter();
+const {onImageError} = useImageFallback();
 const MIN_QUANTITY = 1;
 const MAX_QUANTITY = 100;
 const {cartItems, isLoading, errorMessage, loadCart, updateQuantity, removeItem} = useCart();
