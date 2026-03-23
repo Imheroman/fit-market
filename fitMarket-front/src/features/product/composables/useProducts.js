@@ -28,6 +28,9 @@ const mapProduct = (item) => ({
   carbs: item.carbs ?? 0,
   fat: item.fat ?? 0,
   isFavorite: false,
+  // ES 검색 하이라이팅 (없으면 null)
+  highlightedName: item.highlightedName ?? null,
+  highlightedDescription: item.highlightedDescription ?? null,
 })
 
 export function useProducts() {
