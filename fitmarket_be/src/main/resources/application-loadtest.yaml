@@ -14,7 +14,7 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     # Docker MySQL (port 3308) — 실운영 DB와 분리
-    url: jdbc:mysql://localhost:3308/fitmarket_loadtest?serverTimezone=UTC&allowLoadLocalInfile=true&characterEncoding=UTF-8
+    url: jdbc:mysql://localhost:3308/fitmarket?serverTimezone=UTC&allowLoadLocalInfile=true&characterEncoding=UTF-8
     username: loadtest
     password: loadtest
     hikari:
