@@ -14,7 +14,15 @@
       </RouterLink>
     </header>
 
-    <div v-if="isLoading" class="text-sm text-gray-500">주문 정보를 불러오고 있어요.</div>
+    <div v-if="isLoading || isAwaitingOrder || isPaymentCallback" class="text-sm text-gray-500">
+      {{
+        isAwaitingOrder
+          ? '결제 승인 후 주문을 확인 중이에요. 잠시만 기다려 주세요.'
+          : isPaymentCallback
+            ? '결제 확인 중이에요. 잠시만 기다려 주세요.'
+            : '주문 정보를 불러오고 있어요.'
+      }}
+    </div>
 
     <div v-else-if="errorMessage" class="space-y-4">
       <div class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-4">
@@ -305,6 +313,7 @@ import { useAddresses } from '@/features/address/composables/useAddresses';
 import { requestOrderAddressChange } from '@/features/order/api';
 import { useOrderClaims } from '@/features/order/composables/useOrderClaims';
 import { usePaymentCallbacks } from '@/features/payment/composables/usePaymentCallbacks';
+import { useCart } from '@/features/cart/composables/useCart';
 import { clearPendingOrderRequest, readPendingOrderRequest } from '@/utils/paymentRequestStorage';
 import { getOrderStatusMeta } from '@/utils/orderStatus';
 
@@ -320,6 +329,8 @@ const {
   isLoading: isAddressLoading,
   errorMessage: addressErrorMessage,
 } = useAddresses();
+const { loadCart } = useCart();
+const isAwaitingOrder = ref(false);
 
 const isAddressEditorOpen = ref(false);
 const selectedAddressId = ref('');
@@ -387,6 +398,39 @@ const canEditAddress = computed(() => !isClaimLocked.value);
 
 const normalizeQueryValue = (value) => (Array.isArray(value) ? value[0] : value);
 
+const isPaymentCallback = computed(() => {
+  const paymentStatusFromQuery = route.query.paymentStatus;
+  const orderIdFromQuery = normalizeQueryValue(route.query.orderId);
+  const normalizedOrderId = orderIdFromQuery ? String(orderIdFromQuery) : '';
+  const hasSuccessParams = Boolean(route.query.paymentKey && route.query.amount !== undefined && normalizedOrderId);
+  return paymentStatusFromQuery === 'success' && hasSuccessParams;
+});
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const waitForOrderDetail = async (targetOrderId) => {
+  if (!targetOrderId) return false;
+
+  const retryDelays = [500, 800, 1200, 1600, 2000];
+  isAwaitingOrder.value = true;
+  errorMessage.value = '';
+
+  try {
+    for (let attempt = 0; attempt <= retryDelays.length; attempt += 1) {
+      await loadOrderDetail(targetOrderId);
+      if (orderDetail.value) return true;
+
+      if (attempt < retryDelays.length) {
+        errorMessage.value = '';
+        await sleep(retryDelays[attempt]);
+      }
+    }
+    return false;
+  } finally {
+    isAwaitingOrder.value = false;
+  }
+};
+
 const getStoredOrderPayload = (orderId) => {
   if (!orderId) return null;
   const stored = readPendingOrderRequest();
@@ -429,7 +473,11 @@ const processPaymentResult = async () => {
     clearPendingOrderRequest();
     const resolvedOrderId = normalizedOrderId || orderNumber.value;
     await router.replace({ name: 'my-page-order-detail', params: { orderNumber: resolvedOrderId } });
-    await loadOrderDetail(resolvedOrderId);
+    const refreshCartPromise = loadCart({ force: true }).catch((refreshError) => {
+      console.error('Failed to refresh cart after payment confirmation.', refreshError);
+    });
+    await waitForOrderDetail(resolvedOrderId);
+    await refreshCartPromise;
   } catch (error) {
     console.error(error);
     await router.replace({

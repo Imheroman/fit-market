@@ -23,6 +23,7 @@ import com.ssafy.fitmarket_be.order.dto.OrderCreateResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderDetailResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderItemResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderRefundEligibilityResponse;
+import com.ssafy.fitmarket_be.order.dto.OrderStatusUpdateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderRefundRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeResponse;
@@ -303,6 +304,27 @@ public class OrderService {
       throw new IllegalStateException("주문 취소 처리 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
     }
     restoreStock(order.getId());
+  }
+
+  /**
+   * 주문 상태를 변경한다.
+   *
+   * @param userId      사용자 식별자
+   * @param orderNumber 주문 번호
+   * @param request     상태 변경 요청
+   */
+  @Transactional
+  public void updateApprovalStatus(Long userId, String orderNumber, OrderStatusUpdateRequest request) {
+    OrderView order = findOwnedOrder(userId, orderNumber);
+    OrderApprovalStatus newStatus = OrderApprovalStatus.from(request.approvalStatus());
+    OrderApprovalStatus currentStatus = OrderApprovalStatus.from(order.getApprovalStatus());
+    if (currentStatus == newStatus) {
+      return;
+    }
+    int updated = orderRepository.updateApprovalStatus(order.getId(), newStatus.dbValue());
+    if (updated <= 0) {
+      throw new IllegalStateException("주문 상태를 변경하지 못했어요. 잠시 후 다시 시도해 주세요.");
+    }
   }
 
   /**

@@ -470,6 +470,9 @@ const getSortIcon = (key) => {
 }
 
 const filteredProducts = computed(() => {
+  if (!hasActiveFilters.value) {
+    return products.value
+  }
   return products.value.filter((product) => {
     const calories = product.calories || 0
     const protein = product.protein || 0

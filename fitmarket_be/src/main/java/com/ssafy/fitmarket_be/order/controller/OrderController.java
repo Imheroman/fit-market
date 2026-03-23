@@ -4,6 +4,7 @@ import com.ssafy.fitmarket_be.order.dto.OrderAddressUpdateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderDetailResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderRefundEligibilityResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderRefundRequest;
+import com.ssafy.fitmarket_be.order.dto.OrderStatusUpdateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderSummaryResponse;
@@ -157,6 +158,24 @@ public class OrderController {
   ) {
     OrderReturnExchangeResponse response = orderService.requestReturnOrExchange(userId, orderNumber, request);
     return ResponseEntity.status(HttpStatus.OK).body(response);
+  }
+
+  /**
+   * 주문 상태를 변경한다. (판매자용)
+   *
+   * @param userId      인증된 사용자 식별자
+   * @param orderNumber 주문 번호
+   * @param request     상태 변경 요청
+   * @return HTTP 200
+   */
+  @PatchMapping("/{orderNumber}/status")
+  public ResponseEntity<Void> updateOrderStatus(
+      @AuthenticationPrincipal(expression = "id") Long userId,
+      @PathVariable String orderNumber,
+      @Valid @RequestBody OrderStatusUpdateRequest request
+  ) {
+    orderService.updateApprovalStatus(userId, orderNumber, request);
+    return ResponseEntity.status(HttpStatus.OK).build();
   }
 
   /**
