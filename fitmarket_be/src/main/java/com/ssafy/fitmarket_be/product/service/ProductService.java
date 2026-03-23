@@ -5,12 +5,14 @@ import com.ssafy.fitmarket_be.food.domain.Food;
 import com.ssafy.fitmarket_be.global.dto.PageResponse;
 import com.ssafy.fitmarket_be.product.domain.Product;
 import com.ssafy.fitmarket_be.product.dto.*;
+import com.ssafy.fitmarket_be.product.event.ProductEvent;
 import com.ssafy.fitmarket_be.product.repository.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,6 +28,7 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final LLMService llmService;
     private final com.ssafy.fitmarket_be.ai.service.FoodVectorStoreService foodVectorStoreService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @org.springframework.beans.factory.annotation.Value("${app.ai.enabled:true}")
     private boolean aiEnabled;
@@ -109,6 +112,7 @@ public class ProductService {
         Long productId = productMapper.selectLastInsertId();
         Product product = productMapper.selectProductById(productId);
 
+        eventPublisher.publishEvent(new ProductEvent.Created(productId));
         return ProductCreateResponse.from(product);
     }
 
@@ -139,6 +143,8 @@ public class ProductService {
             request.imageUrl()
         );
         Product updated = productMapper.selectProductById(productId);
+
+        eventPublisher.publishEvent(new ProductEvent.Updated(productId));
         return ProductUpdateResponse.from(updated);
     }
 
@@ -159,6 +165,7 @@ public class ProductService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "해당 상품을 삭제할 권한이 없습니다.");
         }
         productMapper.deleteProduct(productId);
+        eventPublisher.publishEvent(new ProductEvent.Deleted(productId));
     }
 
     /**

@@ -1,9 +1,11 @@
 package com.ssafy.fitmarket_be.product.repository;
 
 import com.ssafy.fitmarket_be.product.domain.Product;
+import com.ssafy.fitmarket_be.product.sync.ProductSyncData;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -131,4 +133,21 @@ public interface ProductMapper {
      * @return 업데이트된 행 수
      */
     int increaseStock(@Param("productId") Long productId, @Param("quantity") int quantity);
+
+    // ========== ES 동기화용 쿼리 ==========
+
+    /**
+     * ES 동기화용 상품 조회 (user_id, food_name, created_date, modified_date 포함).
+     */
+    ProductSyncData selectProductForSync(@Param("id") Long id);
+
+    /**
+     * 배치 보정용: lastSyncTime 이후 변경된 상품 조회.
+     */
+    List<ProductSyncData> selectModifiedAfter(@Param("lastSyncTime") LocalDateTime lastSyncTime);
+
+    /**
+     * 전체 재인덱싱용: 활성 상품 페이지 조회.
+     */
+    List<ProductSyncData> selectAllActiveForSync(@Param("size") int size, @Param("offset") int offset);
 }

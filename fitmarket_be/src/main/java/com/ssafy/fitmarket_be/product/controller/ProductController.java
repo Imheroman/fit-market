@@ -2,6 +2,7 @@ package com.ssafy.fitmarket_be.product.controller;
 
 import com.ssafy.fitmarket_be.global.dto.PageResponse;
 import com.ssafy.fitmarket_be.product.dto.*;
+import com.ssafy.fitmarket_be.product.service.ProductSearchService;
 import com.ssafy.fitmarket_be.product.service.ProductService;
 import com.ssafy.fitmarket_be.ranking.service.ProductRankingService;
 import jakarta.validation.Valid;
@@ -19,11 +20,12 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductSearchService productSearchService;
     private final ProductRankingService rankingService;
 
     /**
      * 상품 목록 조회 (페이징, 필터링).
-     * categoryId와 keyword를 동시에 사용 가능합니다.
+     * keyword가 있으면 ES 검색 (Fallback: MySQL), 없으면 기존 MySQL 조회.
      */
     @GetMapping
     public ResponseEntity<PageResponse<ProductListResponse>> getProducts(
@@ -32,7 +34,12 @@ public class ProductController {
         @RequestParam(required = false) Long categoryId,
         @RequestParam(required = false) String keyword
     ) {
-        PageResponse<ProductListResponse> response = productService.getProducts(page, size, categoryId, keyword);
+        PageResponse<ProductListResponse> response;
+        if (keyword != null && !keyword.isBlank()) {
+            response = productSearchService.search(keyword.trim(), categoryId, page, size);
+        } else {
+            response = productService.getProducts(page, size, categoryId, null);
+        }
         return ResponseEntity.ok(response);
     }
 
