@@ -6,7 +6,8 @@ import com.ssafy.fitmarket_be.product.event.ProductEvent;
 import com.ssafy.fitmarket_be.product.repository.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
@@ -17,11 +18,12 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
+@ConditionalOnProperty(name = "search.elasticsearch.enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 @Slf4j
 public class ProductSearchSyncHandler {
 
-    private final ElasticsearchTemplate elasticsearchTemplate;
+    private final ElasticsearchOperations elasticsearchOperations;
     private final ProductMapper productMapper;
     private final StringRedisTemplate redisTemplate;
 
@@ -66,14 +68,14 @@ public class ProductSearchSyncHandler {
         }
 
         ProductDocument doc = toDocument(data);
-        elasticsearchTemplate.save(doc);
+        elasticsearchOperations.save(doc);
     }
 
     /**
      * ES에서 상품 문서 삭제.
      */
     public void deleteFromIndex(Long productId) {
-        elasticsearchTemplate.delete(String.valueOf(productId), ProductDocument.class);
+        elasticsearchOperations.delete(String.valueOf(productId), ProductDocument.class);
     }
 
     /**

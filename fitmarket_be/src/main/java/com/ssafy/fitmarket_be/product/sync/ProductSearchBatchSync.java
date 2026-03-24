@@ -4,7 +4,8 @@ import com.ssafy.fitmarket_be.product.document.ProductDocument;
 import com.ssafy.fitmarket_be.product.repository.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -15,13 +16,14 @@ import java.util.List;
 import java.util.Set;
 
 @Component
+@ConditionalOnProperty(name = "search.elasticsearch.enabled", havingValue = "true", matchIfMissing = true)
 @RequiredArgsConstructor
 @Slf4j
 public class ProductSearchBatchSync {
 
     private final ProductSearchSyncHandler syncHandler;
     private final ProductMapper productMapper;
-    private final ElasticsearchTemplate elasticsearchTemplate;
+    private final ElasticsearchOperations elasticsearchOperations;
     private final StringRedisTemplate redisTemplate;
 
     private static final String LAST_SYNC_KEY = "es:sync:last-sync-time";
@@ -110,7 +112,7 @@ public class ProductSearchBatchSync {
                 List<ProductDocument> documents = batch.stream()
                         .map(syncHandler::toDocument)
                         .toList();
-                elasticsearchTemplate.save(documents);
+                elasticsearchOperations.save(documents);
                 totalIndexed += documents.size();
             }
             offset += FULL_REINDEX_BATCH_SIZE;

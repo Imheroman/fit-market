@@ -13,8 +13,8 @@ import com.ssafy.fitmarket_be.product.document.ProductDocument;
 import com.ssafy.fitmarket_be.product.dto.ProductListResponse;
 import com.ssafy.fitmarket_be.product.repository.ProductMapper;
 import com.ssafy.fitmarket_be.product.domain.Product;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -24,11 +24,17 @@ import java.util.Map;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ProductSearchService {
 
     private final ElasticsearchClient esClient;
     private final ProductMapper productMapper;
+
+    public ProductSearchService(
+            @Autowired(required = false) ElasticsearchClient esClient,
+            ProductMapper productMapper) {
+        this.esClient = esClient;
+        this.productMapper = productMapper;
+    }
 
     /**
      * ES 기반 검색 (기본) - 실패 시 MySQL Fallback.
@@ -41,12 +47,14 @@ public class ProductSearchService {
      */
     public PageResponse<ProductListResponse> search(String keyword, Long categoryId,
                                                     int page, int size) {
-        try {
-            return searchFromElasticsearch(keyword, categoryId, page, size);
-        } catch (Exception e) {
-            log.warn("ES 검색 실패, MySQL Fallback: {}", e.getMessage());
-            return searchFromMySQL(keyword, categoryId, page, size);
+        if (esClient != null) {
+            try {
+                return searchFromElasticsearch(keyword, categoryId, page, size);
+            } catch (Exception e) {
+                log.warn("ES 검색 실패, MySQL Fallback: {}", e.getMessage());
+            }
         }
+        return searchFromMySQL(keyword, categoryId, page, size);
     }
 
     /**
