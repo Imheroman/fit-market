@@ -42,6 +42,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -66,6 +67,8 @@ class OrderServiceTest {
     private AddressRepository addressRepository;
     @Mock
     private PaymentRepository paymentRepository;
+    @Mock
+    private com.ssafy.fitmarket_be.ranking.service.ProductRankingService rankingService;
 
     private OrderService orderService;
 
@@ -83,7 +86,8 @@ class OrderServiceTest {
             productMapper,
             addressRepository,
             paymentRepository,
-            objectMapper
+            objectMapper,
+            rankingService
         );
     }
 
@@ -263,6 +267,7 @@ class OrderServiceTest {
         given(orderRepository.insertOrderProducts(anyLong(), any())).willReturn(1);
         given(orderRepository.insertOrderAddress(anyLong(), any())).willReturn(1);
         given(orderRepository.updateApprovalStatus(anyLong(), anyString())).willReturn(1);
+        given(productMapper.decreaseStock(anyLong(), anyInt())).willReturn(1);
 
         OrderCreateRequest request = new OrderCreateRequest(
                 "ORD-NEW-001", "DIRECT", 1L, 1, null,
@@ -300,6 +305,14 @@ class OrderServiceTest {
         );
         given(shoppingCartRepository.findByIds(USER_ID, cartItemIds)).willReturn(cartItems);
 
+        Product productA = org.mockito.Mockito.mock(Product.class);
+        given(productA.getStock()).willReturn(10);
+        given(productMapper.selectProductById(10L)).willReturn(productA);
+
+        Product productB = org.mockito.Mockito.mock(Product.class);
+        given(productB.getStock()).willReturn(10);
+        given(productMapper.selectProductById(20L)).willReturn(productB);
+
         given(orderRepository.insertOrder(any())).willAnswer(invocation -> {
             com.ssafy.fitmarket_be.entity.Order order = invocation.getArgument(0);
             java.lang.reflect.Field idField = com.ssafy.fitmarket_be.entity.Order.class.getDeclaredField("id");
@@ -310,6 +323,7 @@ class OrderServiceTest {
         given(orderRepository.insertOrderProducts(anyLong(), any())).willReturn(2);
         given(orderRepository.insertOrderAddress(anyLong(), any())).willReturn(1);
         given(orderRepository.updateApprovalStatus(anyLong(), anyString())).willReturn(1);
+        given(productMapper.decreaseStock(anyLong(), anyInt())).willReturn(1);
 
         OrderCreateRequest request = new OrderCreateRequest(
                 "ORD-CART-001", "CART", null, null, cartItemIds,

@@ -58,3 +58,65 @@ INSERT INTO payments (id, order_id, payment_key, provider, method, status, amoun
 VALUES
 (1, 1, 'PAY-KEY-001', 'TOSS', 'CARD', 'DONE', 10000, '2026-03-15 00:00:00'),
 (2, 2, 'PAY-KEY-002', 'TOSS', 'CARD', 'DONE', 10000, '2026-03-15 00:00:00');
+
+-- ======================================
+-- ES Sync 테스트용 시드 데이터 (993 일정)
+-- ======================================
+
+-- food (영양소 계산 JOIN 검증용)
+INSERT INTO food (id, code, name, calories, protein, carbs, fat)
+VALUES
+    (100, 'SYNC_TEST_FOOD_1', '닭가슴살', '165', '31', '0', '3.6'),
+    (101, 'SYNC_TEST_FOOD_2', '프로틴바', '200', '20', '25', '8');
+
+-- product_categories (카테고리 JOIN 검증용)
+INSERT INTO product_categories (id, name)
+VALUES
+    (100, '단백질'),
+    (101, '간식');
+
+-- users (products FK용)
+INSERT INTO users (id, name, email, password, phone, role)
+VALUES
+    (100, 'sync_seller', 'sync@test.com', '$2a$10$2PPDxpUKhq3FipmhvcSEIeQLhKArl2I3gP2LMoehOa/J2JTLT8DoW', '010-0000-0000', 'SELLER');
+
+-- products (sync 테스트 대상)
+-- 상품 A: active, modified 10분 전
+INSERT INTO products (id, user_id, product_category_id, name, description, price, stock, weight_g, rating, review_count, food_id, created_date, modified_date, deleted_date)
+VALUES
+    (100, 100, 100, '닭가슴살 샐러드', '고단백 샐러드', 12000, 50, 200, 4.5, 10, 100,
+     TIMESTAMPADD(MINUTE, -60, CURRENT_TIMESTAMP),
+     TIMESTAMPADD(MINUTE, -10, CURRENT_TIMESTAMP),
+     NULL);
+
+-- 상품 B: active, modified 1시간 전
+INSERT INTO products (id, user_id, product_category_id, name, description, price, stock, weight_g, rating, review_count, food_id, created_date, modified_date, deleted_date)
+VALUES
+    (101, 100, 100, '프로틴바 초콜릿', '맛있는 프로틴바', 3500, 200, 60, 4.0, 5, 101,
+     TIMESTAMPADD(HOUR, -2, CURRENT_TIMESTAMP),
+     TIMESTAMPADD(HOUR, -1, CURRENT_TIMESTAMP),
+     NULL);
+
+-- 상품 C: active, created 5분 전
+INSERT INTO products (id, user_id, product_category_id, name, description, price, stock, weight_g, rating, review_count, food_id, created_date, modified_date, deleted_date)
+VALUES
+    (102, 100, 101, '프로틴 쉐이크', '바닐라 프로틴', 25000, 30, 350, 4.8, 20, 100,
+     TIMESTAMPADD(MINUTE, -5, CURRENT_TIMESTAMP),
+     TIMESTAMPADD(MINUTE, -3, CURRENT_TIMESTAMP),
+     NULL);
+
+-- 상품 D: soft-deleted
+INSERT INTO products (id, user_id, product_category_id, name, description, price, stock, weight_g, rating, review_count, food_id, created_date, modified_date, deleted_date)
+VALUES
+    (103, 100, 100, '삭제된 상품', '삭제됨', 5000, 0, 100, 3.0, 0, 100,
+     TIMESTAMPADD(DAY, -7, CURRENT_TIMESTAMP),
+     TIMESTAMPADD(MINUTE, -5, CURRENT_TIMESTAMP),
+     TIMESTAMPADD(MINUTE, -5, CURRENT_TIMESTAMP));
+
+-- 상품 E: active, 오래된 상품 (페이징 테스트용)
+INSERT INTO products (id, user_id, product_category_id, name, description, price, stock, weight_g, rating, review_count, food_id, created_date, modified_date, deleted_date)
+VALUES
+    (104, 100, 101, 'BCAA 음료', 'BCAA 500ml', 4000, 100, 500, 3.5, 2, 101,
+     TIMESTAMPADD(DAY, -30, CURRENT_TIMESTAMP),
+     TIMESTAMPADD(DAY, -30, CURRENT_TIMESTAMP),
+     NULL);

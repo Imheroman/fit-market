@@ -51,6 +51,12 @@ dependencies {
     testRuntimeOnly 'com.h2database:h2'
     testImplementation 'org.wiremock:wiremock-standalone:3.3.1'
 
+    // Testcontainers (ES 통합 테스트)
+    testImplementation platform('org.testcontainers:testcontainers-bom:1.19.7')
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:elasticsearch'
+
     // mysql
     runtimeOnly 'com.mysql:mysql-connector-j'
 

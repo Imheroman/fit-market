@@ -3,6 +3,7 @@ package com.ssafy.fitmarket_be.unit.cart;
 import com.ssafy.fitmarket_be.cart.mapper.ShoppingCartMapper;
 import com.ssafy.fitmarket_be.cart.repository.ShoppingCartRepository;
 import com.ssafy.fitmarket_be.cart.service.ShoppingCartService;
+import com.ssafy.fitmarket_be.ranking.service.ProductRankingService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +30,9 @@ class ShoppingCartServiceTest {
 
     @Mock
     ShoppingCartMapper shoppingCartMapper;
+
+    @Mock
+    ProductRankingService rankingService;
 
     @InjectMocks
     ShoppingCartService shoppingCartService;
