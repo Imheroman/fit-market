@@ -62,6 +62,7 @@ import { shouldShowErrorAlert } from '@/utils/httpError';
 import AppHeaderLoggedInActions from '@/components/header/AppHeaderLoggedInActions.vue';
 import AppHeaderLoggedOutActions from '@/components/header/AppHeaderLoggedOutActions.vue';
 
+
 const router = useRouter();
 const { cartCount: cartItemCount, isInitialized: isCartInitialized, loadCart, resetCart } = useCart();
 const { isAuthenticated, userName, isSeller, isAdmin, cartCount: authCartCount, logout } = useAuth();
