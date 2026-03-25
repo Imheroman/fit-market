@@ -17,7 +17,7 @@ public abstract class ElasticsearchTestConfig {
             "RUN bin/elasticsearch-plugin install --batch analysis-nori\n";
 
     @Container
-    static final GenericContainer<?> ES_CONTAINER = new GenericContainer<>(
+    protected static final GenericContainer<?> ES_CONTAINER = new GenericContainer<>(
             new ImageFromDockerfile("fitmarket-es-test")
                     .withFileFromString("Dockerfile", ES_DOCKERFILE)
     )
