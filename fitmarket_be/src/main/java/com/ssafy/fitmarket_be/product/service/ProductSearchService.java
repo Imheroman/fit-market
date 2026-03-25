@@ -7,12 +7,13 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.TotalHits;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.ssafy.fitmarket_be.global.dto.PageResponse;
-import com.ssafy.fitmarket_be.product.document.NutritionInfo;
-import com.ssafy.fitmarket_be.product.document.ProductDocument;
 import com.ssafy.fitmarket_be.product.dto.ProductListResponse;
 import com.ssafy.fitmarket_be.product.repository.ProductMapper;
 import com.ssafy.fitmarket_be.product.domain.Product;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -68,7 +69,7 @@ public class ProductSearchService {
         int safeSize = (size < 1) ? 20 : size;
         int from = (safePage - 1) * safeSize;
 
-        SearchResponse<ProductDocument> response = esClient.search(s -> s
+        SearchResponse<SearchHitSource> response = esClient.search(s -> s
                 .index("products")
                 .query(q -> q
                         .functionScore(fs -> fs
@@ -78,7 +79,7 @@ public class ProductSearchService {
                                                     .multiMatch(mm -> mm
                                                             .query(keyword)
                                                             .fields("name^3", "categoryName^2",
-                                                                    "description", "foodName")
+                                                                    "description")
                                                             .type(TextQueryType.BestFields)
                                                             .analyzer("korean_analyzer")
                                                     )
@@ -121,13 +122,13 @@ public class ProductSearchService {
                 )
                 .from(from)
                 .size(safeSize),
-                ProductDocument.class
+                SearchHitSource.class
         );
 
         // 결과 변환
         List<ProductListResponse> content = new ArrayList<>();
-        for (Hit<ProductDocument> hit : response.hits().hits()) {
-            ProductDocument doc = hit.source();
+        for (Hit<SearchHitSource> hit : response.hits().hits()) {
+            SearchHitSource doc = hit.source();
             if (doc == null) continue;
 
             Map<String, List<String>> highlights = hit.highlight();
@@ -191,11 +192,10 @@ public class ProductSearchService {
     }
 
     /**
-     * ProductDocument + 하이라이트 정보를 ProductListResponse로 변환.
+     * SearchHitSource + 하이라이트 정보를 ProductListResponse로 변환.
      */
-    private ProductListResponse toListResponse(ProductDocument doc,
+    private ProductListResponse toListResponse(SearchHitSource doc,
                                                Map<String, List<String>> highlights) {
-        // 하이라이트 적용: ES 하이라이트가 있으면 사용, 없으면 원본
         String highlightedName = (highlights != null && highlights.containsKey("name"))
                 ? String.join(" ", highlights.get("name"))
                 : null;
@@ -203,7 +203,7 @@ public class ProductSearchService {
                 ? String.join(" ", highlights.get("description"))
                 : null;
 
-        NutritionInfo nutrition = doc.getNutrition();
+        SearchNutritionHit nutrition = doc.getNutrition();
         int calories = (nutrition != null && nutrition.getCalories() != null)
                 ? nutrition.getCalories().intValue() : 0;
         int protein = (nutrition != null && nutrition.getProtein() != null)
@@ -222,7 +222,7 @@ public class ProductSearchService {
                 doc.getPrice(),
                 doc.getStock() != null ? doc.getStock() : 0,
                 doc.getImageUrl(),
-                doc.getRating() != null ? doc.getRating().doubleValue() : 0.0,
+                doc.getRating() != null ? Math.round(doc.getRating() * 10.0) / 10.0 : 0.0,
                 doc.getReviewCount() != null ? doc.getReviewCount() : 0,
                 calories,
                 protein,
@@ -231,5 +231,37 @@ public class ProductSearchService {
                 highlightedName,
                 highlightedDescription
         );
+    }
+
+    /**
+     * ES 검색 응답 역직렬화 전용 경량 DTO.
+     * ProductDocument를 직접 사용하면 LocalDateTime·Completion 등
+     * ES Java Client의 Jackson 매퍼가 처리하지 못하는 타입 때문에 역직렬화 실패.
+     */
+    @Getter
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    static class SearchHitSource {
+        private Long id;
+        private String name;
+        private String description;
+        private Long price;
+        private Integer stock;
+        private Float rating;
+        private Integer reviewCount;
+        private String imageUrl;
+        private Long categoryId;
+        private String categoryName;
+        private SearchNutritionHit nutrition;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    static class SearchNutritionHit {
+        private Float calories;
+        private Float protein;
+        private Float carbs;
+        private Float fat;
     }
 }
