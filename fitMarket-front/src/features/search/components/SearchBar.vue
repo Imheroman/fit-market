@@ -58,9 +58,7 @@ function onCompositionEnd(e) {
 
 function onInput(e) {
   query.value = e.target.value
-  if (!isComposing.value) {
-    triggerAutocomplete(e.target.value)
-  }
+  triggerAutocomplete(e.target.value)
 }
 
 function onSelect(product) {
