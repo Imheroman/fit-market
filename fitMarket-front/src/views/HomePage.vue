@@ -424,6 +424,7 @@ const activeFilterCount = computed(() => {
 
 // Sort options
 const sortOptions = [
+  { key: 'relevance', label: '관련도순' },
   { key: 'date', label: '최신순' },
   { key: 'popularity', label: '인기순' },
   { key: 'price', label: '가격' },
@@ -435,13 +436,14 @@ const sortOptions = [
 
 const currentSort = ref('date')
 const sortDirections = ref({
-  date: 'desc',      // 최신순 (desc) ↔ 오래된순 (asc)
-  popularity: 'desc', // 인기순 (desc) ↔ 비인기순 (asc)
-  price: 'asc',      // 낮은 (asc) ↔ 높은 (desc)
-  calories: 'asc',   // 낮은 (asc) ↔ 높은 (desc)
-  carbs: 'asc',      // 낮은 (asc) ↔ 높은 (desc)
-  protein: 'asc',    // 낮은 (asc) ↔ 높은 (desc)
-  fat: 'asc',        // 낮은 (asc) ↔ 높은 (desc)
+  relevance: 'desc',  // 관련도순 (ES 반환 순서 유지)
+  date: 'desc',       // 최신순 (desc) ↔ 오래된순 (asc)
+  popularity: 'desc',  // 인기순 (desc) ↔ 비인기순 (asc)
+  price: 'asc',       // 낮은 (asc) ↔ 높은 (desc)
+  calories: 'asc',    // 낮은 (asc) ↔ 높은 (desc)
+  carbs: 'asc',       // 낮은 (asc) ↔ 높은 (desc)
+  protein: 'asc',     // 낮은 (asc) ↔ 높은 (desc)
+  fat: 'asc',         // 낮은 (asc) ↔ 높은 (desc)
 })
 
 const toggleSort = (key) => {
@@ -494,6 +496,9 @@ const sortedProducts = computed(() => {
     let aVal, bVal
 
     switch (currentSort.value) {
+      case 'relevance':
+        // ES 관련도 순서 유지 (재정렬하지 않음)
+        return 0
       case 'date':
         // id가 클수록 최신 (가정)
         aVal = a.id
@@ -617,6 +622,9 @@ const handleSearch = async () => {
 const handleSearchFromBar = async (keyword) => {
   searchQuery.value = keyword;
   activeKeyword.value = keyword;
+  if (keyword && keyword.trim()) {
+    currentSort.value = 'relevance';
+  }
   await loadWithFilters(1);
 };
 </script>
