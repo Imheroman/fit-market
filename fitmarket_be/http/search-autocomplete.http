@@ -1,0 +1,119 @@
+### ============================================================
+### 검색 자동완성 API 디버깅
+### ============================================================
+
+### 1. 기본 테스트 — "닭" 검색
+GET http://localhost:8080/api/search/autocomplete?q=죽&limit=8
+Accept: application/json
+
+### 2. "머슬" 검색
+GET http://localhost:8080/api/search/autocomplete?q=머슬&limit=8
+Accept: application/json
+
+### 3. "닭가슴살" 검색 (완전한 단어)
+GET http://localhost:8080/api/search/autocomplete?q=닭가슴살&limit=8
+Accept: application/json
+
+### 4. "프로틴" 검색
+GET http://localhost:8080/api/search/autocomplete?q=프로틴&limit=8
+Accept: application/json
+
+### 5. "샐러드" 검색
+GET http://localhost:8080/api/search/autocomplete?q=샐러드&limit=8
+Accept: application/json
+
+### 6. 영문 검색 — "protein"
+GET http://localhost:8080/api/search/autocomplete?q=protein&limit=8
+Accept: application/json
+
+### 7. 초성 검색 — "ㄷㄱㅅㅅ" (닭가슴살)
+GET http://localhost:8080/api/search/autocomplete?q=ㄷㄱㅅㅅ&limit=8
+Accept: application/json
+
+### 8. 빈 쿼리 — 400 에러 기대
+GET http://localhost:8080/api/search/autocomplete?q=&limit=8
+Accept: application/json
+
+### 9. limit 파라미터 테스트
+GET http://localhost:8080/api/search/autocomplete?q=닭&limit=3
+Accept: application/json
+
+### ============================================================
+### ES 직접 진단 (localhost:9200)
+### ============================================================
+
+### 10. ES 클러스터 상태 확인
+GET http://localhost:9200/_cluster/health
+Accept: application/json
+
+### 11. products 인덱스 존재 여부
+GET http://localhost:9200/products
+Accept: application/json
+
+### 12. products 인덱스 문서 수
+GET http://localhost:9200/products/_count
+Accept: application/json
+
+### 13. products 인덱스 매핑 확인
+GET http://localhost:9200/products/_mapping
+Accept: application/json
+
+### 14. suggest 필드에 데이터가 있는지 확인 — 샘플 1건 조회
+POST http://localhost:9200/products/_search
+Content-Type: application/json
+
+{
+  "size": 1,
+  "_source": ["name", "suggest"],
+  "query": { "match_all": {} }
+}
+
+### 15. ES Completion Suggest 직접 테스트 — "닭" 자모 분해 (ㄷㅏㄺ)
+POST http://localhost:9200/products/_search
+Content-Type: application/json
+
+{
+  "suggest": {
+    "product-suggest": {
+      "prefix": "ㄷㅏㄺ",
+      "completion": {
+        "field": "suggest",
+        "skip_duplicates": true,
+        "size": 8,
+        "fuzzy": { "fuzziness": "AUTO" }
+      }
+    }
+  }
+}
+
+### 16. ES Completion Suggest 직접 테스트 — 원본 한글 "닭"
+POST http://localhost:9200/products/_search
+Content-Type: application/json
+
+{
+  "suggest": {
+    "product-suggest": {
+      "prefix": "닭",
+      "completion": {
+        "field": "suggest",
+        "skip_duplicates": true,
+        "size": 8,
+        "fuzzy": { "fuzziness": "AUTO" }
+      }
+    }
+  }
+}
+
+### 17. "닭" 포함 상품이 있는지 full-text 검색
+POST http://localhost:9200/products/_search
+Content-Type: application/json
+
+{
+  "size": 3,
+  "_source": ["name", "categoryName", "suggest"],
+  "query": {
+    "match": {
+      "name": "닭"
+    }
+  }
+}

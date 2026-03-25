@@ -88,6 +88,7 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/rankings/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/categories").permitAll()
             .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/search/**").permitAll()
             .requestMatchers("/auth/login", "/auth/refresh", "/logout", "/public/**", "/users/signup").permitAll()
             .anyRequest().authenticated()
         );

@@ -1,5 +1,9 @@
 package com.ssafy.fitmarket_be.product.sync;
 
+import com.ssafy.fitmarket_be.common.util.HangulUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 import com.ssafy.fitmarket_be.product.document.NutritionInfo;
 import com.ssafy.fitmarket_be.product.document.ProductDocument;
 import com.ssafy.fitmarket_be.product.event.ProductEvent;
@@ -8,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.suggest.Completion;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
@@ -103,6 +108,32 @@ public class ProductSearchSyncHandler {
                 .sellerId(data.sellerId())
                 .createdDate(data.createdDate())
                 .updatedDate(data.modifiedDate())
+                .suggest(buildSuggestInput(data.name()))
                 .build();
+    }
+
+    private Completion buildSuggestInput(String name) {
+        if (name == null || name.isBlank()) {
+            return new Completion(new String[]{""});
+        }
+
+        List<String> inputs = new ArrayList<>();
+        inputs.add(name);
+        inputs.add(HangulUtils.decompose(name));
+        inputs.add(HangulUtils.extractChosung(name));
+
+        // 각 단어별 suggest input 추가 — "요리하다 닭볶음" → "닭볶음"도 prefix 매칭 가능
+        String[] words = name.split("\\s+");
+        if (words.length > 1) {
+            for (int i = 1; i < words.length; i++) {
+                String word = words[i];
+                if (!word.isBlank()) {
+                    inputs.add(word);
+                    inputs.add(HangulUtils.decompose(word));
+                }
+            }
+        }
+
+        return new Completion(inputs.toArray(String[]::new));
     }
 }

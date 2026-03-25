@@ -12,6 +12,7 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Mapping;
 import org.springframework.data.elasticsearch.annotations.Setting;
+import org.springframework.data.elasticsearch.core.suggest.Completion;
 
 import java.time.LocalDateTime;
 
@@ -68,6 +69,9 @@ public class ProductDocument {
 
     @Field(type = FieldType.Date)
     private LocalDateTime updatedDate;
+
+    // 매핑은 product-mappings.json에서 관리 (completion type, simple analyzer, max_input_length 50)
+    private Completion suggest;
 
     /**
      * Product 도메인 + 연관 데이터를 ES ProductDocument로 변환한다.

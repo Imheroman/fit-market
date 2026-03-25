@@ -5,7 +5,12 @@
       "type": "text",
       "analyzer": "korean_analyzer",
       "fields": {
-        "keyword": { "type": "keyword" }
+        "keyword": { "type": "keyword" },
+        "suggest": {
+          "type": "completion",
+          "analyzer": "simple",
+          "max_input_length": 50
+        }
       }
     },
     "description": {
@@ -40,6 +45,11 @@
     },
     "sellerId": { "type": "long" },
     "createdDate": { "type": "date" },
-    "updatedDate": { "type": "date" }
+    "updatedDate": { "type": "date" },
+    "suggest": {
+      "type": "completion",
+      "analyzer": "simple",
+      "max_input_length": 50
+    }
   }
 }
