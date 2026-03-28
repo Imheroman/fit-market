@@ -9,8 +9,6 @@ import co.elastic.clients.elasticsearch.core.search.CompletionSuggest;
 import co.elastic.clients.elasticsearch.core.search.CompletionSuggestOption;
 import co.elastic.clients.elasticsearch.core.search.Suggestion;
 import com.ssafy.fitmarket_be.common.util.HangulUtils;
-import com.ssafy.fitmarket_be.product.document.ProductDocument;
-import com.ssafy.fitmarket_be.product.domain.ProductDocumentFixture;
 import com.ssafy.fitmarket_be.search.dto.ProductSuggestionResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -42,6 +41,17 @@ class SearchAutocompleteServiceTest {
 
     @InjectMocks
     private SearchAutocompleteService searchAutocompleteService;
+
+    // ----- Helper: SuggestHitSource 생성 -----
+
+    private SearchAutocompleteService.SuggestHitSource createSuggestSource(
+            String name, String categoryName, String imageUrl) {
+        SearchAutocompleteService.SuggestHitSource source = new SearchAutocompleteService.SuggestHitSource();
+        ReflectionTestUtils.setField(source, "name", name);
+        ReflectionTestUtils.setField(source, "categoryName", categoryName);
+        ReflectionTestUtils.setField(source, "imageUrl", imageUrl);
+        return source;
+    }
 
     // ===== HangulUtils 단위 테스트 =====
 
@@ -142,31 +152,33 @@ class SearchAutocompleteServiceTest {
         @SuppressWarnings("unchecked")
         void getSuggestions_정상조회_결과반환() throws IOException {
             // given
-            ProductDocument doc1 = ProductDocumentFixture.create(1L, "닭가슴살 샐러드", 4.5f);
-            ProductDocument doc2 = ProductDocumentFixture.create(2L, "닭가슴살 스테이크", 4.2f);
+            SearchAutocompleteService.SuggestHitSource src1 = createSuggestSource(
+                    "닭가슴살 샐러드", "단백질", "https://img.test/1");
+            SearchAutocompleteService.SuggestHitSource src2 = createSuggestSource(
+                    "닭가슴살 스테이크", "단백질", "https://img.test/2");
 
-            CompletionSuggestOption<ProductDocument> option1 = mock(CompletionSuggestOption.class);
+            CompletionSuggestOption<SearchAutocompleteService.SuggestHitSource> option1 = mock(CompletionSuggestOption.class);
             given(option1.id()).willReturn("1");
-            given(option1.source()).willReturn(doc1);
+            given(option1.source()).willReturn(src1);
 
-            CompletionSuggestOption<ProductDocument> option2 = mock(CompletionSuggestOption.class);
+            CompletionSuggestOption<SearchAutocompleteService.SuggestHitSource> option2 = mock(CompletionSuggestOption.class);
             given(option2.id()).willReturn("2");
-            given(option2.source()).willReturn(doc2);
+            given(option2.source()).willReturn(src2);
 
-            CompletionSuggest<ProductDocument> completionSuggest = mock(CompletionSuggest.class);
+            CompletionSuggest<SearchAutocompleteService.SuggestHitSource> completionSuggest = mock(CompletionSuggest.class);
             given(completionSuggest.options()).willReturn(List.of(option1, option2));
 
-            Suggestion<ProductDocument> suggestion = mock(Suggestion.class);
+            Suggestion<SearchAutocompleteService.SuggestHitSource> suggestion = mock(Suggestion.class);
             given(suggestion.completion()).willReturn(completionSuggest);
 
-            Map<String, List<Suggestion<ProductDocument>>> suggestMap = Map.of(
+            Map<String, List<Suggestion<SearchAutocompleteService.SuggestHitSource>>> suggestMap = Map.of(
                 "product-suggest", List.of(suggestion)
             );
 
-            SearchResponse<ProductDocument> searchResponse = mock(SearchResponse.class);
+            SearchResponse<SearchAutocompleteService.SuggestHitSource> searchResponse = mock(SearchResponse.class);
             given(searchResponse.suggest()).willReturn(suggestMap);
 
-            given(esClient.search(any(Function.class), eq(ProductDocument.class)))
+            given(esClient.search(any(Function.class), eq(SearchAutocompleteService.SuggestHitSource.class)))
                 .willReturn(searchResponse);
 
             // when
@@ -181,7 +193,7 @@ class SearchAutocompleteServiceTest {
             assertThat(result.get(1).id()).isEqualTo(2L);
             assertThat(result.get(1).name()).isEqualTo("닭가슴살 스테이크");
 
-            verify(esClient).search(any(Function.class), eq(ProductDocument.class));
+            verify(esClient).search(any(Function.class), eq(SearchAutocompleteService.SuggestHitSource.class));
         }
 
         @Test
@@ -189,20 +201,20 @@ class SearchAutocompleteServiceTest {
         @SuppressWarnings("unchecked")
         void getSuggestions_빈결과_빈리스트반환() throws IOException {
             // given
-            CompletionSuggest<ProductDocument> completionSuggest = mock(CompletionSuggest.class);
+            CompletionSuggest<SearchAutocompleteService.SuggestHitSource> completionSuggest = mock(CompletionSuggest.class);
             given(completionSuggest.options()).willReturn(List.of());
 
-            Suggestion<ProductDocument> suggestion = mock(Suggestion.class);
+            Suggestion<SearchAutocompleteService.SuggestHitSource> suggestion = mock(Suggestion.class);
             given(suggestion.completion()).willReturn(completionSuggest);
 
-            Map<String, List<Suggestion<ProductDocument>>> suggestMap = Map.of(
+            Map<String, List<Suggestion<SearchAutocompleteService.SuggestHitSource>>> suggestMap = Map.of(
                 "product-suggest", List.of(suggestion)
             );
 
-            SearchResponse<ProductDocument> searchResponse = mock(SearchResponse.class);
+            SearchResponse<SearchAutocompleteService.SuggestHitSource> searchResponse = mock(SearchResponse.class);
             given(searchResponse.suggest()).willReturn(suggestMap);
 
-            given(esClient.search(any(Function.class), eq(ProductDocument.class)))
+            given(esClient.search(any(Function.class), eq(SearchAutocompleteService.SuggestHitSource.class)))
                 .willReturn(searchResponse);
 
             // when
@@ -221,7 +233,7 @@ class SearchAutocompleteServiceTest {
 
             // then
             assertThat(result).isEmpty();
-            verify(esClient, never()).search(any(Function.class), eq(ProductDocument.class));
+            verify(esClient, never()).search(any(Function.class), eq(SearchAutocompleteService.SuggestHitSource.class));
         }
 
         @Test
@@ -233,7 +245,7 @@ class SearchAutocompleteServiceTest {
                 .error(ErrorCause.of(e -> e.type("search_phase_execution_exception").reason("test error")))
                 .status(500)
             );
-            given(esClient.search(any(Function.class), eq(ProductDocument.class)))
+            given(esClient.search(any(Function.class), eq(SearchAutocompleteService.SuggestHitSource.class)))
                 .willThrow(new ElasticsearchException("test-endpoint", errorResponse));
 
             // when
@@ -248,7 +260,7 @@ class SearchAutocompleteServiceTest {
         @SuppressWarnings("unchecked")
         void getSuggestions_IOException_빈리스트반환() throws IOException {
             // given
-            given(esClient.search(any(Function.class), eq(ProductDocument.class)))
+            given(esClient.search(any(Function.class), eq(SearchAutocompleteService.SuggestHitSource.class)))
                 .willThrow(new IOException("ES connection refused"));
 
             // when

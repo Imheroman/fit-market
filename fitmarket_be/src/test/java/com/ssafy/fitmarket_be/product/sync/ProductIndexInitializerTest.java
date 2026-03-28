@@ -3,6 +3,7 @@ package com.ssafy.fitmarket_be.product.sync;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.CountResponse;
 import co.elastic.clients.elasticsearch.core.InfoResponse;
+import com.ssafy.fitmarket_be.product.document.ProductDocument;
 import com.ssafy.fitmarket_be.product.repository.ProductMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
@@ -31,13 +34,16 @@ class ProductIndexInitializerTest {
     private ElasticsearchClient esClient;
 
     @Mock
+    private ElasticsearchOperations elasticsearchOperations;
+
+    @Mock
     private ProductMapper productMapper;
 
     private ProductIndexInitializer initializer;
 
     @BeforeEach
     void setUp() {
-        initializer = new ProductIndexInitializer(batchSync, esClient, productMapper);
+        initializer = new ProductIndexInitializer(batchSync, esClient, elasticsearchOperations, productMapper);
     }
 
     @Test
@@ -48,6 +54,11 @@ class ProductIndexInitializerTest {
         ReflectionTestUtils.setField(initializer, "initIndex", true);
         given(esClient.info()).willReturn(mock(InfoResponse.class));
         given(productMapper.countProducts()).willReturn(100L);
+
+        IndexOperations indexOps = mock(IndexOperations.class);
+        given(elasticsearchOperations.indexOps(ProductDocument.class)).willReturn(indexOps);
+        given(indexOps.exists()).willReturn(true);
+        given(indexOps.createWithMapping()).willReturn(true);
 
         CountResponse countResponse = mock(CountResponse.class);
         given(countResponse.count()).willReturn(100L);
@@ -96,6 +107,11 @@ class ProductIndexInitializerTest {
         ReflectionTestUtils.setField(initializer, "initIndex", true);
         given(esClient.info()).willReturn(mock(InfoResponse.class));
         given(productMapper.countProducts()).willReturn(100L);
+
+        IndexOperations indexOps = mock(IndexOperations.class);
+        given(elasticsearchOperations.indexOps(ProductDocument.class)).willReturn(indexOps);
+        given(indexOps.exists()).willReturn(false);
+        given(indexOps.createWithMapping()).willReturn(true);
 
         CountResponse countResponse = mock(CountResponse.class);
         given(countResponse.count()).willReturn(95L);  // 불일치
