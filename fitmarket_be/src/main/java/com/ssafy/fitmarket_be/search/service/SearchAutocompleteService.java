@@ -21,8 +21,8 @@ public class SearchAutocompleteService {
 
     private final ElasticsearchClient esClient;
 
-    @Autowired(required = false)
-    public SearchAutocompleteService(ElasticsearchClient esClient) {
+    public SearchAutocompleteService(
+            @Autowired(required = false) ElasticsearchClient esClient) {
         this.esClient = esClient;
     }
 
