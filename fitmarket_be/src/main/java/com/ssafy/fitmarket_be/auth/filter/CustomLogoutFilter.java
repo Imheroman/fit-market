@@ -54,8 +54,8 @@ public class CustomLogoutFilter extends OncePerRequestFilter {
     }
 
     // AT + RT 쿠키 만료
-    response.addCookie(CookieUtils.createExpireAccessToken());
-    response.addCookie(CookieUtils.createExpireRefreshToken());
+    CookieUtils.addCookie(response, CookieUtils.createExpireAccessToken());
+    CookieUtils.addCookie(response, CookieUtils.createExpireRefreshToken());
     response.setStatus(HttpStatus.OK.value());
   }
 }

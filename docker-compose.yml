@@ -29,7 +29,13 @@ services:
     container_name: fitmarket-redis
     ports:
       - "6379:6379"
-    command: redis-server --maxmemory 256mb --maxmemory-policy volatile-ttl
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy volatile-ttl
+      --requirepass ${REDIS_PASSWORD:-fitmarket-dev-redis}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-fitmarket-dev-redis}
     volumes:
       - redis-data:/data
     restart: unless-stopped

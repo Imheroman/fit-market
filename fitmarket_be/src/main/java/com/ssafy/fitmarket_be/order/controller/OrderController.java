@@ -16,6 +16,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -168,6 +169,7 @@ public class OrderController {
    * @param request     상태 변경 요청
    * @return HTTP 200
    */
+  @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
   @PatchMapping("/{orderNumber}/status")
   public ResponseEntity<Void> updateOrderStatus(
       @AuthenticationPrincipal(expression = "id") Long userId,

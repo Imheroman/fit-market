@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseCookie;
 
 import java.util.Optional;
 
@@ -62,32 +63,34 @@ class CookieUtilsTest {
     }
 
     @Test
-    @DisplayName("create로 생성한 쿠키는 HttpOnly 설정이 true이다")
-    void create_HttpOnly설정확인() {
+    @DisplayName("create로 생성한 쿠키는 HttpOnly, Secure, SameSite=Lax 설정이 포함된다")
+    void create_보안속성확인() {
         // when
-        Cookie c = CookieUtils.create("token", "val");
+        ResponseCookie c = CookieUtils.create("token", "val");
 
         // then
         assertThat(c.isHttpOnly()).isTrue();
+        assertThat(c.isSecure()).isTrue();
+        assertThat(c.getSameSite()).isEqualTo("Lax");
     }
 
     @Test
     @DisplayName("create로 생성한 쿠키의 maxAge는 THIRTY_MINUTES(1800초)이다")
     void create_maxAge_THIRTY_MINUTES_1800초() {
         // when
-        Cookie c = CookieUtils.create("token", "val");
+        ResponseCookie c = CookieUtils.create("token", "val");
 
         // then
-        assertThat(c.getMaxAge()).isEqualTo(1800);
+        assertThat(c.getMaxAge().getSeconds()).isEqualTo(1800);
     }
 
     @Test
     @DisplayName("createExpireToken으로 생성한 쿠키는 maxAge가 0이다")
     void createExpireToken_maxAge0() {
         // when
-        Cookie c = CookieUtils.createExpireToken();
+        ResponseCookie c = CookieUtils.createExpireToken();
 
         // then
-        assertThat(c.getMaxAge()).isEqualTo(0);
+        assertThat(c.getMaxAge().getSeconds()).isEqualTo(0);
     }
 }

@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.Duration;
 import java.util.HashMap;
@@ -34,9 +35,16 @@ public class RedisCacheConfig implements CachingConfigurer {
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+            .allowIfBaseType("com.ssafy.fitmarket_be.")
+            .allowIfBaseType("java.util.")
+            .allowIfBaseType("java.time.")
+            .allowIfBaseType("org.springframework.data.domain.")
+            .build();
+
         objectMapper.activateDefaultTyping(
-            LaissezFaireSubTypeValidator.instance,
-            ObjectMapper.DefaultTyping.EVERYTHING,
+            ptv,
+            ObjectMapper.DefaultTyping.NON_FINAL,
             JsonTypeInfo.As.PROPERTY
         );
 

@@ -32,8 +32,8 @@ public class TokenBlacklistService {
         try {
             return Boolean.TRUE.equals(redisTemplate.hasKey(BL_PREFIX + jti));
         } catch (RedisConnectionFailureException e) {
-            log.error("Redis unavailable for blacklist check", e);
-            return false;
+            log.error("Redis unavailable for blacklist check — fail-close: rejecting token jti={}", jti, e);
+            return true;  // fail-close: Redis 장애 시 모든 토큰 거부
         }
     }
 }

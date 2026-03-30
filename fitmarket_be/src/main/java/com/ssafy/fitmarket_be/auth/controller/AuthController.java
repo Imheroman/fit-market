@@ -61,8 +61,8 @@ public class AuthController {
 
         refreshTokenService.save(userId, newRefreshToken);
 
-        response.addCookie(CookieUtils.createAccessTokenCookie(newAccessToken));
-        response.addCookie(CookieUtils.createRefreshTokenCookie(newRefreshToken));
+        CookieUtils.addCookie(response, CookieUtils.createAccessTokenCookie(newAccessToken));
+        CookieUtils.addCookie(response, CookieUtils.createRefreshTokenCookie(newRefreshToken));
 
         return ResponseEntity.ok().build();
     }

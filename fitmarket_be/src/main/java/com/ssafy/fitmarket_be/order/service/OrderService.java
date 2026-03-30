@@ -38,9 +38,11 @@ import com.ssafy.fitmarket_be.ranking.service.ProductRankingService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -62,6 +64,19 @@ public class OrderService {
   private static final int REFUND_AVAILABLE_DAYS = 3;
   private static final int RETURN_EXCHANGE_AVAILABLE_DAYS = 7;
   private static final String CLAIM_ALREADY_REQUESTED_MESSAGE = "이미 환불/반품/교환 요청이 접수된 주문이에요.";
+
+  private static final EnumMap<OrderApprovalStatus, Set<OrderApprovalStatus>> ALLOWED_TRANSITIONS;
+
+  static {
+    ALLOWED_TRANSITIONS = new EnumMap<>(OrderApprovalStatus.class);
+    ALLOWED_TRANSITIONS.put(OrderApprovalStatus.PENDING_APPROVAL,
+        Set.of(OrderApprovalStatus.APPROVED, OrderApprovalStatus.REJECTED));
+    ALLOWED_TRANSITIONS.put(OrderApprovalStatus.APPROVED,
+        Set.of(OrderApprovalStatus.SHIPPING));
+    ALLOWED_TRANSITIONS.put(OrderApprovalStatus.SHIPPING,
+        Set.of(OrderApprovalStatus.DELIVERED));
+    // DELIVERED, CANCELLED, REJECTED: 종료 상태 — 전이 불가 (맵에 미등록)
+  }
 
   private final OrderRepository orderRepository;
   private final ShoppingCartRepository shoppingCartRepository;
@@ -321,6 +336,14 @@ public class OrderService {
     if (currentStatus == newStatus) {
       return;
     }
+
+    Set<OrderApprovalStatus> allowed = ALLOWED_TRANSITIONS.get(currentStatus);
+    if (allowed == null || !allowed.contains(newStatus)) {
+      throw new IllegalStateException(
+          String.format("'%s' → '%s' 상태 전이는 허용되지 않아요.", currentStatus.dbValue(), newStatus.dbValue())
+      );
+    }
+
     int updated = orderRepository.updateApprovalStatus(order.getId(), newStatus.dbValue());
     if (updated <= 0) {
       throw new IllegalStateException("주문 상태를 변경하지 못했어요. 잠시 후 다시 시도해 주세요.");

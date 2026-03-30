@@ -41,8 +41,8 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
     String refreshToken = jwtUtil.createRefreshToken(user.getId(), user.getUsername(), user.getAuthorities());
 
     // 쿠키 설정
-    response.addCookie(CookieUtils.createAccessTokenCookie(accessToken));
-    response.addCookie(CookieUtils.createRefreshTokenCookie(refreshToken));
+    CookieUtils.addCookie(response, CookieUtils.createAccessTokenCookie(accessToken));
+    CookieUtils.addCookie(response, CookieUtils.createRefreshTokenCookie(refreshToken));
 
     // RT를 Redis에 저장
     refreshTokenService.save(user.getId(), refreshToken);

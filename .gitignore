@@ -790,6 +790,10 @@ gradle-app.setting
 
 /fitmarket_be/**/application-prod.yaml
 
+# Environment variables
+.env
+!.env.example
+
 # 김영웅 개발 관련 문서 ignore
 **/work_summary
 **/summary
