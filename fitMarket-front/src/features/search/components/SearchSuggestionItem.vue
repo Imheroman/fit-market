@@ -23,6 +23,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { getImageUrl } from '@/utils/image'
 
 const props = defineProps({
   product: { type: Object, required: true },
@@ -33,8 +34,6 @@ defineEmits(['select'])
 const imgError = ref(false)
 
 const imageFullUrl = computed(() => {
-  if (!props.product.imageUrl) return ''
-  if (props.product.imageUrl.startsWith('http')) return props.product.imageUrl
-  return `http://localhost:8080/api${props.product.imageUrl}`
+  return getImageUrl(props.product.imageUrl)
 })
 </script>

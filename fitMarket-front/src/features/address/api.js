@@ -23,8 +23,6 @@ export async function fetchAddresses() {
 
 export async function createAddress(payload) {
     try {
-        console.log("create payload:", payload);
-
         const response = await fitmarket.post('/addresses', payload, {withCredentials: true});
         const created = extractPayload(response);
         if (created) {

@@ -273,8 +273,8 @@ const {onImageError} = useImageFallback();
 const MAX_VISIBLE_ADDRESSES = 3;
 const MIN_QUANTITY = 1;
 const MAX_QUANTITY = 100;
-const TOSS_CLIENT_KEY = 'test_ck_6bJXmgo28eDWxw4yY4oyrLAnGKWx';
-const TOSS_CUSTOMER_KEY = 'A_I811IPruggOPKpP-5ee';
+const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY;
+const TOSS_CUSTOMER_KEY = import.meta.env.VITE_TOSS_CUSTOMER_KEY;
 
 const {cartItems, isLoading: isCartLoading, loadCart} = useCart();
 const {

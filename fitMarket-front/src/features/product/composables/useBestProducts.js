@@ -1,12 +1,13 @@
 import { onMounted, ref } from 'vue'
 import { fetchBestProducts } from '@/features/product/api'
+import { getImageUrl } from '@/utils/image'
 
 const mapProduct = (item) => ({
   id: item.id,
   name: item.name,
   category: item.categoryName ?? '기타',
   price: item.price,
-  image: item.imageUrl ? `http://localhost:8080/api${item.imageUrl}` : item.imageUrl,
+  image: getImageUrl(item.imageUrl),
   rating: item.rating ?? 0,
   reviews: item.reviewCount ?? 0,
   calories: item.calories ?? 0,

@@ -1,17 +1,6 @@
 import { ref } from 'vue'
 import { fetchProducts } from '@/features/product/api'
-
-const products = ref([])
-const isLoading = ref(false)
-const errorMessage = ref('')
-const pagination = ref({
-  page: 1,
-  size: 20,
-  totalElements: 0,
-  totalPages: 1,
-  hasNext: false,
-  hasPrevious: false,
-})
+import { getImageUrl } from '@/utils/image'
 
 const mapProduct = (item) => ({
   id: item.id,
@@ -19,21 +8,31 @@ const mapProduct = (item) => ({
   categoryId: item.categoryId ?? null,
   category: item.categoryName ?? '기타',
   price: item.price,
-  image: item.imageUrl ? `http://localhost:8080/api${item.imageUrl}` : item.imageUrl,
+  image: getImageUrl(item.imageUrl),
   rating: item.rating ?? 0,
   reviews: item.reviewCount ?? 0,
-  // 백엔드에서 평탄화된 구조로 전달됨
   calories: item.calories ?? 0,
   protein: item.protein ?? 0,
   carbs: item.carbs ?? 0,
   fat: item.fat ?? 0,
   isFavorite: false,
-  // ES 검색 하이라이팅 (없으면 null)
   highlightedName: item.highlightedName ?? null,
   highlightedDescription: item.highlightedDescription ?? null,
 })
 
 export function useProducts() {
+  const products = ref([])
+  const isLoading = ref(false)
+  const errorMessage = ref('')
+  const pagination = ref({
+    page: 1,
+    size: 20,
+    totalElements: 0,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+  })
+
   const loadProducts = async ({ page = pagination.value.page, size = pagination.value.size, categoryId, keyword } = {}) => {
     isLoading.value = true
     errorMessage.value = ''

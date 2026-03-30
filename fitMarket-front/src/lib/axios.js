@@ -7,7 +7,7 @@ const isDev = import.meta.env.DEV;
 
 // axios 인스턴스 생성: 동적으로 memberStore에서 accessToken을 가져올 수 없으므로 인터셉터에서 처리
 const fitmarket = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 1000 * 10,
   withCredentials: true,
   headers: {
@@ -16,8 +16,6 @@ const fitmarket = axios.create({
 });
 
 const AUTH_REQUIRED_MESSAGE = '로그인이 필요해요. 로그인 후 이용할 수 있어요.';
-
-const clearAuthErrorState = () => {};
 
 // 동시에 여러 401 응답이 들어올 때 중복 처리를 방지하는 플래그
 let isHandling401 = false;
@@ -67,4 +65,4 @@ fitmarket.interceptors.response.use(
   }
 );
 
-export { fitmarket, clearAuthErrorState };
+export { fitmarket };
