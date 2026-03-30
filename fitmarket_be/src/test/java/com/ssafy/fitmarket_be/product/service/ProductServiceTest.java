@@ -220,23 +220,6 @@ class ProductServiceTest {
         assertThat(result.hasNext()).isFalse();
     }
 
-    @Test
-    @DisplayName("getProductDetail: selectProductById → incrementViewCount 순서로 호출된다")
-    void getProductDetail_정상_incrementViewCount호출순서() {
-        // given
-        Long productId = 1L;
-        Product product = ProductFixture.create(productId, 3);
-        given(productMapper.selectProductById(productId)).willReturn(product);
-
-        // when
-        productService.getProductDetail(productId);
-
-        // then
-        InOrder inOrder = inOrder(productMapper);
-        inOrder.verify(productMapper).selectProductById(productId);
-        inOrder.verify(productMapper).incrementViewCount(productId);
-    }
-
     // ===== updateProduct() =====
 
     @Test

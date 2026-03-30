@@ -15,8 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,9 +32,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-// buildMockSeller()가 여러 테스트에서 공유되어 테스트별로 사용되는 스텁의 부분집합이 달라짐
-// → 헬퍼 메서드 기반 픽스처 패턴에서는 클래스 레벨 LENIENT가 적합
-@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("SellerServiceImpl")
 class SellerServiceImplTest {
 
@@ -65,20 +60,22 @@ class SellerServiceImplTest {
 
     private Seller buildMockSeller(Long id, Long userId, SellerStatus status) {
         Seller seller = mock(Seller.class);
+        // 모든 테스트에서 공통으로 사용되는 핵심 스텁
         given(seller.getId()).willReturn(id);
         given(seller.getUserId()).willReturn(userId);
         given(seller.getStatus()).willReturn(status);
         given(seller.isPending()).willReturn(SellerStatus.PENDING.equals(status));
-        given(seller.getBusinessName()).willReturn("테스트 사업체");
-        given(seller.getBusinessNumber()).willReturn("123-45-67890");
-        given(seller.getBusinessType()).willReturn(BusinessType.INDIVIDUAL);
-        given(seller.getContactPhone()).willReturn("010-1234-5678");
-        given(seller.getBusinessAddress()).willReturn("서울시 강남구");
-        given(seller.getIntroduction()).willReturn("소개");
-        given(seller.getReviewNote()).willReturn(null);
-        given(seller.getReviewedBy()).willReturn(null);
-        given(seller.getCreatedDate()).willReturn(null);
-        given(seller.getModifiedDate()).willReturn(null);
+        // 일부 테스트에서만 사용되는 스텁 → lenient 적용
+        lenient().when(seller.getBusinessName()).thenReturn("테스트 사업체");
+        lenient().when(seller.getBusinessNumber()).thenReturn("123-45-67890");
+        lenient().when(seller.getBusinessType()).thenReturn(BusinessType.INDIVIDUAL);
+        lenient().when(seller.getContactPhone()).thenReturn("010-1234-5678");
+        lenient().when(seller.getBusinessAddress()).thenReturn("서울시 강남구");
+        lenient().when(seller.getIntroduction()).thenReturn("소개");
+        lenient().when(seller.getReviewNote()).thenReturn(null);
+        lenient().when(seller.getReviewedBy()).thenReturn(null);
+        lenient().when(seller.getCreatedDate()).thenReturn(null);
+        lenient().when(seller.getModifiedDate()).thenReturn(null);
         return seller;
     }
 
