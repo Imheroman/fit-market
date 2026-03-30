@@ -1,5 +1,6 @@
 package com.ssafy.fitmarket_be.seller.presentation;
 
+import com.ssafy.fitmarket_be.global.common.ApiResponse;
 import com.ssafy.fitmarket_be.order.domain.OrderSearchPeriod;
 import com.ssafy.fitmarket_be.order.dto.OrderDetailResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderStatusUpdateRequest;
@@ -27,31 +28,31 @@ public class SellerOrderController {
   private final SellerOrderService sellerOrderService;
 
   @GetMapping
-  public ResponseEntity<List<OrderSummaryResponse>> getOrders(
+  public ResponseEntity<ApiResponse<List<OrderSummaryResponse>>> getOrders(
       @AuthenticationPrincipal(expression = "id") Long sellerId,
       @RequestParam(name = "period", required = false) String period
   ) {
     OrderSearchPeriod searchPeriod = OrderSearchPeriod.from(period);
     List<OrderSummaryResponse> responses = sellerOrderService.getOrders(sellerId, searchPeriod);
-    return ResponseEntity.status(HttpStatus.OK).body(responses);
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(responses));
   }
 
   @GetMapping("/{orderNumber}")
-  public ResponseEntity<OrderDetailResponse> getOrderDetail(
+  public ResponseEntity<ApiResponse<OrderDetailResponse>> getOrderDetail(
       @AuthenticationPrincipal(expression = "id") Long sellerId,
       @PathVariable String orderNumber
   ) {
     OrderDetailResponse response = sellerOrderService.getOrderDetail(sellerId, orderNumber);
-    return ResponseEntity.status(HttpStatus.OK).body(response);
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
   }
 
   @PatchMapping("/{orderNumber}/status")
-  public ResponseEntity<Void> updateOrderStatus(
+  public ResponseEntity<ApiResponse<Void>> updateOrderStatus(
       @AuthenticationPrincipal(expression = "id") Long sellerId,
       @PathVariable String orderNumber,
       @Valid @RequestBody OrderStatusUpdateRequest request
   ) {
     sellerOrderService.updateOrderStatus(sellerId, orderNumber, request);
-    return ResponseEntity.status(HttpStatus.OK).build();
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
   }
 }

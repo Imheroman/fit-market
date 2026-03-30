@@ -2,6 +2,7 @@ package com.ssafy.fitmarket_be.category.controller;
 
 import com.ssafy.fitmarket_be.category.dto.CategoryResponse;
 import com.ssafy.fitmarket_be.category.service.CategoryService;
+import com.ssafy.fitmarket_be.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,8 +22,8 @@ public class CategoryController {
      * 모든 카테고리 조회 (상품 개수 포함).
      */
     @GetMapping
-    public ResponseEntity<List<CategoryResponse>> getAllCategories() {
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAllCategories() {
         List<CategoryResponse> response = categoryService.getAllCategories();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

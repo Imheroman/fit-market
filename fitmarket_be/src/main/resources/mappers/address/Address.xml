@@ -4,14 +4,20 @@
 <mapper namespace="com.ssafy.fitmarket_be.address.repository.AddressRepository">
 
   <resultMap id="AddressResultMap" type="Address">
-    <id property="id" column="id"/>
-    <result property="postalCode" column="postal_code"/>
-    <result property="addressLine" column="address_line"/>
-    <result property="addressLineDetail" column="address_line_detail"/>
-    <result property="main" column="is_main"/>
-    <result property="createdDate" column="created_date"/>
-    <result property="modifiedDate" column="modified_date"/>
-    <result property="deletedDate" column="deleted_date"/>
+    <constructor>
+      <idArg column="id" javaType="java.lang.Long"/>
+      <arg column="name" javaType="java.lang.String"/>
+      <arg column="recipient" javaType="java.lang.String"/>
+      <arg column="phone" javaType="java.lang.String"/>
+      <arg column="memo" javaType="java.lang.String"/>
+      <arg column="postal_code" javaType="java.lang.String"/>
+      <arg column="address_line" javaType="java.lang.String"/>
+      <arg column="address_line_detail" javaType="java.lang.String"/>
+      <arg column="is_main" javaType="boolean"/>
+      <arg column="created_date" javaType="java.time.LocalDateTime"/>
+      <arg column="modified_date" javaType="java.time.LocalDateTime"/>
+      <arg column="deleted_date" javaType="java.time.LocalDateTime"/>
+    </constructor>
   </resultMap>
 
   <select id="findAllByUserId" resultMap="AddressResultMap">

@@ -1,5 +1,6 @@
 package com.ssafy.fitmarket_be.seller.presentation;
 
+import com.ssafy.fitmarket_be.global.common.ApiResponse;
 import com.ssafy.fitmarket_be.seller.api.SellerService;
 import com.ssafy.fitmarket_be.seller.api.dto.SellerCreateRequest;
 import com.ssafy.fitmarket_be.seller.api.dto.SellerResponse;
@@ -28,40 +29,40 @@ public class SellerController {
   private final SellerService sellerService;
 
   @PostMapping
-  public ResponseEntity<SellerResponse> apply(
+  public ResponseEntity<ApiResponse<SellerResponse>> apply(
       @AuthenticationPrincipal(expression = "id") Long userId,
       @Valid @RequestBody SellerCreateRequest request
   ) {
     SellerResponse response = sellerService.apply(userId, request);
     return ResponseEntity
         .created(URI.create("/seller/" + response.id()))
-        .body(response);
+        .body(ApiResponse.success(response));
   }
 
   @GetMapping("/me")
-  public ResponseEntity<SellerResponse> getMyApplication(
+  public ResponseEntity<ApiResponse<SellerResponse>> getMyApplication(
       @AuthenticationPrincipal(expression = "id") Long userId
   ) {
     SellerResponse response = sellerService.getMyApplication(userId);
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(ApiResponse.success(response));
   }
 
   @GetMapping
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<List<SellerResponse>> list(
+  public ResponseEntity<ApiResponse<List<SellerResponse>>> list(
       @RequestParam(name = "status", required = false) String status
   ) {
     List<SellerResponse> response = sellerService.listByStatus(status);
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(ApiResponse.success(response));
   }
 
   @PatchMapping("/{id}/review")
-  public ResponseEntity<SellerResponse> review(
+  public ResponseEntity<ApiResponse<SellerResponse>> review(
       @PathVariable("id") Long sellerId,
       @AuthenticationPrincipal(expression = "id") Long reviewerId,
       @Valid @RequestBody SellerReviewRequest request
   ) {
     SellerResponse response = sellerService.review(sellerId, reviewerId, request);
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(ApiResponse.success(response));
   }
 }

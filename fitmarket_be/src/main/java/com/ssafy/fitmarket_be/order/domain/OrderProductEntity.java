@@ -1,18 +1,17 @@
 package com.ssafy.fitmarket_be.order.domain;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * 주문 상품 스냅샷을 저장하는 엔티티.
  */
 @Getter
-@Setter
 @Builder
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 public class OrderProductEntity {
 

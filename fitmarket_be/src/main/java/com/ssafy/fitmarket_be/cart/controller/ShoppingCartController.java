@@ -4,6 +4,7 @@ import com.ssafy.fitmarket_be.cart.dto.CartItemResponse;
 import com.ssafy.fitmarket_be.cart.dto.CartAddItemRequest;
 import com.ssafy.fitmarket_be.cart.dto.CartUpdateQuantityRequest;
 import com.ssafy.fitmarket_be.cart.service.ShoppingCartService;
+import com.ssafy.fitmarket_be.global.common.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -38,10 +39,10 @@ public class ShoppingCartController {
    * @return 장바구니 상품 목록
    */
   @GetMapping
-  public ResponseEntity<List<CartItemResponse>> findCartItems(
+  public ResponseEntity<ApiResponse<List<CartItemResponse>>> findCartItems(
       @AuthenticationPrincipal(expression = "id") Long userId) {
     List<CartItemResponse> cartItems = this.shoppingCartService.getCartItems(userId);
-    return ResponseEntity.status(HttpStatus.OK).body(cartItems);
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(cartItems));
   }
 
   /**
@@ -52,13 +53,13 @@ public class ShoppingCartController {
    * @return 빈 본문
    */
   @PostMapping("/{cartItemId}")
-  public ResponseEntity<Void> addItem(
+  public ResponseEntity<ApiResponse<Void>> addItem(
       @AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable Long cartItemId,
       @Valid @RequestBody CartAddItemRequest request) {
     boolean isCreated = this.shoppingCartService.addItem(userId, cartItemId, request.quantity());
     log.debug("user id: {} -> product id: {} _ created ? {}", userId, cartItemId, isCreated);
-    return ResponseEntity.status(HttpStatus.OK).build();
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
   }
 
   /**
@@ -70,12 +71,12 @@ public class ShoppingCartController {
    * @return 빈 본문
    */
   @PatchMapping("/{cartItemId}")
-  public ResponseEntity<Void> updateQuantity(
+  public ResponseEntity<ApiResponse<Void>> updateQuantity(
       @AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable Long cartItemId,
       @Valid @RequestBody CartUpdateQuantityRequest request) {
     this.shoppingCartService.updateQuantity(userId, cartItemId, request.quantity());
-    return ResponseEntity.status(HttpStatus.OK).build();
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
   }
 
   /**
@@ -86,10 +87,10 @@ public class ShoppingCartController {
    * @return 빈 본문
    */
   @DeleteMapping("/{cartItemId}")
-  public ResponseEntity<Void> delete(
+  public ResponseEntity<ApiResponse<Void>> delete(
       @AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable Long cartItemId) {
     this.shoppingCartService.delete(userId, cartItemId);
-    return ResponseEntity.status(HttpStatus.OK).build();
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
   }
 }

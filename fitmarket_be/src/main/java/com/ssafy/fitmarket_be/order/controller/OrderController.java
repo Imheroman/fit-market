@@ -1,5 +1,6 @@
 package com.ssafy.fitmarket_be.order.controller;
 
+import com.ssafy.fitmarket_be.global.common.ApiResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderAddressUpdateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderDetailResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderRefundEligibilityResponse;
@@ -9,6 +10,8 @@ import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderSummaryResponse;
 import com.ssafy.fitmarket_be.order.domain.OrderSearchPeriod;
+import com.ssafy.fitmarket_be.order.service.OrderQueryService;
+import com.ssafy.fitmarket_be.order.service.OrderRefundService;
 import com.ssafy.fitmarket_be.order.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +40,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
 
   private final OrderService orderService;
+  private final OrderQueryService orderQueryService;
+  private final OrderRefundService orderRefundService;
 
   /**
    * 사용자의 주문 목록을 조회한다.
@@ -46,13 +51,13 @@ public class OrderController {
    * @return 주문 목록
    */
   @GetMapping
-  public ResponseEntity<List<OrderSummaryResponse>> getOrders(
+  public ResponseEntity<ApiResponse<List<OrderSummaryResponse>>> getOrders(
       @AuthenticationPrincipal(expression = "id") Long userId,
       @RequestParam(name = "period", required = false) String period
   ) {
     OrderSearchPeriod searchPeriod = OrderSearchPeriod.from(period);
-    List<OrderSummaryResponse> responses = orderService.getOrders(userId, searchPeriod);
-    return ResponseEntity.status(HttpStatus.OK).body(responses);
+    List<OrderSummaryResponse> responses = orderQueryService.getOrders(userId, searchPeriod);
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(responses));
   }
 
   /**
@@ -63,12 +68,12 @@ public class OrderController {
    * @return 주문 상세
    */
   @GetMapping("/{orderNumber}")
-  public ResponseEntity<OrderDetailResponse> getOrderDetail(
+  public ResponseEntity<ApiResponse<OrderDetailResponse>> getOrderDetail(
       @AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable String orderNumber
   ) {
-    OrderDetailResponse response = orderService.getOrderDetail(userId, orderNumber);
-    return ResponseEntity.status(HttpStatus.OK).body(response);
+    OrderDetailResponse response = orderQueryService.getOrderDetail(userId, orderNumber);
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
   }
 
   /**
@@ -80,13 +85,13 @@ public class OrderController {
    * @return HTTP 200
    */
   @PatchMapping("/{orderNumber}/address")
-  public ResponseEntity<Void> updateOrderAddress(
+  public ResponseEntity<ApiResponse<Void>> updateOrderAddress(
       @AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable String orderNumber,
       @Valid @RequestBody OrderAddressUpdateRequest request
   ) {
     orderService.updateOrderAddress(userId, orderNumber, request);
-    return ResponseEntity.status(HttpStatus.OK).build();
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
   }
 
   /**
@@ -97,12 +102,12 @@ public class OrderController {
    * @return HTTP 204
    */
   @PostMapping("/{orderNumber}/cancel")
-  public ResponseEntity<Void> cancelOrder(
+  public ResponseEntity<ApiResponse<Void>> cancelOrder(
       @AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable String orderNumber
   ) {
     orderService.cancelOrder(userId, orderNumber);
-    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
   }
 
   /**
@@ -113,12 +118,12 @@ public class OrderController {
    * @return 환불 가능 여부
    */
   @GetMapping("/{orderNumber}/refund/eligibility")
-  public ResponseEntity<OrderRefundEligibilityResponse> getRefundEligibility(
+  public ResponseEntity<ApiResponse<OrderRefundEligibilityResponse>> getRefundEligibility(
       @AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable String orderNumber
   ) {
-    OrderRefundEligibilityResponse response = orderService.getRefundEligibility(userId, orderNumber);
-    return ResponseEntity.status(HttpStatus.OK).body(response);
+    OrderRefundEligibilityResponse response = orderQueryService.getRefundEligibility(userId, orderNumber);
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
   }
 
   /**
@@ -130,17 +135,17 @@ public class OrderController {
    * @return 환불 처리 응답
    */
   @PostMapping("/{orderNumber}/refund")
-  public ResponseEntity<OrderRefundEligibilityResponse> refundOrder(
+  public ResponseEntity<ApiResponse<OrderRefundEligibilityResponse>> refundOrder(
       @AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable String orderNumber,
       @RequestBody(required = false) OrderRefundRequest request
   ) {
-    OrderRefundEligibilityResponse response = orderService.refundOrder(
+    OrderRefundEligibilityResponse response = orderRefundService.refundOrder(
         userId,
         orderNumber,
         request == null ? new OrderRefundRequest(null, null) : request
     );
-    return ResponseEntity.status(HttpStatus.OK).body(response);
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
   }
 
   /**
@@ -152,13 +157,13 @@ public class OrderController {
    * @return 반품/교환 가능 여부
    */
   @PostMapping("/{orderNumber}/return-exchange")
-  public ResponseEntity<OrderReturnExchangeResponse> requestReturnOrExchange(
+  public ResponseEntity<ApiResponse<OrderReturnExchangeResponse>> requestReturnOrExchange(
       @AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable String orderNumber,
       @Valid @RequestBody OrderReturnExchangeRequest request
   ) {
-    OrderReturnExchangeResponse response = orderService.requestReturnOrExchange(userId, orderNumber, request);
-    return ResponseEntity.status(HttpStatus.OK).body(response);
+    OrderReturnExchangeResponse response = orderRefundService.requestReturnOrExchange(userId, orderNumber, request);
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response));
   }
 
   /**
@@ -171,13 +176,13 @@ public class OrderController {
    */
   @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
   @PatchMapping("/{orderNumber}/status")
-  public ResponseEntity<Void> updateOrderStatus(
+  public ResponseEntity<ApiResponse<Void>> updateOrderStatus(
       @AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable String orderNumber,
       @Valid @RequestBody OrderStatusUpdateRequest request
   ) {
     orderService.updateApprovalStatus(userId, orderNumber, request);
-    return ResponseEntity.status(HttpStatus.OK).build();
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
   }
 
   /**
@@ -188,11 +193,11 @@ public class OrderController {
    * @return HTTP 204
    */
   @DeleteMapping("/{orderNumber}")
-  public ResponseEntity<Void> deleteOrder(
+  public ResponseEntity<ApiResponse<Void>> deleteOrder(
       @AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable String orderNumber
   ) {
     orderService.deleteOrder(userId, orderNumber);
-    return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
   }
 }

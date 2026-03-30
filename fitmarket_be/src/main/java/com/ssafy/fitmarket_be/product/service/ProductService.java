@@ -171,18 +171,25 @@ public class ProductService {
     }
 
     /**
-     * 상품 상세 조회 (조회 시 review_count + 1).
+     * 상품 상세 조회 (읽기 전용 — 캐시 대상).
+     * 조회수 증가는 {@link #incrementViewCount(Long)}에서 별도로 수행한다.
      */
     @Cacheable(value = "product-detail", key = "#productId")
-    @Transactional
+    @Transactional(readOnly = true)
     public ProductDetailResponse getProductDetail(Long productId) {
         Product product = productMapper.selectProductById(productId);
         if (product == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다: " + productId);
         }
+        return ProductDetailResponse.from(product);
+    }
+
+    /**
+     * 상품 조회수를 1 증가시킨다 (캐시 비대상).
+     */
+    @Transactional
+    public void incrementViewCount(Long productId) {
         productMapper.incrementViewCount(productId);
-        Product updated = productMapper.selectProductById(productId);
-        return ProductDetailResponse.from(updated);
     }
 
     /**

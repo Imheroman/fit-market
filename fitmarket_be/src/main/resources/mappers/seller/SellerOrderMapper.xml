@@ -4,38 +4,42 @@
 <mapper namespace="com.ssafy.fitmarket_be.seller.infrastructure.mybatis.SellerOrderMapper">
 
   <resultMap id="OrderViewMap" type="com.ssafy.fitmarket_be.order.domain.OrderView">
-    <id property="id" column="id"/>
-    <result property="orderNumber" column="order_number"/>
-    <result property="orderMode" column="order_mode"
-            javaType="com.ssafy.fitmarket_be.order.domain.OrderMode"
-            typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
-    <result property="approvalStatus" column="approval_status"/>
-    <result property="addressId" column="address_id"/>
-    <result property="addressSnapshot" column="address_snapshot"/>
-    <result property="userId" column="user_id"/>
-    <result property="orderDate" column="order_date"/>
-    <result property="shipDate" column="ship_date"/>
-    <result property="dueDate" column="due_date"/>
-    <result property="merchandiseAmount" column="merchandise_amount"/>
-    <result property="shippingFee" column="shipping_fee"/>
-    <result property="discountAmount" column="discount_amount"/>
-    <result property="totalAmount" column="total_amount"/>
-    <result property="paymentStatus" column="payment_status"
-            javaType="com.ssafy.fitmarket_be.payment.domain.PaymentStatus"
-            typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
-    <result property="comment" column="comment"/>
+    <constructor>
+      <idArg column="id" javaType="java.lang.Long"/>
+      <arg column="order_number" javaType="java.lang.String"/>
+      <arg column="order_mode"
+           javaType="com.ssafy.fitmarket_be.order.domain.OrderMode"
+           typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+      <arg column="approval_status" javaType="java.lang.String"/>
+      <arg column="address_id" javaType="java.lang.Long"/>
+      <arg column="address_snapshot" javaType="java.lang.String"/>
+      <arg column="user_id" javaType="java.lang.Long"/>
+      <arg column="order_date" javaType="java.time.LocalDateTime"/>
+      <arg column="ship_date" javaType="java.time.LocalDateTime"/>
+      <arg column="due_date" javaType="java.time.LocalDateTime"/>
+      <arg column="merchandise_amount" javaType="java.lang.Long"/>
+      <arg column="shipping_fee" javaType="java.lang.Long"/>
+      <arg column="discount_amount" javaType="java.lang.Long"/>
+      <arg column="total_amount" javaType="java.lang.Long"/>
+      <arg column="payment_status"
+           javaType="com.ssafy.fitmarket_be.payment.domain.PaymentStatus"
+           typeHandler="org.apache.ibatis.type.EnumTypeHandler"/>
+      <arg column="comment" javaType="java.lang.String"/>
+    </constructor>
   </resultMap>
 
   <resultMap id="OrderProductMap" type="com.ssafy.fitmarket_be.order.domain.OrderProductEntity">
-    <id property="id" column="id"/>
-    <result property="orderId" column="order_id"/>
-    <result property="productId" column="product_id"/>
-    <result property="cartItemId" column="cart_item_id"/>
-    <result property="productName" column="product_name"/>
-    <result property="quantity" column="quantity"/>
-    <result property="unitPrice" column="unit_price"/>
-    <result property="totalPrice" column="total_price"/>
-    <result property="optionInfo" column="option_info"/>
+    <constructor>
+      <idArg column="id" javaType="java.lang.Long"/>
+      <arg column="order_id" javaType="java.lang.Long"/>
+      <arg column="product_id" javaType="java.lang.Long"/>
+      <arg column="cart_item_id" javaType="java.lang.Long"/>
+      <arg column="product_name" javaType="java.lang.String"/>
+      <arg column="quantity" javaType="int"/>
+      <arg column="unit_price" javaType="java.lang.Long"/>
+      <arg column="total_price" javaType="java.lang.Long"/>
+      <arg column="option_info" javaType="java.lang.String"/>
+    </constructor>
   </resultMap>
 
   <select id="findOrdersBySellerIdAndStartDate" resultMap="OrderViewMap">

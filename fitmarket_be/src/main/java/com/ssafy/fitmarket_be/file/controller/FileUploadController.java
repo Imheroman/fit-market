@@ -2,6 +2,7 @@ package com.ssafy.fitmarket_be.file.controller;
 
 import com.ssafy.fitmarket_be.file.dto.FileUploadResponse;
 import com.ssafy.fitmarket_be.file.service.FileStorageService;
+import com.ssafy.fitmarket_be.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ public class FileUploadController {
      * @return 업로드된 파일의 URL
      */
     @PostMapping("/upload")
-    public ResponseEntity<FileUploadResponse> uploadFile(
+    public ResponseEntity<ApiResponse<FileUploadResponse>> uploadFile(
         @RequestParam("file") MultipartFile file
     ) {
         log.info("파일 업로드 요청: {}, 크기: {}bytes", file.getOriginalFilename(), file.getSize());
@@ -32,7 +33,7 @@ public class FileUploadController {
             String fileUrl = fileStorageService.store(file);
             log.info("파일 업로드 성공: {}", fileUrl);
 
-            return ResponseEntity.ok(new FileUploadResponse(fileUrl));
+            return ResponseEntity.ok(ApiResponse.success(new FileUploadResponse(fileUrl)));
         } catch (IllegalArgumentException e) {
             log.warn("파일 업로드 실패 (유효성 검증): {}", e.getMessage());
             throw e;

@@ -1,13 +1,8 @@
 package com.ssafy.fitmarket_be.payment.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ssafy.fitmarket_be.cart.repository.ShoppingCartRepository;
-import com.ssafy.fitmarket_be.order.domain.OrderApprovalStatus;
-import com.ssafy.fitmarket_be.order.domain.OrderMode;
 import com.ssafy.fitmarket_be.order.domain.OrderPaymentContext;
-import com.ssafy.fitmarket_be.order.domain.OrderProductEntity;
 import com.ssafy.fitmarket_be.order.repository.OrderRepository;
 import com.ssafy.fitmarket_be.order.service.OrderService;
 import com.ssafy.fitmarket_be.payment.domain.Payment;
@@ -15,20 +10,20 @@ import com.ssafy.fitmarket_be.payment.domain.PaymentStatus;
 import com.ssafy.fitmarket_be.payment.dto.TossPaymentFailureResponse;
 import com.ssafy.fitmarket_be.payment.dto.TossPaymentRequest;
 import com.ssafy.fitmarket_be.payment.dto.TossPaymentResponse;
+import com.ssafy.fitmarket_be.payment.event.PaymentCompletedEvent;
 import com.ssafy.fitmarket_be.payment.repository.PaymentRepository;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
-import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.util.StringUtils;
 
 /**
  * 토스페이먼츠 결제 승인 및 실패 처리를 담당하는 서비스.
@@ -43,9 +38,9 @@ public class TossPaymentService {
   private final OrderRepository orderRepository;
   private final OrderService orderService;
   private final PaymentRepository paymentRepository;
-  private final ShoppingCartRepository shoppingCartRepository;
   private final PlatformTransactionManager transactionManager;
   private final ObjectMapper objectMapper;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * 결제 위젯 v2 결제 승인 처리.
@@ -183,17 +178,6 @@ public class TossPaymentService {
     TransactionTemplate template = new TransactionTemplate(transactionManager);
     try {
       template.executeWithoutResult(status -> {
-        ensureOrderProducts(paymentContext);
-        int paymentUpdated = orderRepository.updatePaymentStatus(paymentContext.orderId(), PaymentStatus.PAID);
-        if (paymentUpdated <= 0) {
-          throw new IllegalStateException("주문 결제 상태를 갱신하지 못했어요.");
-        }
-        int approvalUpdated = orderRepository.updateApprovalStatus(paymentContext.orderId(),
-            OrderApprovalStatus.APPROVED.dbValue());
-        if (approvalUpdated <= 0) {
-          throw new IllegalStateException("주문 승인 상태를 갱신하지 못했어요.");
-        }
-
         Payment payment = Payment.builder()
             .orderId(paymentContext.orderId())
             .paymentKey(request.paymentKey())
@@ -206,9 +190,15 @@ public class TossPaymentService {
             .build();
         paymentRepository.upsert(payment);
 
-        if (paymentContext.orderMode() == OrderMode.CART) {
-          deletePurchasedCartItems(paymentContext);
-        }
+        eventPublisher.publishEvent(new PaymentCompletedEvent(
+            paymentContext.orderId(),
+            paymentContext.userId(),
+            paymentContext.orderNumber(),
+            request.paymentKey(),
+            response.totalAmount(),
+            paymentContext.orderMode(),
+            paymentContext.itemsSnapshot()
+        ));
       });
     } catch (Exception e) {
       log.error("[PAYMENT_SAVE_FAILED] orderId={}, paymentKey={}, amount={}, error={}",
@@ -217,43 +207,6 @@ public class TossPaymentService {
           request.amount(),
           e.getMessage(), e);
       throw e;
-    }
-  }
-
-  private void ensureOrderProducts(OrderPaymentContext paymentContext) {
-    int existingProducts = orderRepository.countOrderProducts(paymentContext.orderId());
-    if (existingProducts > 0) {
-      return;
-    }
-    if (!StringUtils.hasText(paymentContext.itemsSnapshot())) {
-      throw new IllegalStateException("주문 상품 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.");
-    }
-    List<OrderProductEntity> products = parseOrderProducts(paymentContext.itemsSnapshot());
-    int insertedProducts = orderRepository.insertOrderProducts(paymentContext.orderId(), products);
-    if (insertedProducts != products.size()) {
-      throw new IllegalStateException("주문 상품 정보를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.");
-    }
-    orderRepository.clearItemsSnapshot(paymentContext.orderId());
-  }
-
-  private List<OrderProductEntity> parseOrderProducts(String snapshot) {
-    try {
-      return objectMapper.readValue(snapshot, new TypeReference<>() {
-      });
-    } catch (JsonProcessingException e) {
-      throw new IllegalStateException("주문 상품 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.", e);
-    }
-  }
-
-  private void deletePurchasedCartItems(OrderPaymentContext paymentContext) {
-    List<Long> cartItemIds = orderRepository.findCartItemIdsByOrderId(paymentContext.orderId());
-    if (cartItemIds.isEmpty()) {
-      return;
-    }
-    int deleted = shoppingCartRepository.softDeleteByIds(cartItemIds, paymentContext.userId());
-    if (deleted != cartItemIds.size()) {
-      log.info("cart items already removed or partially removed. orderId={}, deleted={}, expected={}",
-          paymentContext.orderId(), deleted, cartItemIds.size());
     }
   }
 

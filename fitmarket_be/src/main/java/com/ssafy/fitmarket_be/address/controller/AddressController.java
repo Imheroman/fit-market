@@ -4,6 +4,7 @@ import com.ssafy.fitmarket_be.address.dto.AddressCreateRequestDto;
 import com.ssafy.fitmarket_be.address.dto.AddressResponseDto;
 import com.ssafy.fitmarket_be.address.dto.AddressUpdateRequestDto;
 import com.ssafy.fitmarket_be.address.service.AddressService;
+import com.ssafy.fitmarket_be.global.common.ApiResponse;
 import java.net.URI;
 import java.util.List;
 import jakarta.validation.Valid;
@@ -30,49 +31,49 @@ public class AddressController {
   private final AddressService addressService;
 
   @GetMapping
-  public ResponseEntity<List<AddressResponseDto>> findAddresses(
+  public ResponseEntity<ApiResponse<List<AddressResponseDto>>> findAddresses(
       @AuthenticationPrincipal(expression = "id") Long userId) {
     List<AddressResponseDto> addresses = this.addressService.findAddresses(userId);
     log.debug("address result: {}", addresses);
-    return ResponseEntity.status(HttpStatus.OK).body(addresses);
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(addresses));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<AddressResponseDto> find(@AuthenticationPrincipal(expression = "id") Long userId,
+  public ResponseEntity<ApiResponse<AddressResponseDto>> find(@AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable Long id) {
     AddressResponseDto address = this.addressService.find(userId, id);
-    return ResponseEntity.status(HttpStatus.OK).body(address);
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(address));
   }
 
   @PostMapping
-  public ResponseEntity<Void> create(@AuthenticationPrincipal(expression = "id") Long userId,
+  public ResponseEntity<ApiResponse<Void>> create(@AuthenticationPrincipal(expression = "id") Long userId,
       @Valid @RequestBody AddressCreateRequestDto request) {
     log.trace("create request: {}", request);
     Long addressId = this.addressService.create(userId, request);
     return ResponseEntity.status(HttpStatus.CREATED)
         .location(URI.create("/addresses/" + addressId))
-        .build();
+        .body(ApiResponse.success(null));
   }
 
   @PatchMapping("/{id}")
-  public ResponseEntity<Void> update(@AuthenticationPrincipal(expression = "id") Long userId,
+  public ResponseEntity<ApiResponse<Void>> update(@AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable Long id,
       @Valid @RequestBody AddressUpdateRequestDto request) {
     this.addressService.update(userId, id, request);
-    return ResponseEntity.status(HttpStatus.OK).build();
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
   }
 
   @PatchMapping("/{id}/main")
-  public ResponseEntity<Void> setMain(@AuthenticationPrincipal(expression = "id") Long userId,
+  public ResponseEntity<ApiResponse<Void>> setMain(@AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable Long id) {
     this.addressService.setMain(userId, id);
-    return ResponseEntity.status(HttpStatus.OK).build();
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
   }
 
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> delete(@AuthenticationPrincipal(expression = "id") Long userId,
+  public ResponseEntity<ApiResponse<Void>> delete(@AuthenticationPrincipal(expression = "id") Long userId,
       @PathVariable Long id) {
     this.addressService.delete(userId, id);
-    return ResponseEntity.status(HttpStatus.OK).build();
+    return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null));
   }
 }

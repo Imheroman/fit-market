@@ -1,5 +1,6 @@
 package com.ssafy.fitmarket_be.payment.controller;
 
+import com.ssafy.fitmarket_be.global.common.ApiResponse;
 import com.ssafy.fitmarket_be.payment.dto.TossPaymentFailureResponse;
 import com.ssafy.fitmarket_be.payment.dto.TossPaymentRequest;
 import com.ssafy.fitmarket_be.payment.dto.TossPaymentResponse;
@@ -34,12 +35,12 @@ public class PaymentController {
    * @return 승인 완료된 결제 응답
    */
   @PostMapping("/success")
-  public ResponseEntity<TossPaymentResponse> paymentSuccess(
+  public ResponseEntity<ApiResponse<TossPaymentResponse>> paymentSuccess(
       @AuthenticationPrincipal(expression = "id") Long userId,
       @Valid @RequestBody TossPaymentRequest request
   ) {
     TossPaymentResponse response = paymentService.confirmPayment(userId, request);
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(ApiResponse.success(response));
   }
 
   /**
@@ -56,7 +57,7 @@ public class PaymentController {
    * @return 사용자 안내 문구가 포함된 실패 응답
    */
   @GetMapping("/fail")
-  public ResponseEntity<TossPaymentFailureResponse> paymentFail(
+  public ResponseEntity<ApiResponse<TossPaymentFailureResponse>> paymentFail(
       @RequestParam(name = "code", required = false) String code,
       @RequestParam(name = "message", required = false) String message,
       @RequestParam(name = "errorCode", required = false) String errorCode,
@@ -68,7 +69,7 @@ public class PaymentController {
     TossPaymentFailureResponse response = paymentService.handlePaymentFailure(
         resolvedCode, resolvedMessage, orderId
     );
-    return ResponseEntity.badRequest().body(response);
+    return ResponseEntity.badRequest().body(ApiResponse.success(response));
   }
 
   private String resolveFirstNonEmpty(String primary, String fallback) {

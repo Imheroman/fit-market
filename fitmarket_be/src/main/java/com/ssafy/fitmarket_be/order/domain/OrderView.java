@@ -2,19 +2,18 @@ package com.ssafy.fitmarket_be.order.domain;
 
 import com.ssafy.fitmarket_be.payment.domain.PaymentStatus;
 import java.time.LocalDateTime;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /**
  * 주문 조회 시 사용되는 읽기 전용 뷰 모델.
  */
 @Getter
-@Setter
 @Builder
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 public class OrderView {
 

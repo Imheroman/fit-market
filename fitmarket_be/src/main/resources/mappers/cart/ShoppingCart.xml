@@ -4,21 +4,23 @@
 <mapper namespace="com.ssafy.fitmarket_be.cart.repository.ShoppingCartRepository">
 
   <resultMap id="ShoppingCartProductResultMap" type="ShoppingCartProduct">
-    <id property="id" column="id"/>
-    <result property="userId" column="user_id"/>
-    <result property="productId" column="product_id"/>
-    <result property="productName" column="product_name"/>
-    <result property="categoryId" column="category_id"/>
-    <result property="categoryName" column="category_name"/>
-    <result property="price" column="price"/>
-    <result property="quantity" column="quantity"/>
-    <result property="imageUrl" column="image_url"/>
-    <result property="calories" column="calories"/>
-    <result property="protein" column="protein"/>
-    <result property="carbs" column="carbs"/>
-    <result property="fat" column="fat"/>
-    <result property="createdDate" column="created_date"/>
-    <result property="modifiedDate" column="modified_date"/>
+    <constructor>
+      <idArg column="id" javaType="java.lang.Long"/>
+      <arg column="user_id" javaType="java.lang.Long"/>
+      <arg column="product_id" javaType="java.lang.Long"/>
+      <arg column="product_name" javaType="java.lang.String"/>
+      <arg column="category_id" javaType="java.lang.Long"/>
+      <arg column="category_name" javaType="java.lang.String"/>
+      <arg column="price" javaType="java.lang.Long"/>
+      <arg column="quantity" javaType="int"/>
+      <arg column="image_url" javaType="java.lang.String"/>
+      <arg column="calories" javaType="int"/>
+      <arg column="protein" javaType="int"/>
+      <arg column="carbs" javaType="int"/>
+      <arg column="fat" javaType="int"/>
+      <arg column="created_date" javaType="java.time.LocalDateTime"/>
+      <arg column="modified_date" javaType="java.time.LocalDateTime"/>
+    </constructor>
   </resultMap>
 
   <select id="findActiveByUserId" resultMap="ShoppingCartProductResultMap">
