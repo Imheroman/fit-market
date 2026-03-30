@@ -44,7 +44,8 @@ mybatis:
 jwt:
   access-expiration-time: 900000
   refresh-expiration-time: 604800000
-  secret: YXNkc2FmZGFzZmFzZGZhZHNmYWRzZmFzZGFzZmFzZGYxMjM=
+  # openssl rand -base64 64 로 생성한 512비트 dev 전용 시크릿
+  secret: U02cazw71/+8kIit55K+RN/AgvS0tuMaWtM/KT+HpaOBRkBgbhXheIc8oFojl3UCo0KOHxIZK1DAusHXeBlQZQ==
 
 # 파일 업로드 설정
 file:

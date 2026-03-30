@@ -119,12 +119,25 @@ public class OrderService {
         : List.of(buildDirectItem(request.productId(), request.quantity()));
 
     long merchandiseAmount = calculateMerchandiseAmount(orderProducts);
+
+    // 배송비: 클라이언트 값 수용하되 상한 검증 (DTO @Max와 이중 방어)
     long shippingFee = Objects.requireNonNullElse(request.shippingFee(), 0L);
-    long discountAmount = Objects.requireNonNullElse(request.discountAmount(), 0L);
+    if (shippingFee > 50_000) {
+      throw new IllegalArgumentException("배송비가 정책 상한(50,000원)을 초과했어요.");
+    }
+
+    // 할인금액: 클라이언트 값 무시, 서버에서 재계산
+    long discountAmount = calculateDiscountAmount(merchandiseAmount, orderProducts);
+
     long totalAmount = merchandiseAmount + shippingFee - discountAmount;
 
     if (totalAmount <= 0) {
       throw new IllegalArgumentException("결제 금액이 0원 이하예요. 할인/배송비 설정을 다시 확인해 주세요.");
+    }
+
+    // 할인 비율 검증: 상품 금액의 50% 이상 할인 방지 (비즈니스 정책)
+    if (discountAmount > merchandiseAmount / 2) {
+      throw new IllegalArgumentException("할인 금액이 상품 금액의 50%를 초과할 수 없어요.");
     }
 
     String orderNumber = resolveOrderNumber(orderNumberOverride, request.orderNumber());
@@ -665,6 +678,20 @@ public class OrderService {
         .unitPrice(product.getPrice())
         .totalPrice(totalPrice)
         .build();
+  }
+
+  /**
+   * 서버사이드 할인금액 계산.
+   * 현재는 할인 정책이 없으므로 0을 반환한다.
+   * 향후 쿠폰, 등급 할인 등 정책 추가 시 이 메서드에서 계산한다.
+   *
+   * @param merchandiseAmount 상품 합계 금액
+   * @param orderProducts     주문 상품 목록
+   * @return 서버 계산 할인금액
+   */
+  private long calculateDiscountAmount(long merchandiseAmount, List<OrderProductEntity> orderProducts) {
+    // TODO: 쿠폰, 등급 할인 등 비즈니스 정책 추가 시 구현
+    return 0L;
   }
 
   private long calculateMerchandiseAmount(List<OrderProductEntity> orderProducts) {

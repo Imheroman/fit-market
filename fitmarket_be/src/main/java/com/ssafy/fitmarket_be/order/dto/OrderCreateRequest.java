@@ -30,7 +30,9 @@ public record OrderCreateRequest(
     @Max(value = 100, message = "한 상품은 한 번에 최대 100개까지 주문할 수 있어요.") Integer quantity,
     List<Long> cartItemIds,
     @NotNull(message = "배송지를 선택해 주세요.") Long addressId,
-    @PositiveOrZero(message = "배송비는 음수가 될 수 없어요.") Long shippingFee,
+    @PositiveOrZero(message = "배송비는 음수가 될 수 없어요.")
+    @Max(value = 50000, message = "배송비가 너무 높아요. 다시 확인해 주세요.")
+    Long shippingFee,
     @PositiveOrZero(message = "할인 금액은 음수가 될 수 없어요.") Long discountAmount,
     String comment
 ) {

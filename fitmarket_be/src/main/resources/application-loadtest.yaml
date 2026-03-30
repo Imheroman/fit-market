@@ -64,7 +64,8 @@ cors:
 jwt:
   access-expiration-time: 43200000
   refresh-expiration-time: 43200000
-  secret: YXNkc2FmZGFzZmFzZGZhZHNmYWRzZmFzZGFzZmFzZGYxMjM=
+  # openssl rand -base64 64 로 생성한 512비트 loadtest 전용 시크릿
+  secret: EAB5XuCYkBAwHSgPpkZ0tipPFU/Ik0WF38YrCc029vY4WfT0mcB/+R/W/vS+rwJj/ZNH3ThwRp+IM7ToVW9VFQ==
 
 file:
   upload-dir: uploads

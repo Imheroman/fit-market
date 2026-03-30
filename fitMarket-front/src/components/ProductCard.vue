@@ -17,7 +17,7 @@
 
     <div class="p-5">
       <div class="flex items-start justify-between mb-2">
-        <h3 v-if="product.highlightedName" class="font-semibold text-lg search-highlight" v-html="product.highlightedName"></h3>
+        <h3 v-if="product.highlightedName" class="font-semibold text-lg search-highlight" v-html="sanitizedHighlightedName"></h3>
         <h3 v-else class="font-semibold text-lg">{{ product.name }}</h3>
       </div>
 
@@ -65,6 +65,7 @@ import {computed} from 'vue'
 import {useRouter} from 'vue-router'
 import {Star, ShoppingCart} from 'lucide-vue-next'
 import {useImageFallback} from '@/composables/useImageFallback'
+import DOMPurify from 'dompurify'
 
 const router = useRouter()
 const {onImageError} = useImageFallback()
@@ -77,6 +78,18 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['toggle-favorite', 'add-to-cart'])
+
+/**
+ * ES 하이라이팅 결과를 새니타이징한다.
+ * <em> 태그만 허용하여 XSS 스크립트 실행을 차단한다.
+ */
+const sanitizedHighlightedName = computed(() => {
+  if (!props.product.highlightedName) return ''
+  return DOMPurify.sanitize(props.product.highlightedName, {
+    ALLOWED_TAGS: ['em'],
+    ALLOWED_ATTR: []
+  })
+})
 
 const displayPrice = computed(() => {
   if (typeof props.product.price === 'number') {
