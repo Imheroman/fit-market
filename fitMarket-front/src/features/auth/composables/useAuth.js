@@ -2,7 +2,6 @@ import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { fetchUserProfile, deleteUserAccount } from '@/features/user/api';
 import { logoutUser } from '@/features/auth/api';
-import { clearAuthErrorState } from '@/lib/axios';
 import { useSessionStore, buildUserSession, ensureRoleArray } from '@/features/auth/store';
 
 export function useAuth() {
@@ -12,7 +11,6 @@ export function useAuth() {
   const profileError = ref('');
 
   const login = (sessionPayload) => {
-    clearAuthErrorState();
     return sessionStore.login(sessionPayload);
   };
   const logout = async () => {

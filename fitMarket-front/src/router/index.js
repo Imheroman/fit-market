@@ -1,26 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router"
 import HomePage from "@/views/HomePage.vue"
-import ProductDetailPage from "@/views/ProductDetailPage.vue"
-import CartPage from "@/views/CartPage.vue"
-import MyPage from "@/views/MyPage.vue"
-import MyProfilePage from "@/views/mypage/MyProfilePage.vue"
-import MyOrdersPage from "@/views/mypage/MyOrdersPage.vue"
-import MyOrderDetailPage from "@/views/mypage/MyOrderDetailPage.vue"
-import MyAddressesPage from "@/views/mypage/MyAddressesPage.vue"
-import MyAddressCreatePage from "@/views/mypage/MyAddressCreatePage.vue"
-import MyAddressEditPage from "@/views/mypage/MyAddressEditPage.vue"
-import UserEditPage from "@/views/UserEditPage.vue"
-import ChangeNamePage from "@/views/account/ChangeNamePage.vue"
-import ChangePhonePage from "@/views/account/ChangePhonePage.vue"
-import ChangePasswordPage from "@/views/account/ChangePasswordPage.vue"
-import OrderCheckoutPage from "@/views/OrderCheckoutPage.vue"
-import SellerApplicationPage from "@/views/SellerApplicationPage.vue"
-import SellerProductRegisterPage from "@/views/SellerProductRegisterPage.vue"
-import AdminSellerApplicationsPage from "@/views/AdminSellerApplicationsPage.vue"
-import LoginPage from "@/views/LoginPage.vue"
-import RegisterPage from "@/views/RegisterPage.vue"
-import NewProductsPage from "@/views/NewProductsPage.vue"
-import BestProductsPage from "@/views/BestProductsPage.vue"
 import { useSessionStore } from "@/features/auth/store"
 
 const router = createRouter({
@@ -34,83 +13,83 @@ const router = createRouter({
     {
       path: "/products/new",
       name: "new-products",
-      component: NewProductsPage,
+      component: () => import("@/views/NewProductsPage.vue"),
     },
     {
       path: "/products/best",
       name: "best-products",
-      component: BestProductsPage,
+      component: () => import("@/views/BestProductsPage.vue"),
     },
     {
       path: "/product/:id",
       name: "product-detail",
-      component: ProductDetailPage,
+      component: () => import("@/views/ProductDetailPage.vue"),
     },
     {
       path: "/login",
       name: "login",
-      component: LoginPage,
+      component: () => import("@/views/LoginPage.vue"),
       meta: { guestOnly: true },
     },
     {
       path: "/signup",
       name: "signup",
-      component: RegisterPage,
+      component: () => import("@/views/RegisterPage.vue"),
       meta: { guestOnly: true },
     },
     {
       path: "/cart",
       name: "cart",
-      component: CartPage,
+      component: () => import("@/views/CartPage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/order/checkout",
       name: "order-checkout",
-      component: OrderCheckoutPage,
+      component: () => import("@/views/OrderCheckoutPage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/mypage",
       name: "my-page",
-      component: MyPage,
+      component: () => import("@/views/MyPage.vue"),
       redirect: { name: "my-page-profile" },
       meta: { requiresAuth: true },
       children: [
         {
           path: "profile",
           name: "my-page-profile",
-          component: MyProfilePage,
+          component: () => import("@/views/mypage/MyProfilePage.vue"),
           meta: { requiresAuth: true },
         },
         {
           path: "orders",
           name: "my-page-orders",
-          component: MyOrdersPage,
+          component: () => import("@/views/mypage/MyOrdersPage.vue"),
           meta: { requiresAuth: true },
         },
         {
           path: "orders/:orderNumber",
           name: "my-page-order-detail",
-          component: MyOrderDetailPage,
+          component: () => import("@/views/mypage/MyOrderDetailPage.vue"),
           meta: { requiresAuth: true },
         },
         {
           path: "addresses",
           name: "my-page-addresses",
-          component: MyAddressesPage,
+          component: () => import("@/views/mypage/MyAddressesPage.vue"),
           meta: { requiresAuth: true },
         },
         {
           path: "addresses/new",
           name: "my-page-addresses-new",
-          component: MyAddressCreatePage,
+          component: () => import("@/views/mypage/MyAddressCreatePage.vue"),
           meta: { requiresAuth: true },
         },
         {
           path: "addresses/:id/edit",
           name: "my-page-addresses-edit",
-          component: MyAddressEditPage,
+          component: () => import("@/views/mypage/MyAddressEditPage.vue"),
           meta: { requiresAuth: true },
         },
       ],
@@ -118,43 +97,43 @@ const router = createRouter({
     {
       path: "/mypage/edit",
       name: "my-page-edit",
-      component: UserEditPage,
+      component: () => import("@/views/UserEditPage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/mypage/edit/name",
       name: "my-page-edit-name",
-      component: ChangeNamePage,
+      component: () => import("@/views/account/ChangeNamePage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/mypage/edit/phone",
       name: "my-page-edit-phone",
-      component: ChangePhonePage,
+      component: () => import("@/views/account/ChangePhonePage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/mypage/edit/password",
       name: "my-page-edit-password",
-      component: ChangePasswordPage,
+      component: () => import("@/views/account/ChangePasswordPage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/seller/apply",
       name: "seller-apply",
-      component: SellerApplicationPage,
+      component: () => import("@/views/SellerApplicationPage.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/seller/products",
       name: "seller-products",
-      component: SellerProductRegisterPage,
+      component: () => import("@/views/SellerProductRegisterPage.vue"),
       meta: { requiresAuth: true, role: "SELLER" },
     },
     {
       path: "/admin/seller-applications",
       name: "admin-seller-applications",
-      component: AdminSellerApplicationsPage,
+      component: () => import("@/views/AdminSellerApplicationsPage.vue"),
       meta: { requiresAuth: true, role: "ADMIN" },
     },
   ],

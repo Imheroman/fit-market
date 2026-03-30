@@ -48,6 +48,8 @@ const shouldFetchOrderDetail = (order) => {
   return !(claimType && claimStatus);
 };
 
+// TODO: 백엔드 batch API 추가 시 N+1 호출을 단일 요청으로 대체
+// 현재는 Promise.all로 병렬 호출하여 성능을 최대한 확보
 const hydrateOrderClaims = async (orders) => {
   const tasks = orders.map(async (order) => {
     if (!shouldFetchOrderDetail(order)) return order;

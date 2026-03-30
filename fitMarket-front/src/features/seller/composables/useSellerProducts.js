@@ -6,6 +6,8 @@ import {
   deleteProduct as deleteProductApi,
 } from '@/features/product/api'
 import { uploadImage } from '@/features/seller/api'
+import { getImageUrl, stripImageBaseUrl } from '@/utils/image'
+import { useSessionStore } from '@/features/auth/store'
 
 export const PRODUCT_CATEGORIES = [
   { value: 'lunchbox', label: '도시락', categoryId: 1 },
@@ -28,6 +30,7 @@ const createDefaultForm = () => ({
 })
 
 export function useSellerProducts() {
+  const sessionStore = useSessionStore()
   const form = reactive(createDefaultForm())
   const errors = reactive({
     name: '',
@@ -141,7 +144,7 @@ export function useSellerProducts() {
         weightG: Number(form.weight),
         stock: Number(form.stock),
         imageUrl: imageUrl,
-        userId: 1, // TODO: 인증 구현 후 실제 사용자 ID로 변경
+        userId: sessionStore.user?.id,
       }
 
       const response = await createProduct(productData)
@@ -151,13 +154,13 @@ export function useSellerProducts() {
       const createdStock = response?.stock ?? productData.stock
       const newProduct = {
         id: response.id,
-        sellerId: response.userId || 1,
-        sellerName: '건강한 밥상',
+        sellerId: response.userId || sessionStore.user?.id,
+        sellerName: response.sellerName || sessionStore.user?.name || '',
         name: response.name,
         category: form.category,
         price: response.price,
         description: form.description,
-        image: response.imageUrl ? `http://localhost:8080/api${response.imageUrl}` : response.imageUrl,
+        image: getImageUrl(response.imageUrl),
         weight: Number(form.weight),
         stock: createdStock,
         calories: response.calories,
@@ -255,7 +258,7 @@ export function useSellerProducts() {
       const existingProduct = sellerProducts.value.find((p) => p.id === editingProductId.value)
 
       // 이미지 업로드
-      let imageUrl = existingProduct.image?.replace('http://localhost:8080/api', '') || existingProduct.image
+      let imageUrl = stripImageBaseUrl(existingProduct.image)
       if (form.imageFile) {
         try {
           imageUrl = await uploadImage(form.imageFile)
@@ -273,7 +276,7 @@ export function useSellerProducts() {
         weightG: Number(form.weight),
         stock: Number(form.stock),
         imageUrl: imageUrl,
-        userId: 1,
+        userId: sessionStore.user?.id,
       }
 
       const response = await updateProductApi(editingProductId.value, productData)
@@ -288,7 +291,7 @@ export function useSellerProducts() {
           category: form.category,
           price: response?.price ?? Number(form.price),
           description: form.description,
-          image: response?.imageUrl ? `http://localhost:8080/api${response.imageUrl}` : sellerProducts.value[productIndex].image,
+          image: response?.imageUrl ? getImageUrl(response.imageUrl) : sellerProducts.value[productIndex].image,
           weight: Number(form.weight),
           stock: updatedStock,
           calories: response?.calories ?? sellerProducts.value[productIndex].calories,
@@ -330,13 +333,13 @@ export function useSellerProducts() {
 
         return {
           id: p.id,
-          sellerId: 1, // 백엔드 응답에 없음
-          sellerName: '건강한 밥상', // TODO: 실제 판매자 정보 사용
+          sellerId: p.userId || sessionStore.user?.id,
+          sellerName: p.sellerName || sessionStore.user?.name || '',
           name: p.name,
           category: categoryObj?.value || 'lunchbox',
           price: p.price,
           description: p.description ?? '',
-          image: p.imageUrl ? `http://localhost:8080/api${p.imageUrl}` : p.imageUrl,
+          image: getImageUrl(p.imageUrl),
           weight: 0, // 백엔드 응답에 weight 없음
           stock: p.stock ?? 0,
           calories: p.calories,

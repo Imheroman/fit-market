@@ -180,9 +180,11 @@ export function useSellerApplicationsAdmin() {
   )
 
   const loadApplications = async () => {
-    const pending = await fetchSellerApplicationsByStatus('pending')
-    const approved = await fetchSellerApplicationsByStatus('approved')
-    const rejected = await fetchSellerApplicationsByStatus('rejected')
+    const [pending, approved, rejected] = await Promise.all([
+      fetchSellerApplicationsByStatus('pending'),
+      fetchSellerApplicationsByStatus('approved'),
+      fetchSellerApplicationsByStatus('rejected'),
+    ])
     const normalize = (list) =>
       list.map((item) => ({
         ...item,
