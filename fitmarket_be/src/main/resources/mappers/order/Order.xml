@@ -262,6 +262,7 @@
       o.items_snapshot
     FROM orders o
     WHERE o.order_number = #{orderNumber}
+      AND o.user_id = #{userId}
       AND o.deleted_date IS NULL
     LIMIT 1
   </select>

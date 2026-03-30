@@ -7,13 +7,12 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.TotalHits;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.ssafy.fitmarket_be.global.dto.PageResponse;
 import com.ssafy.fitmarket_be.product.dto.ProductListResponse;
+import com.ssafy.fitmarket_be.product.dto.search.SearchHitSource;
+import com.ssafy.fitmarket_be.product.dto.search.SearchNutritionHit;
 import com.ssafy.fitmarket_be.product.repository.ProductMapper;
 import com.ssafy.fitmarket_be.product.domain.Product;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -233,35 +232,4 @@ public class ProductSearchService {
         );
     }
 
-    /**
-     * ES 검색 응답 역직렬화 전용 경량 DTO.
-     * ProductDocument를 직접 사용하면 LocalDateTime·Completion 등
-     * ES Java Client의 Jackson 매퍼가 처리하지 못하는 타입 때문에 역직렬화 실패.
-     */
-    @Getter
-    @NoArgsConstructor
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    static class SearchHitSource {
-        private Long id;
-        private String name;
-        private String description;
-        private Long price;
-        private Integer stock;
-        private Float rating;
-        private Integer reviewCount;
-        private String imageUrl;
-        private Long categoryId;
-        private String categoryName;
-        private SearchNutritionHit nutrition;
-    }
-
-    @Getter
-    @NoArgsConstructor
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    static class SearchNutritionHit {
-        private Float calories;
-        private Float protein;
-        private Float carbs;
-        private Float fat;
-    }
 }

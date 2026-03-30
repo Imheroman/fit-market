@@ -57,7 +57,7 @@ public class TossPaymentService {
    * 주문을 생성한 뒤 결제를 확정한다.</p>
    */
   public TossPaymentResponse confirmPayment(Long userId, TossPaymentRequest request) {
-//    OrderPaymentContext paymentContext = orderRepository.findPaymentContextByOrderNumber(request.orderId())
+//    OrderPaymentContext paymentContext = orderRepository.findPaymentContextByOrderNumber(request.orderId(), userId)
 //        .orElseGet(() -> createOrderAfterPayment(userId, request));
     OrderPaymentContext paymentContext = createOrderAfterPayment(userId, request);
     log.debug("payment context: {}", paymentContext);
@@ -115,7 +115,7 @@ public class TossPaymentService {
       throw new IllegalStateException("결제 내역과 연결할 주문 정보를 찾지 못했어요. 다시 시도해 주세요.");
     }
     orderService.createOrderWithOrderNumber(userId, request.orderId(), request.orderRequest());
-    return orderRepository.findPaymentContextByOrderNumber(request.orderId())
+    return orderRepository.findPaymentContextByOrderNumber(request.orderId(), userId)
         .orElseThrow(() -> new IllegalStateException("주문 정보를 불러오지 못했어요. 결제를 다시 진행해 주세요."));
   }
 

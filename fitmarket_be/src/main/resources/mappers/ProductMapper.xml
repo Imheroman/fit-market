@@ -47,15 +47,21 @@
           AND p.product_category_id = #{categoryId}
         </if>
         <if test="keyword != null and keyword != ''">
+          <bind name="escapedKeyword"
+                value="keyword.replace('%', '\\%').replace('_', '\\_')" />
           AND (
-            p.name LIKE CONCAT('%', #{keyword}, '%')
-            OR p.description LIKE CONCAT('%', #{keyword}, '%')
-            OR pc.name LIKE CONCAT('%', #{keyword}, '%')
-            OR f.name LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.calories, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.protein, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.carbs, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.fat, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            p.name LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
+            OR p.description LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
+            OR pc.name LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
+            OR f.name LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.calories, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR)
+               LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.protein, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR)
+               LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.carbs, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR)
+               LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.fat, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR)
+               LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
           )
         </if>
         ORDER BY p.created_date DESC
@@ -73,15 +79,21 @@
           AND p.product_category_id = #{categoryId}
         </if>
         <if test="keyword != null and keyword != ''">
+          <bind name="escapedKeyword"
+                value="keyword.replace('%', '\\%').replace('_', '\\_')" />
           AND (
-            p.name LIKE CONCAT('%', #{keyword}, '%')
-            OR p.description LIKE CONCAT('%', #{keyword}, '%')
-            OR pc.name LIKE CONCAT('%', #{keyword}, '%')
-            OR f.name LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.calories, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.protein, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.carbs, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
-            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.fat, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR) LIKE CONCAT('%', #{keyword}, '%')
+            p.name LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
+            OR p.description LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
+            OR pc.name LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
+            OR f.name LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.calories, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR)
+               LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.protein, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR)
+               LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.carbs, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR)
+               LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
+            OR CAST(COALESCE(ROUND(CAST(NULLIF(f.fat, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0), 0) AS CHAR)
+               LIKE CONCAT('%', #{escapedKeyword}, '%') ESCAPE '\\'
           )
         </if>
     </select>
@@ -149,8 +161,8 @@
         )
     </insert>
 
-    <!-- review_count 증가 -->
-    <update id="incrementReviewCount">
+    <!-- 상품 조회수(review_count 컬럼) 증가 -->
+    <update id="incrementViewCount">
         UPDATE products
         SET review_count = review_count + 1
         WHERE id = #{productId}

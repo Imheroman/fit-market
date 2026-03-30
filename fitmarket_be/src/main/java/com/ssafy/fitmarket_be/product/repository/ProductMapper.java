@@ -43,9 +43,10 @@ public interface ProductMapper {
     Product selectProductById(@Param("id") Long id);
 
     /**
-     * review_count 증가.
+     * 상품 조회수(review_count 컬럼)를 1 증가시킨다.
+     * 컬럼명은 review_count이나 실제 용도는 조회수(view count)이다.
      */
-    void incrementReviewCount(@Param("productId") Long productId);
+    void incrementViewCount(@Param("productId") Long productId);
 
     /**
      * 베스트 상품 조회 (페이징).

@@ -106,9 +106,12 @@ public interface OrderRepository {
    * 결제 승인에 필요한 주문 정보를 조회한다.
    *
    * @param orderNumber 주문 번호
+   * @param userId      사용자 식별자
    * @return 결제 컨텍스트
    */
-  Optional<OrderPaymentContext> findPaymentContextByOrderNumber(@Param("orderNumber") String orderNumber);
+  Optional<OrderPaymentContext> findPaymentContextByOrderNumber(
+      @Param("orderNumber") String orderNumber,
+      @Param("userId") Long userId);
 
   /**
    * 주문에 매핑된 상품 스냅샷 건수를 조회한다.

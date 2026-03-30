@@ -92,7 +92,7 @@ class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("상품 조회 순서는 selectProductById → incrementReviewCount → selectProductById 다")
+    @DisplayName("상품 조회 순서는 selectProductById → incrementViewCount → selectProductById 다")
     void 상품_조회_순서는_조회_후_카운트_증가_재조회_순서다() {
         // given
         Long productId = 1L;
@@ -105,12 +105,12 @@ class ProductServiceTest {
         // then
         InOrder inOrder = inOrder(productMapper);
         inOrder.verify(productMapper).selectProductById(productId);
-        inOrder.verify(productMapper).incrementReviewCount(productId);
+        inOrder.verify(productMapper).incrementViewCount(productId);
         inOrder.verify(productMapper).selectProductById(productId);
     }
 
     @Test
-    @DisplayName("존재하지 않는 상품이면 incrementReviewCount 를 호출하지 않는다")
+    @DisplayName("존재하지 않는 상품이면 incrementViewCount 를 호출하지 않는다")
     void 존재하지_않는_상품이면_카운트를_증가시키지_않는다() {
         // given
         Long productId = 999L;
@@ -221,8 +221,8 @@ class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("getProductDetail: selectProductById → incrementReviewCount 순서로 호출된다")
-    void getProductDetail_정상_incrementReviewCount호출순서() {
+    @DisplayName("getProductDetail: selectProductById → incrementViewCount 순서로 호출된다")
+    void getProductDetail_정상_incrementViewCount호출순서() {
         // given
         Long productId = 1L;
         Product product = ProductFixture.create(productId, 3);
@@ -234,7 +234,7 @@ class ProductServiceTest {
         // then
         InOrder inOrder = inOrder(productMapper);
         inOrder.verify(productMapper).selectProductById(productId);
-        inOrder.verify(productMapper).incrementReviewCount(productId);
+        inOrder.verify(productMapper).incrementViewCount(productId);
     }
 
     // ===== updateProduct() =====

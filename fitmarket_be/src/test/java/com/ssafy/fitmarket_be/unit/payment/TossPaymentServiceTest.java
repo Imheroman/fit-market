@@ -166,7 +166,7 @@ class TossPaymentServiceTest {
         OrderPaymentContext paymentContext = new OrderPaymentContext(
                 ORDER_ID, USER_ID, ORDER_NUMBER, 20000L, PaymentStatus.PENDING, OrderMode.DIRECT, null
         );
-        given(orderRepository.findPaymentContextByOrderNumber(ORDER_NUMBER))
+        given(orderRepository.findPaymentContextByOrderNumber(ORDER_NUMBER, USER_ID))
                 .willReturn(Optional.of(paymentContext));
 
         // when / then
@@ -190,7 +190,7 @@ class TossPaymentServiceTest {
         OrderPaymentContext paymentContext = new OrderPaymentContext(
                 ORDER_ID, USER_ID, ORDER_NUMBER, AMOUNT, PaymentStatus.PAID, OrderMode.DIRECT, null
         );
-        given(orderRepository.findPaymentContextByOrderNumber(ORDER_NUMBER))
+        given(orderRepository.findPaymentContextByOrderNumber(ORDER_NUMBER, USER_ID))
                 .willReturn(Optional.of(paymentContext));
 
         // when / then
@@ -213,7 +213,7 @@ class TossPaymentServiceTest {
         OrderPaymentContext paymentContext = new OrderPaymentContext(
                 ORDER_ID, USER_ID, ORDER_NUMBER, AMOUNT, PaymentStatus.PENDING, OrderMode.DIRECT, null
         );
-        given(orderRepository.findPaymentContextByOrderNumber(ORDER_NUMBER))
+        given(orderRepository.findPaymentContextByOrderNumber(ORDER_NUMBER, USER_ID))
                 .willReturn(Optional.of(paymentContext));
 
         // WebClient 체인 모킹
@@ -242,7 +242,7 @@ class TossPaymentServiceTest {
         OrderPaymentContext paymentContext = new OrderPaymentContext(
                 ORDER_ID, USER_ID, ORDER_NUMBER, AMOUNT, PaymentStatus.PENDING, OrderMode.DIRECT, null
         );
-        given(orderRepository.findPaymentContextByOrderNumber(ORDER_NUMBER))
+        given(orderRepository.findPaymentContextByOrderNumber(ORDER_NUMBER, USER_ID))
                 .willReturn(Optional.of(paymentContext));
 
         // Toss 응답 금액 9000 (요청은 10000)
@@ -271,7 +271,7 @@ class TossPaymentServiceTest {
         OrderPaymentContext paymentContext = new OrderPaymentContext(
                 ORDER_ID, USER_ID, ORDER_NUMBER, AMOUNT, PaymentStatus.PENDING, OrderMode.DIRECT, null
         );
-        given(orderRepository.findPaymentContextByOrderNumber(ORDER_NUMBER))
+        given(orderRepository.findPaymentContextByOrderNumber(ORDER_NUMBER, USER_ID))
                 .willReturn(Optional.of(paymentContext));
 
         // Toss 응답 orderId가 다른 값
@@ -300,7 +300,7 @@ class TossPaymentServiceTest {
         OrderPaymentContext paymentContext = new OrderPaymentContext(
                 ORDER_ID, USER_ID, ORDER_NUMBER, AMOUNT, PaymentStatus.PENDING, OrderMode.DIRECT, "[]"
         );
-        given(orderRepository.findPaymentContextByOrderNumber(ORDER_NUMBER))
+        given(orderRepository.findPaymentContextByOrderNumber(ORDER_NUMBER, USER_ID))
                 .willReturn(Optional.of(paymentContext));
 
         TossPaymentResponse tossResponse = new TossPaymentResponse(
@@ -340,7 +340,7 @@ class TossPaymentServiceTest {
         OrderPaymentContext paymentContext = new OrderPaymentContext(
                 ORDER_ID, USER_ID, ORDER_NUMBER, AMOUNT, PaymentStatus.PENDING, OrderMode.CART, "[]"
         );
-        given(orderRepository.findPaymentContextByOrderNumber(ORDER_NUMBER))
+        given(orderRepository.findPaymentContextByOrderNumber(ORDER_NUMBER, USER_ID))
                 .willReturn(Optional.of(paymentContext));
 
         TossPaymentResponse tossResponse = new TossPaymentResponse(

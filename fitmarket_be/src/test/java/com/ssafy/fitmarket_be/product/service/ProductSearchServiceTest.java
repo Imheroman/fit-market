@@ -10,6 +10,8 @@ import com.ssafy.fitmarket_be.global.dto.PageResponse;
 import com.ssafy.fitmarket_be.product.domain.Product;
 import com.ssafy.fitmarket_be.product.domain.ProductFixture;
 import com.ssafy.fitmarket_be.product.dto.ProductListResponse;
+import com.ssafy.fitmarket_be.product.dto.search.SearchHitSource;
+import com.ssafy.fitmarket_be.product.dto.search.SearchNutritionHit;
 import com.ssafy.fitmarket_be.product.repository.ProductMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,9 +51,9 @@ class ProductSearchServiceTest {
 
     // ----- Helper: SearchHitSource 생성 -----
 
-    private ProductSearchService.SearchHitSource createHitSource(
+    private SearchHitSource createHitSource(
             Long id, String name, Float rating, Long categoryId, String categoryName) {
-        ProductSearchService.SearchHitSource source = new ProductSearchService.SearchHitSource();
+        SearchHitSource source = new SearchHitSource();
         ReflectionTestUtils.setField(source, "id", id);
         ReflectionTestUtils.setField(source, "name", name);
         ReflectionTestUtils.setField(source, "description", "테스트 설명 " + name);
@@ -63,7 +65,7 @@ class ProductSearchServiceTest {
         ReflectionTestUtils.setField(source, "categoryId", categoryId);
         ReflectionTestUtils.setField(source, "categoryName", categoryName);
 
-        ProductSearchService.SearchNutritionHit nutrition = new ProductSearchService.SearchNutritionHit();
+        SearchNutritionHit nutrition = new SearchNutritionHit();
         ReflectionTestUtils.setField(nutrition, "calories", 250f);
         ReflectionTestUtils.setField(nutrition, "protein", 30f);
         ReflectionTestUtils.setField(nutrition, "carbs", 10f);
@@ -80,16 +82,16 @@ class ProductSearchServiceTest {
     @SuppressWarnings("unchecked")
     void search_정상ES검색_하이라이트포함결과반환() throws IOException {
         // given
-        ProductSearchService.SearchHitSource src1 = createHitSource(1L, "닭가슴살 샐러드", 4.5f, 1L, "단백질");
-        ProductSearchService.SearchHitSource src2 = createHitSource(2L, "닭가슴살 스테이크", 4.2f, 1L, "단백질");
+        SearchHitSource src1 = createHitSource(1L, "닭가슴살 샐러드", 4.5f, 1L, "단백질");
+        SearchHitSource src2 = createHitSource(2L, "닭가슴살 스테이크", 4.2f, 1L, "단백질");
 
-        SearchResponse<ProductSearchService.SearchHitSource> searchResponse = mock(SearchResponse.class);
-        HitsMetadata<ProductSearchService.SearchHitSource> hitsMetadata = mock(HitsMetadata.class);
-        Hit<ProductSearchService.SearchHitSource> hit1 = mock(Hit.class);
-        Hit<ProductSearchService.SearchHitSource> hit2 = mock(Hit.class);
+        SearchResponse<SearchHitSource> searchResponse = mock(SearchResponse.class);
+        HitsMetadata<SearchHitSource> hitsMetadata = mock(HitsMetadata.class);
+        Hit<SearchHitSource> hit1 = mock(Hit.class);
+        Hit<SearchHitSource> hit2 = mock(Hit.class);
         TotalHits totalHits = new TotalHits.Builder().value(2).relation(TotalHitsRelation.Eq).build();
 
-        given(esClient.search(any(Function.class), eq(ProductSearchService.SearchHitSource.class))).willReturn(searchResponse);
+        given(esClient.search(any(Function.class), eq(SearchHitSource.class))).willReturn(searchResponse);
         given(searchResponse.hits()).willReturn(hitsMetadata);
         given(hitsMetadata.hits()).willReturn(List.of(hit1, hit2));
         given(hitsMetadata.total()).willReturn(totalHits);
@@ -123,7 +125,7 @@ class ProductSearchServiceTest {
     @SuppressWarnings("unchecked")
     void search_ES장애시_MySQLFallback반환() throws IOException {
         // given
-        given(esClient.search(any(Function.class), eq(ProductSearchService.SearchHitSource.class)))
+        given(esClient.search(any(Function.class), eq(SearchHitSource.class)))
                 .willThrow(new IOException("ES connection refused"));
 
         Product product = ProductFixture.create(1L, 10);
@@ -149,14 +151,14 @@ class ProductSearchServiceTest {
     @SuppressWarnings("unchecked")
     void search_categoryId필터_ES쿼리포함검증() throws IOException {
         // given
-        ProductSearchService.SearchHitSource src = createHitSource(1L, "프로틴바", 4.0f, 3L, "간식");
+        SearchHitSource src = createHitSource(1L, "프로틴바", 4.0f, 3L, "간식");
 
-        SearchResponse<ProductSearchService.SearchHitSource> searchResponse = mock(SearchResponse.class);
-        HitsMetadata<ProductSearchService.SearchHitSource> hitsMetadata = mock(HitsMetadata.class);
-        Hit<ProductSearchService.SearchHitSource> hit = mock(Hit.class);
+        SearchResponse<SearchHitSource> searchResponse = mock(SearchResponse.class);
+        HitsMetadata<SearchHitSource> hitsMetadata = mock(HitsMetadata.class);
+        Hit<SearchHitSource> hit = mock(Hit.class);
         TotalHits totalHits = new TotalHits.Builder().value(1).relation(TotalHitsRelation.Eq).build();
 
-        given(esClient.search(any(Function.class), eq(ProductSearchService.SearchHitSource.class))).willReturn(searchResponse);
+        given(esClient.search(any(Function.class), eq(SearchHitSource.class))).willReturn(searchResponse);
         given(searchResponse.hits()).willReturn(hitsMetadata);
         given(hitsMetadata.hits()).willReturn(List.of(hit));
         given(hitsMetadata.total()).willReturn(totalHits);
@@ -170,7 +172,7 @@ class ProductSearchServiceTest {
         assertThat(result.content()).hasSize(1);
         assertThat(result.content().get(0).categoryId()).isEqualTo(3L);
 
-        verify(esClient).search(any(Function.class), eq(ProductSearchService.SearchHitSource.class));
+        verify(esClient).search(any(Function.class), eq(SearchHitSource.class));
     }
 
     // ===== 케이스 4: 빈 결과 - 빈 리스트 반환 =====
@@ -180,11 +182,11 @@ class ProductSearchServiceTest {
     @SuppressWarnings("unchecked")
     void search_빈결과_빈리스트반환() throws IOException {
         // given
-        SearchResponse<ProductSearchService.SearchHitSource> searchResponse = mock(SearchResponse.class);
-        HitsMetadata<ProductSearchService.SearchHitSource> hitsMetadata = mock(HitsMetadata.class);
+        SearchResponse<SearchHitSource> searchResponse = mock(SearchResponse.class);
+        HitsMetadata<SearchHitSource> hitsMetadata = mock(HitsMetadata.class);
         TotalHits totalHits = new TotalHits.Builder().value(0).relation(TotalHitsRelation.Eq).build();
 
-        given(esClient.search(any(Function.class), eq(ProductSearchService.SearchHitSource.class))).willReturn(searchResponse);
+        given(esClient.search(any(Function.class), eq(SearchHitSource.class))).willReturn(searchResponse);
         given(searchResponse.hits()).willReturn(hitsMetadata);
         given(hitsMetadata.hits()).willReturn(List.of());
         given(hitsMetadata.total()).willReturn(totalHits);
@@ -205,15 +207,15 @@ class ProductSearchServiceTest {
     @SuppressWarnings("unchecked")
     void search_sourceNull_건너뛰기() throws IOException {
         // given: 2개 hit 중 1개 source==null
-        ProductSearchService.SearchHitSource src1 = createHitSource(1L, "닭가슴살 샐러드", 4.5f, 1L, "단백질");
+        SearchHitSource src1 = createHitSource(1L, "닭가슴살 샐러드", 4.5f, 1L, "단백질");
 
-        SearchResponse<ProductSearchService.SearchHitSource> searchResponse = mock(SearchResponse.class);
-        HitsMetadata<ProductSearchService.SearchHitSource> hitsMetadata = mock(HitsMetadata.class);
-        Hit<ProductSearchService.SearchHitSource> hit1 = mock(Hit.class);
-        Hit<ProductSearchService.SearchHitSource> hitNull = mock(Hit.class);
+        SearchResponse<SearchHitSource> searchResponse = mock(SearchResponse.class);
+        HitsMetadata<SearchHitSource> hitsMetadata = mock(HitsMetadata.class);
+        Hit<SearchHitSource> hit1 = mock(Hit.class);
+        Hit<SearchHitSource> hitNull = mock(Hit.class);
         TotalHits totalHits = new TotalHits.Builder().value(2).relation(TotalHitsRelation.Eq).build();
 
-        given(esClient.search(any(Function.class), eq(ProductSearchService.SearchHitSource.class))).willReturn(searchResponse);
+        given(esClient.search(any(Function.class), eq(SearchHitSource.class))).willReturn(searchResponse);
         given(searchResponse.hits()).willReturn(hitsMetadata);
         given(hitsMetadata.hits()).willReturn(List.of(hit1, hitNull));
         given(hitsMetadata.total()).willReturn(totalHits);
@@ -240,15 +242,15 @@ class ProductSearchServiceTest {
     @SuppressWarnings("unchecked")
     void search_totalHitsNull_contentSize사용() throws IOException {
         // given: hitsMetadata.total() → null, hits 2개
-        ProductSearchService.SearchHitSource src1 = createHitSource(1L, "프로틴바 A", 4.0f, 1L, "단백질");
-        ProductSearchService.SearchHitSource src2 = createHitSource(2L, "프로틴바 B", 3.8f, 1L, "단백질");
+        SearchHitSource src1 = createHitSource(1L, "프로틴바 A", 4.0f, 1L, "단백질");
+        SearchHitSource src2 = createHitSource(2L, "프로틴바 B", 3.8f, 1L, "단백질");
 
-        SearchResponse<ProductSearchService.SearchHitSource> searchResponse = mock(SearchResponse.class);
-        HitsMetadata<ProductSearchService.SearchHitSource> hitsMetadata = mock(HitsMetadata.class);
-        Hit<ProductSearchService.SearchHitSource> hit1 = mock(Hit.class);
-        Hit<ProductSearchService.SearchHitSource> hit2 = mock(Hit.class);
+        SearchResponse<SearchHitSource> searchResponse = mock(SearchResponse.class);
+        HitsMetadata<SearchHitSource> hitsMetadata = mock(HitsMetadata.class);
+        Hit<SearchHitSource> hit1 = mock(Hit.class);
+        Hit<SearchHitSource> hit2 = mock(Hit.class);
 
-        given(esClient.search(any(Function.class), eq(ProductSearchService.SearchHitSource.class))).willReturn(searchResponse);
+        given(esClient.search(any(Function.class), eq(SearchHitSource.class))).willReturn(searchResponse);
         given(searchResponse.hits()).willReturn(hitsMetadata);
         given(hitsMetadata.hits()).willReturn(List.of(hit1, hit2));
         given(hitsMetadata.total()).willReturn(null);
@@ -275,11 +277,11 @@ class ProductSearchServiceTest {
     @SuppressWarnings("unchecked")
     void search_페이지기본값보정_안전한기본값적용() throws IOException {
         // given
-        SearchResponse<ProductSearchService.SearchHitSource> searchResponse = mock(SearchResponse.class);
-        HitsMetadata<ProductSearchService.SearchHitSource> hitsMetadata = mock(HitsMetadata.class);
+        SearchResponse<SearchHitSource> searchResponse = mock(SearchResponse.class);
+        HitsMetadata<SearchHitSource> hitsMetadata = mock(HitsMetadata.class);
         TotalHits totalHits = new TotalHits.Builder().value(0).relation(TotalHitsRelation.Eq).build();
 
-        given(esClient.search(any(Function.class), eq(ProductSearchService.SearchHitSource.class))).willReturn(searchResponse);
+        given(esClient.search(any(Function.class), eq(SearchHitSource.class))).willReturn(searchResponse);
         given(searchResponse.hits()).willReturn(hitsMetadata);
         given(hitsMetadata.hits()).willReturn(List.of());
         given(hitsMetadata.total()).willReturn(totalHits);

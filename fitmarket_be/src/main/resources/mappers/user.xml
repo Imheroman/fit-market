@@ -6,13 +6,15 @@
 <mapper namespace="com.ssafy.fitmarket_be.user.repository.UserRepository">
 
   <select id="findByEmail" resultMap="userMap">
-    SELECT * FROM users
-    where email = #{email}
+    SELECT id, name, email, password, phone, role, created_date, modified_date, deleted_date
+    FROM users
+    WHERE email = #{email}
   </select>
 
   <select id="findBy" resultMap="userMap">
-    SELECT * FROM users
-    where id = #{id}
+    SELECT id, name, email, password, phone, role, created_date, modified_date, deleted_date
+    FROM users
+    WHERE id = #{id}
   </select>
 
   <insert id="save" useGeneratedKeys="true" keyProperty="id">
