@@ -1,6 +1,7 @@
 package com.ssafy.fitmarket_be.advice;
 
 import com.ssafy.fitmarket_be.global.common.ApiResponse;
+import com.ssafy.fitmarket_be.global.exception.BusinessException;
 import jakarta.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
@@ -57,6 +59,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.warn("접근 거부: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
             .body(ApiResponse.error("접근 권한이 없습니다."));
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(
+            final BusinessException e) {
+        log.warn("비즈니스 예외 발생: {}", e.getMessage());
+        return ResponseEntity.status(e.getStatus())
+            .body(ApiResponse.error(e.getMessage()));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiResponse<Void>> handleResponseStatusException(
+            final ResponseStatusException e) {
+        log.warn("ResponseStatus 예외: status={}, reason={}", e.getStatusCode(), e.getReason());
+        return ResponseEntity.status(e.getStatusCode())
+            .body(ApiResponse.error(e.getReason()));
     }
 
     @ExceptionHandler({Throwable.class})

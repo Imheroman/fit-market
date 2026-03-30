@@ -96,20 +96,22 @@ public class ProductService {
         }
 
         // 상품 등록
-        productMapper.insertProduct(
-            userId,
-            request.categoryId(),
-            request.name(),
-            request.description(),
-            request.price(),
-            request.weightG(),
-            request.stock(),
-            request.imageUrl(),
-            foodId
-        );
+        ProductInsertCommand command = ProductInsertCommand.builder()
+            .userId(userId)
+            .categoryId(request.categoryId())
+            .name(request.name())
+            .description(request.description())
+            .price(request.price())
+            .weightG(request.weightG())
+            .stock(request.stock())
+            .imageUrl(request.imageUrl())
+            .foodId(foodId)
+            .build();
+
+        productMapper.insertProduct(command);
 
         // 방금 등록한 상품 조회
-        Long productId = productMapper.selectLastInsertId();
+        Long productId = command.getId();  // MyBatis가 자동 세팅한 ID
         Product product = productMapper.selectProductById(productId);
 
         eventPublisher.publishEvent(new ProductEvent.Created(productId));
