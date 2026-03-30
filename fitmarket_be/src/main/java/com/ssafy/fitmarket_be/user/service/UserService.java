@@ -59,16 +59,18 @@ public class UserService {
     int result = this.userRepository.delete(id);
 
     if (result <= 0) {
-      throw new RuntimeException("회원 탈퇴 실패 이메일: ".concat(id.toString()));
+      log.error("회원 탈퇴 처리 실패. userId={}", id);
+      throw new RuntimeException("회원 탈퇴 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
     }
   }
 
   @Transactional
   public UserUpdateResponseDto updateName(Long id, String name) {
-    int result = this.update(id, "name", name);
+    int result = this.userRepository.updateName(id, name);
 
     if (result <= 0) {
-      throw new RuntimeException("회원 이름 수정 실패 이메일: ".concat(id.toString()));
+      log.error("이름 변경 실패. userId={}", id);
+      throw new RuntimeException("이름 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.");
     }
 
     return new UserUpdateResponseDto(name);
@@ -76,10 +78,11 @@ public class UserService {
 
   @Transactional
   public UserUpdateResponseDto updatePhone(Long id, String phone) {
-    int result = this.update(id, "phone", phone);
+    int result = this.userRepository.updatePhone(id, phone);
 
     if (result <= 0) {
-      throw new RuntimeException("회원 전화번호 수정 실패 이메일: ".concat(id.toString()));
+      log.error("전화번호 변경 실패. userId={}", id);
+      throw new RuntimeException("전화번호 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.");
     }
 
     return new UserUpdateResponseDto(phone);
@@ -107,17 +110,13 @@ public class UserService {
     }
 
     String encodedPassword = this.passwordEncoder.encode(request.getNewPassword());
-    int result = this.update(id, "password", encodedPassword);
+    int result = this.userRepository.updatePassword(id, encodedPassword);
 
     if (result <= 0) {
-      throw new RuntimeException("비밀번호 변경에 실패했어요. 잠시 후 다시 시도해 주세요.");
+      log.error("비밀번호 변경 실패. userId={}", id);
+      throw new RuntimeException("비밀번호 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.");
     }
 
     return new UserUpdateResponseDto("");
-  }
-
-  private int update(Long id, String column, String value) {
-    log.trace("update userId: {}, column: {}", id, column);
-    return this.userRepository.update(id, column, value);
   }
 }

@@ -23,17 +23,18 @@ import com.ssafy.fitmarket_be.order.dto.OrderCreateResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderDetailResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderItemResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderRefundEligibilityResponse;
+import com.ssafy.fitmarket_be.order.dto.OrderStatusUpdateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderRefundRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeResponse;
 import com.ssafy.fitmarket_be.order.dto.OrderReturnExchangeStatusResponse;
-import com.ssafy.fitmarket_be.order.dto.OrderStatusUpdateRequest;
 import com.ssafy.fitmarket_be.order.dto.OrderSummaryResponse;
 import com.ssafy.fitmarket_be.order.repository.OrderRepository;
 import com.ssafy.fitmarket_be.payment.domain.PaymentStatus;
 import com.ssafy.fitmarket_be.payment.repository.PaymentRepository;
 import com.ssafy.fitmarket_be.product.domain.Product;
 import com.ssafy.fitmarket_be.product.repository.ProductMapper;
+import com.ssafy.fitmarket_be.ranking.service.ProductRankingService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -68,6 +69,7 @@ public class OrderService {
   private final AddressRepository addressRepository;
   private final PaymentRepository paymentRepository;
   private final ObjectMapper objectMapper;
+  private final ProductRankingService rankingService;
 
   /**
    * 선결제 후 주문 생성 플로우를 위해, 프런트에서 전달한 주문 번호를 그대로 사용해 주문을 생성한다.
@@ -137,7 +139,22 @@ public class OrderService {
     }
 
     saveOrderProducts(order.getId(), orderProducts);
+
+    // 주문 상품별 재고 차감
+    for (OrderProductEntity item : orderProducts) {
+      int affected = productMapper.decreaseStock(item.getProductId(), item.getQuantity());
+      if (affected == 0) {
+        throw new IllegalStateException(
+            "재고가 부족해요. 상품: " + item.getProductName()
+        );
+      }
+    }
+
     saveOrderAddressHistory(order.getId(), address);
+
+    for (OrderProductEntity item : orderProducts) {
+      rankingService.incrementScore(item.getProductId(), 10.0);
+    }
 
     int updatedApproval = orderRepository.updateApprovalStatus(order.getId(),
         OrderApprovalStatus.PENDING_APPROVAL.dbValue());
@@ -197,8 +214,10 @@ public class OrderService {
         .orElse(null);
     boolean hasReturnExchangeRequest = returnExchange != null;
     RefundEligibility refundEligibility = evaluateRefundEligibility(order, hasReturnExchangeRequest);
-    ReturnExchangeEligibility returnExchangeEligibility =
-        evaluateReturnExchangeEligibility(order, hasReturnExchangeRequest);
+    ReturnExchangeEligibility returnEligibility =
+        evaluateReturnEligibility(order, hasReturnExchangeRequest);
+    ReturnExchangeEligibility exchangeEligibility =
+        evaluateExchangeEligibility(order, hasReturnExchangeRequest);
 
     return new OrderDetailResponse(
         order.getOrderNumber(),
@@ -211,8 +230,8 @@ public class OrderService {
         order.getShippingFee(),
         order.getDiscountAmount(),
         refundEligibility.eligible(),
-        returnExchangeEligibility.eligible(),
-        returnExchangeEligibility.eligible(),
+        returnEligibility.eligible(),
+        exchangeEligibility.eligible(),
         returnExchange == null ? null : toReturnExchangeStatusResponse(returnExchange),
         order.getOrderDate(),
         order.getComment(),
@@ -259,6 +278,32 @@ public class OrderService {
       throw new IllegalStateException("배송지 정보를 수정하지 못했어요. 잠시 후 다시 시도해 주세요.");
     }
     refreshOrderAddressHistory(order.getId(), address);
+  }
+
+  /**
+   * 주문을 취소한다.
+   * 사용자는 PENDING_APPROVAL 상태의 주문만 취소할 수 있다.
+   *
+   * @param userId      사용자 식별자
+   * @param orderNumber 주문 번호
+   */
+  @Transactional
+  public void cancelOrder(Long userId, String orderNumber) {
+    OrderView order = findOwnedOrder(userId, orderNumber);
+    OrderApprovalStatus currentStatus = OrderApprovalStatus.from(order.getApprovalStatus());
+
+    if (currentStatus.isTerminal()) {
+      throw new IllegalStateException("이미 종료된 주문은 변경할 수 없어요.");
+    }
+    if (currentStatus != OrderApprovalStatus.PENDING_APPROVAL) {
+      throw new IllegalStateException("취소할 수 없는 주문 상태예요. 현재 상태: " + currentStatus.dbValue());
+    }
+
+    int updated = orderRepository.updateApprovalStatus(order.getId(), OrderApprovalStatus.CANCELLED.dbValue());
+    if (updated <= 0) {
+      throw new IllegalStateException("주문 취소 처리 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
+    }
+    restoreStock(order.getId());
   }
 
   /**
@@ -323,6 +368,7 @@ public class OrderService {
       log.info("payment row not found while refunding order {}", orderNumber);
     }
     orderRepository.updateApprovalStatus(order.getId(), OrderApprovalStatus.CANCELLED.dbValue());
+    restoreStock(order.getId());
 
     saveReturnExchangeRequest(
         order.getId(),
@@ -380,6 +426,9 @@ public class OrderService {
     if (status.isTerminal()) {
       return new RefundEligibility(false, "이미 종료된 주문이라 환불할 수 없어요.");
     }
+    if (status == OrderApprovalStatus.DELIVERED) {
+      return new RefundEligibility(false, "배송 완료된 주문은 반품/교환을 이용해 주세요.");
+    }
     if (status.isShippingOrLater()) {
       return new RefundEligibility(false, "배송이 시작된 주문은 환불할 수 없어요.");
     }
@@ -417,6 +466,18 @@ public class OrderService {
       return new ReturnExchangeEligibility(false, "배송 완료 후 7일이 지나 반품/교환할 수 없어요.");
     }
     return new ReturnExchangeEligibility(true, "반품/교환이 가능해요.");
+  }
+
+  private ReturnExchangeEligibility evaluateReturnEligibility(
+      OrderView order, boolean hasReturnExchangeRequest
+  ) {
+    return evaluateReturnExchangeEligibility(order, hasReturnExchangeRequest);
+  }
+
+  private ReturnExchangeEligibility evaluateExchangeEligibility(
+      OrderView order, boolean hasReturnExchangeRequest
+  ) {
+    return evaluateReturnExchangeEligibility(order, hasReturnExchangeRequest);
   }
 
   private boolean hasReturnExchangeRequest(Long orderId) {
@@ -482,6 +543,16 @@ public class OrderService {
     orderRepository.softDeleteOrderProducts(order.getId());
   }
 
+  private void restoreStock(Long orderId) {
+    List<OrderProductEntity> items = orderRepository.findOrderProductsByOrderIds(List.of(orderId))
+        .stream()
+        .filter(item -> item.getOrderId().equals(orderId))
+        .toList();
+    for (OrderProductEntity item : items) {
+      productMapper.increaseStock(item.getProductId(), item.getQuantity());
+    }
+  }
+
   private void saveOrderProducts(Long orderId, List<OrderProductEntity> orderProducts) {
     int insertedProducts = orderRepository.insertOrderProducts(orderId, orderProducts);
     if (insertedProducts != orderProducts.size()) {
@@ -529,6 +600,15 @@ public class OrderService {
     List<OrderProductEntity> orderProducts = new ArrayList<>();
     for (ShoppingCartProduct cartProduct : cartProducts) {
       validateQuantityLimit(cartProduct.getQuantity());
+
+      // 재고 확인
+      Product product = productMapper.selectProductById(cartProduct.getProductId());
+      if (product == null || product.getStock() < cartProduct.getQuantity()) {
+        throw new IllegalArgumentException(
+            "재고가 부족해요. 상품: " + cartProduct.getProductName()
+        );
+      }
+
       long totalPrice = cartProduct.getPrice() * cartProduct.getQuantity();
       orderProducts.add(OrderProductEntity.builder()
           .productId(cartProduct.getProductId())

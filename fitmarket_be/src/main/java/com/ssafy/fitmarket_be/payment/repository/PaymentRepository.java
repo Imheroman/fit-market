@@ -40,4 +40,12 @@ public interface PaymentRepository {
    * @return 결제 승인 시각
    */
   Optional<LocalDateTime> findApprovedAtByOrderId(@Param("orderId") Long orderId);
+
+  /**
+   * paymentKey로 기존 결제 존재 여부를 확인한다 (멱등성 체크).
+   *
+   * @param paymentKey 토스페이먼츠 결제 키
+   * @return 기존 결제 정보
+   */
+  Optional<Payment> findByPaymentKey(@Param("paymentKey") String paymentKey);
 }

@@ -1,0 +1,55 @@
+{
+  "properties": {
+    "id": { "type": "long" },
+    "name": {
+      "type": "text",
+      "analyzer": "korean_analyzer",
+      "fields": {
+        "keyword": { "type": "keyword" },
+        "suggest": {
+          "type": "completion",
+          "analyzer": "simple",
+          "max_input_length": 50
+        }
+      }
+    },
+    "description": {
+      "type": "text",
+      "analyzer": "korean_analyzer"
+    },
+    "price": { "type": "long" },
+    "stock": { "type": "integer" },
+    "rating": { "type": "float" },
+    "reviewCount": { "type": "integer" },
+    "imageUrl": { "type": "keyword", "index": false },
+    "categoryId": { "type": "long" },
+    "categoryName": {
+      "type": "text",
+      "analyzer": "korean_analyzer",
+      "fields": {
+        "keyword": { "type": "keyword" }
+      }
+    },
+    "foodName": {
+      "type": "text",
+      "analyzer": "korean_analyzer"
+    },
+    "nutrition": {
+      "type": "object",
+      "properties": {
+        "calories": { "type": "float" },
+        "protein": { "type": "float" },
+        "carbs": { "type": "float" },
+        "fat": { "type": "float" }
+      }
+    },
+    "sellerId": { "type": "long" },
+    "createdDate": { "type": "date" },
+    "updatedDate": { "type": "date" },
+    "suggest": {
+      "type": "completion",
+      "analyzer": "simple",
+      "max_input_length": 50
+    }
+  }
+}

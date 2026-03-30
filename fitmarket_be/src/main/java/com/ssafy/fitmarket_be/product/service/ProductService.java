@@ -5,9 +5,14 @@ import com.ssafy.fitmarket_be.food.domain.Food;
 import com.ssafy.fitmarket_be.global.dto.PageResponse;
 import com.ssafy.fitmarket_be.product.domain.Product;
 import com.ssafy.fitmarket_be.product.dto.*;
+import com.ssafy.fitmarket_be.product.event.ProductEvent;
 import com.ssafy.fitmarket_be.product.repository.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,11 +28,18 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final LLMService llmService;
     private final com.ssafy.fitmarket_be.ai.service.FoodVectorStoreService foodVectorStoreService;
+    private final ApplicationEventPublisher eventPublisher;
+
+    @org.springframework.beans.factory.annotation.Value("${app.ai.enabled:true}")
+    private boolean aiEnabled;
 
     /**
      * 상품 목록 조회 (페이징, 필터링).
      * categoryId와 keyword를 동시에 적용 가능합니다.
      */
+    @Cacheable(value = "products",
+               key = "#categoryId + ':' + #keyword + ':' + #page + ':' + #size",
+               sync = true)
     public PageResponse<ProductListResponse> getProducts(Integer page, Integer size, Long categoryId, String keyword) {
         int safePage = (page == null || page < 1) ? 1 : page;
         int safeSize = (size == null || size < 1) ? 20 : size;
@@ -70,14 +82,18 @@ public class ProductService {
      * 상품 등록.
      * RAG를 사용하여 상품명과 유사한 식품 후보를 찾고, LLM으로 최종 매칭합니다.
      */
+    @CacheEvict(value = {"products", "best-products", "new-products", "categories"}, allEntries = true)
     @Transactional
     public ProductCreateResponse createProduct(Long userId, ProductCreateRequest request) {
-        // RAG: 벡터 검색으로 상위 50개 유사 식품 추출 (토큰 대폭 절감!)
-        List<Food> similarFoods =
-            foodVectorStoreService.searchSimilarFoods(request.name(), 50);
+        Long foodId = null;
+        if (aiEnabled) {
+            // RAG: 벡터 검색으로 상위 50개 유사 식품 추출 (토큰 대폭 절감!)
+            List<Food> similarFoods =
+                foodVectorStoreService.searchSimilarFoods(request.name(), 50);
 
-        // LLM으로 최종 매칭 (50개만 전달하므로 토큰 99% 절감)
-        Long foodId = llmService.findBestMatch(request.name(), similarFoods);
+            // LLM으로 최종 매칭 (50개만 전달하므로 토큰 99% 절감)
+            foodId = llmService.findBestMatch(request.name(), similarFoods);
+        }
 
         // 상품 등록
         productMapper.insertProduct(
@@ -96,15 +112,26 @@ public class ProductService {
         Long productId = productMapper.selectLastInsertId();
         Product product = productMapper.selectProductById(productId);
 
+        eventPublisher.publishEvent(new ProductEvent.Created(productId));
         return ProductCreateResponse.from(product);
     }
 
     /**
      * 상품 수정.
      */
+    @Caching(evict = {
+        @CacheEvict(value = {"products", "best-products", "new-products"}, allEntries = true),
+        @CacheEvict(value = "product-detail", key = "#productId")
+    })
     @Transactional
-    public ProductUpdateResponse updateProduct(Long productId, ProductUpdateRequest request) {
-        // 상품 수정
+    public ProductUpdateResponse updateProduct(Long userId, Long productId, ProductUpdateRequest request) {
+        Product product = productMapper.selectProductById(productId);
+        if (product == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다.");
+        }
+        if (!productMapper.existsByIdAndUserId(productId, userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "해당 상품을 수정할 권한이 없습니다.");
+        }
         productMapper.updateProduct(
             productId,
             request.name(),
@@ -115,32 +142,45 @@ public class ProductService {
             request.stock(),
             request.imageUrl()
         );
+        Product updated = productMapper.selectProductById(productId);
 
-        // 수정된 상품 조회
-        Product product = productMapper.selectProductById(productId);
-
-        return ProductUpdateResponse.from(product);
+        eventPublisher.publishEvent(new ProductEvent.Updated(productId));
+        return ProductUpdateResponse.from(updated);
     }
 
     /**
      * 상품 삭제 (소프트 삭제).
      */
+    @Caching(evict = {
+        @CacheEvict(value = {"products", "best-products", "new-products", "categories"}, allEntries = true),
+        @CacheEvict(value = "product-detail", key = "#productId")
+    })
     @Transactional
-    public void deleteProduct(Long productId) {
+    public void deleteProduct(Long userId, Long productId) {
+        Product product = productMapper.selectProductById(productId);
+        if (product == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다.");
+        }
+        if (!productMapper.existsByIdAndUserId(productId, userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "해당 상품을 삭제할 권한이 없습니다.");
+        }
         productMapper.deleteProduct(productId);
+        eventPublisher.publishEvent(new ProductEvent.Deleted(productId));
     }
 
     /**
      * 상품 상세 조회 (조회 시 review_count + 1).
      */
+    @Cacheable(value = "product-detail", key = "#productId")
     @Transactional
     public ProductDetailResponse getProductDetail(Long productId) {
-        productMapper.incrementReviewCount(productId);
         Product product = productMapper.selectProductById(productId);
         if (product == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다: " + productId);
         }
-        return ProductDetailResponse.from(product);
+        productMapper.incrementReviewCount(productId);
+        Product updated = productMapper.selectProductById(productId);
+        return ProductDetailResponse.from(updated);
     }
 
     /**
@@ -156,6 +196,9 @@ public class ProductService {
     /**
      * 베스트 상품 조회 (평점/리뷰순).
      */
+    @Cacheable(value = "best-products",
+               key = "#page + ':' + #size",
+               sync = true)
     public PageResponse<ProductListResponse> getBestProducts(Integer page, Integer size) {
         int safePage = (page == null || page < 1) ? 1 : page;
         int safeSize = (size == null || size < 1) ? 12 : size;
@@ -185,6 +228,9 @@ public class ProductService {
     /**
      * 신상품 조회 (최신순).
      */
+    @Cacheable(value = "new-products",
+               key = "#page + ':' + #size",
+               sync = true)
     public PageResponse<ProductListResponse> getNewProducts(Integer page, Integer size) {
         int safePage = (page == null || page < 1) ? 1 : page;
         int safeSize = (size == null || size < 1) ? 12 : size;

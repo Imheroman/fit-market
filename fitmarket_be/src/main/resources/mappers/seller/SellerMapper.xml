@@ -50,6 +50,51 @@
         ORDER BY created_date DESC
     </select>
 
+    <resultMap id="SellerWithUserMap" type="com.ssafy.fitmarket_be.seller.api.dto.SellerResponse">
+        <constructor>
+            <idArg column="id" javaType="long"/>
+            <arg column="user_id" javaType="long"/>
+            <arg column="user_name" javaType="string"/>
+            <arg column="user_email" javaType="string"/>
+            <arg column="business_name" javaType="string"/>
+            <arg column="business_number" javaType="string"/>
+            <arg column="business_type" javaType="string"/>
+            <arg column="contact_phone" javaType="string"/>
+            <arg column="business_address" javaType="string"/>
+            <arg column="introduction" javaType="string"/>
+            <arg column="status" javaType="string"/>
+            <arg column="review_note" javaType="string"/>
+            <arg column="reviewed_by" javaType="long"/>
+            <arg column="created_date" javaType="java.time.LocalDateTime"/>
+            <arg column="modified_date" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <select id="findByStatusWithUser" resultMap="SellerWithUserMap">
+        SELECT
+            s.id,
+            s.user_id,
+            u.name         AS user_name,
+            u.email        AS user_email,
+            s.business_name,
+            s.business_number,
+            s.business_type,
+            s.contact_phone,
+            s.business_address,
+            s.introduction,
+            s.status,
+            s.review_note,
+            s.reviewed_by,
+            s.created_date,
+            s.modified_date
+        FROM sellers s
+        INNER JOIN users u ON s.user_id = u.id
+        WHERE s.deleted_date IS NULL
+          AND u.deleted_date IS NULL
+          AND s.status = #{status,javaType=com.ssafy.fitmarket_be.seller.domain.SellerStatus,typeHandler=com.ssafy.fitmarket_be.seller.infrastructure.mybatis.SellerStatusTypeHandler}
+        ORDER BY s.created_date DESC
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO sellers (
             user_id,

@@ -1,0 +1,45 @@
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:fitmarket;MODE=MySQL;NON_KEYWORDS=VALUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration
+      - org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchClientAutoConfiguration
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:h2/schema-h2.sql
+      data-locations: classpath:h2/test-data.sql
+  elasticsearch:
+    uris: http://localhost:9200
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+mybatis:
+  type-aliases-package: com.ssafy.fitmarket_be.entity
+  mapper-locations: classpath:/mappers/**/*.xml
+
+jwt:
+  access-expiration-time: 900000
+  refresh-expiration-time: 604800000
+  secret: dGVzdHNlY3JldGtleWZvcmpXdFRlc3RpbmdQdXJwb3NlT25seU5vdFByb2Q=
+
+file:
+  upload-dir: uploads
+
+search:
+  elasticsearch:
+    enabled: false
+    init-index: false
+
+cors:
+  allowed-origins: http://localhost:5173
+
+openai:
+  api:
+    key: test-key

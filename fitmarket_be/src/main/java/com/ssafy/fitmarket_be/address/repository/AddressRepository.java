@@ -36,4 +36,6 @@ public interface AddressRepository {
   );
 
   Optional<Long> findSingleActiveAddressId(@Param("userId") Long userId);
+
+  Optional<Long> findFirstActiveAddressId(@Param("userId") Long userId);
 }

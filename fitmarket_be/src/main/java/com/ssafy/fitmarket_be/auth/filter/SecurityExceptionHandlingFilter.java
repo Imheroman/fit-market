@@ -12,6 +12,7 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -31,6 +32,8 @@ public class SecurityExceptionHandlingFilter extends OncePerRequestFilter {
                 setErrorResponse(response, HttpStatus.UNAUTHORIZED, "TOKEN_ERROR");
             } else if (e instanceof BadCredentialsException) { // 로그인 실패 관련 처리
                 setErrorResponse(response, HttpStatus.UNAUTHORIZED, e.getMessage());
+            } else if (e instanceof AccessDeniedException) { // 메서드 보안 접근 거부 처리
+                setErrorResponse(response, HttpStatus.FORBIDDEN, "접근 권한이 없습니다. (Forbidden)");
             } else { // 기타 예외 처리
                 setErrorResponse(response, HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
             }

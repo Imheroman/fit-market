@@ -15,7 +15,7 @@
 import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import MyProfileSection from '@/components/mypage/MyProfileSection.vue';
-import { useAuth } from '@/composables/useAuth';
+import { useAuth } from '@/features/auth/composables/useAuth';
 import { formatPhoneNumber } from '@/utils/phone';
 import { shouldShowErrorAlert } from '@/utils/httpError';
 

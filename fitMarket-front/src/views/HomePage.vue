@@ -4,7 +4,7 @@
     <AppHeader />
 
     <!-- Hero Section -->
-    <section class="relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-green-700 text-white">
+    <section class="relative bg-gradient-to-br from-green-500 via-green-600 to-green-700 text-white">
       <div class="absolute inset-0 bg-[url('/fresh-vegetables-pattern.png')] opacity-10" />
       <div class="relative container mx-auto px-4 py-16 md:py-24">
         <div class="max-w-2xl">
@@ -19,23 +19,12 @@
             표준 식품 DB로 정확한 영양 정보를 제공합니다.
           </p>
           <div class="flex flex-col sm:flex-row gap-4">
-            <div class="relative flex-1 max-w-md">
-              <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="칼로리, 단백질, 상품명으로 검색..."
-                class="w-full pl-12 h-12 bg-white text-gray-900 rounded-lg border-0 shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                @keyup.enter="handleSearch"
+            <div class="flex-1 max-w-md">
+              <SearchBar
+                class="w-full [&_input]:h-12 [&_input]:bg-white [&_input]:text-gray-900 [&_input]:rounded-lg [&_input]:border-0 [&_input]:shadow-lg [&_input]:pl-12 [&_input]:text-base"
+                @search="handleSearchFromBar"
               />
             </div>
-            <button
-              class="h-12 px-6 bg-white text-green-600 hover:bg-green-50 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
-              @click="handleSearch"
-            >
-              검색하기
-              <ArrowRight class="w-5 h-5" />
-            </button>
           </div>
         </div>
       </div>
@@ -344,10 +333,11 @@ import { Search, Flame, Leaf, ShoppingCart, ArrowRight, ArrowUp, ArrowDown, Chev
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
 import ProductCard from '@/components/ProductCard.vue';
-import { useProducts } from '@/composables/useProducts';
-import { useCart } from '@/composables/useCart';
+import SearchBar from '@/features/search/components/SearchBar.vue';
+import { useProducts } from '@/features/product/composables/useProducts';
+import { useCart } from '@/features/cart/composables/useCart';
 import { shouldShowErrorAlert } from '@/utils/httpError';
-import { fetchCategories } from '@/api/categoriesApi';
+import { fetchCategories } from '@/features/product/api';
 
 const { products, isLoading, errorMessage, toggleFavorite, loadProducts, pagination } = useProducts();
 const { addToCart } = useCart();
@@ -434,6 +424,7 @@ const activeFilterCount = computed(() => {
 
 // Sort options
 const sortOptions = [
+  { key: 'relevance', label: '관련도순' },
   { key: 'date', label: '최신순' },
   { key: 'popularity', label: '인기순' },
   { key: 'price', label: '가격' },
@@ -445,13 +436,14 @@ const sortOptions = [
 
 const currentSort = ref('date')
 const sortDirections = ref({
-  date: 'desc',      // 최신순 (desc) ↔ 오래된순 (asc)
-  popularity: 'desc', // 인기순 (desc) ↔ 비인기순 (asc)
-  price: 'asc',      // 낮은 (asc) ↔ 높은 (desc)
-  calories: 'asc',   // 낮은 (asc) ↔ 높은 (desc)
-  carbs: 'asc',      // 낮은 (asc) ↔ 높은 (desc)
-  protein: 'asc',    // 낮은 (asc) ↔ 높은 (desc)
-  fat: 'asc',        // 낮은 (asc) ↔ 높은 (desc)
+  relevance: 'desc',  // 관련도순 (ES 반환 순서 유지)
+  date: 'desc',       // 최신순 (desc) ↔ 오래된순 (asc)
+  popularity: 'desc',  // 인기순 (desc) ↔ 비인기순 (asc)
+  price: 'asc',       // 낮은 (asc) ↔ 높은 (desc)
+  calories: 'asc',    // 낮은 (asc) ↔ 높은 (desc)
+  carbs: 'asc',       // 낮은 (asc) ↔ 높은 (desc)
+  protein: 'asc',     // 낮은 (asc) ↔ 높은 (desc)
+  fat: 'asc',         // 낮은 (asc) ↔ 높은 (desc)
 })
 
 const toggleSort = (key) => {
@@ -470,6 +462,9 @@ const getSortIcon = (key) => {
 }
 
 const filteredProducts = computed(() => {
+  if (!hasActiveFilters.value) {
+    return products.value
+  }
   return products.value.filter((product) => {
     const calories = product.calories || 0
     const protein = product.protein || 0
@@ -501,6 +496,9 @@ const sortedProducts = computed(() => {
     let aVal, bVal
 
     switch (currentSort.value) {
+      case 'relevance':
+        // ES 관련도 순서 유지 (재정렬하지 않음)
+        return 0
       case 'date':
         // id가 클수록 최신 (가정)
         aVal = a.id
@@ -618,6 +616,15 @@ const goToPage = async (page) => {
 const handleSearch = async () => {
   const keyword = searchQuery.value.trim();
   activeKeyword.value = keyword;
+  await loadWithFilters(1);
+};
+
+const handleSearchFromBar = async (keyword) => {
+  searchQuery.value = keyword;
+  activeKeyword.value = keyword;
+  if (keyword && keyword.trim()) {
+    currentSort.value = 'relevance';
+  }
   await loadWithFilters(1);
 };
 </script>

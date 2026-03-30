@@ -110,15 +110,21 @@ public class AddressService {
 
   @Transactional
   public void delete(Long userId, Long id) {
+    // 1. 삭제 전 해당 배송지의 메인 여부 확인
+    Address target = this.addressRepository.findByIdAndUserId(id, userId)
+        .orElseThrow(() -> new IllegalArgumentException("삭제할 배송지를 찾을 수 없어요. 이미 삭제되었는지 확인해 주세요."));
+    boolean wasMain = target.isMain();
+
+    // 2. 삭제 수행
     int deleted = this.addressRepository.delete(id, userId);
     if (deleted <= 0) {
       throw new IllegalArgumentException("삭제할 배송지를 찾을 수 없어요. 이미 삭제되었는지 확인해 주세요.");
     }
 
-    int remainingAddresses = this.addressRepository.countActiveByUserId(userId);
-    if (remainingAddresses == 1) {
-      Optional<Long> remainingAddressId = this.addressRepository.findSingleActiveAddressId(userId);
-      remainingAddressId.ifPresent(
+    // 3. 삭제된 배송지가 메인이었으면, 남은 배송지 중 가장 오래된 것을 메인으로 설정
+    if (wasMain) {
+      Optional<Long> firstRemainingId = this.addressRepository.findFirstActiveAddressId(userId);
+      firstRemainingId.ifPresent(
           addressId -> this.addressRepository.setMainByUserIdAndAddressId(userId, addressId));
     }
   }

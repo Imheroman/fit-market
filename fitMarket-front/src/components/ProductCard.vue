@@ -8,6 +8,7 @@
           :src="product.image"
           :alt="product.name"
           class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          @error="onImageError"
       />
       <span class="absolute top-3 left-3 px-3 py-1 bg-green-500 text-white text-sm font-medium rounded-full">
         {{ product.category }}
@@ -16,7 +17,8 @@
 
     <div class="p-5">
       <div class="flex items-start justify-between mb-2">
-        <h3 class="font-semibold text-lg">{{ product.name }}</h3>
+        <h3 v-if="product.highlightedName" class="font-semibold text-lg search-highlight" v-html="product.highlightedName"></h3>
+        <h3 v-else class="font-semibold text-lg">{{ product.name }}</h3>
       </div>
 
       <div class="flex items-center gap-1 mb-3">
@@ -62,8 +64,10 @@
 import {computed} from 'vue'
 import {useRouter} from 'vue-router'
 import {Star, ShoppingCart} from 'lucide-vue-next'
+import {useImageFallback} from '@/composables/useImageFallback'
 
 const router = useRouter()
+const {onImageError} = useImageFallback()
 
 const props = defineProps({
   product: {
@@ -89,3 +93,14 @@ const handleAddToCart = () => {
   emit('add-to-cart', props.product.id)
 }
 </script>
+
+<style scoped>
+.search-highlight :deep(em) {
+  font-style: normal;
+  font-weight: 700;
+  color: #16a34a;
+  background-color: #dcfce7;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+</style>

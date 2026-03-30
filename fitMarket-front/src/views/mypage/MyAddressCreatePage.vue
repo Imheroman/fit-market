@@ -37,8 +37,8 @@
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 import MyAddressForm from '@/components/mypage/MyAddressForm.vue';
-import { useAuth } from '@/composables/useAuth';
-import { useAddresses } from '@/composables/useAddresses';
+import { useAuth } from '@/features/auth/composables/useAuth';
+import { useAddresses } from '@/features/address/composables/useAddresses';
 
 const router = useRouter();
 const { user, loadUserProfile } = useAuth();

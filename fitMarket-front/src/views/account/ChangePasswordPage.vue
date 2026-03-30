@@ -151,8 +151,8 @@ import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
-import { useAuth } from '@/composables/useAuth';
-import { useChangePassword } from '@/composables/useChangePassword';
+import { useAuth } from '@/features/auth/composables/useAuth';
+import { useChangePassword } from '@/features/user/composables/useChangePassword';
 
 const router = useRouter();
 const { isAuthenticated, isProfileLoading, profileError, loadUserProfile, logout } = useAuth();

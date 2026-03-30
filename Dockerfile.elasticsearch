@@ -1,0 +1,4 @@
+FROM docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+
+# Nori 한글 형태소 분석기 설치 (mecab-ko-dic 기반)
+RUN bin/elasticsearch-plugin install --batch analysis-nori

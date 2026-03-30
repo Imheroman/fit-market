@@ -81,8 +81,8 @@ import {Clock} from 'lucide-vue-next';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
 import ProductCard from '@/components/ProductCard.vue';
-import {useCart} from '@/composables/useCart';
-import {useNewProducts} from '@/composables/useNewProducts';
+import {useCart} from '@/features/cart/composables/useCart';
+import {useNewProducts} from '@/features/product/composables/useNewProducts';
 import {shouldShowErrorAlert} from '@/utils/httpError';
 
 const {products: sortedProducts, isLoading, errorMessage, toggleFavorite, loadProducts, pagination} = useNewProducts();

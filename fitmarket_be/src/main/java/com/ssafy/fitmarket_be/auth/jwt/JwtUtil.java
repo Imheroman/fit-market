@@ -2,10 +2,7 @@ package com.ssafy.fitmarket_be.auth.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,103 +15,111 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JwtUtil {
-  private static final long EXPIRATION_TIME = 1000 * 60 * 30; // 30분
   private static final String USER_NAME = "username";
   private static final String ROLE = "role";
+  private static final String TYPE = "type";
 
   private final SecretKey key;
+  private final long accessExpirationTime;
+  private final long refreshExpirationTime;
 
-  public JwtUtil(@Value("${jwt.secret}") String secret) {
+  public JwtUtil(
+      @Value("${jwt.secret}") String secret,
+      @Value("${jwt.access-expiration-time}") long accessExpirationTime,
+      @Value("${jwt.refresh-expiration-time}") long refreshExpirationTime
+  ) {
     this.key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
+    this.accessExpirationTime = accessExpirationTime;
+    this.refreshExpirationTime = refreshExpirationTime;
   }
 
-  public String create(Long id, String username, Collection<? extends GrantedAuthority> authorities) {
+  public String createAccessToken(Long id, String username, Collection<? extends GrantedAuthority> authorities) {
     String role = authorities.stream()
         .map(GrantedAuthority::getAuthority)
         .collect(Collectors.joining(","));
 
-    return Jwts.builder().header().add("typ", "JWT") // 헤더: 타입 지정 (필수적이진 않음)
-        .and()
+    return Jwts.builder()
+        .header().add("typ", "JWT").and()
+        .id(UUID.randomUUID().toString())
         .subject(String.valueOf(id))
-        .claim(USER_NAME, username) // email
-        .claim(ROLE, role)         // role
-        .issuedAt(new Date(System.currentTimeMillis())) // 발행 시간
-        .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME)) // 만료 시간
-        .signWith(key) // signature
+        .claim(USER_NAME, username)
+        .claim(ROLE, role)
+        .claim(TYPE, "access")
+        .issuedAt(new Date())
+        .expiration(new Date(System.currentTimeMillis() + accessExpirationTime))
+        .signWith(key)
         .compact();
   }
 
-  /**
-   * 토큰에서 user sequence id 추출
-   *
-   * @param token
-   * @return
-   */
-  public Long getId(String token) {
-    String id = parseClaims(token).getSubject();
-    return Long.parseLong(id);
+  public String createRefreshToken(Long id, String username, Collection<? extends GrantedAuthority> authorities) {
+    String role = authorities.stream()
+        .map(GrantedAuthority::getAuthority)
+        .collect(Collectors.joining(","));
+
+    return Jwts.builder()
+        .header().add("typ", "JWT").and()
+        .id(UUID.randomUUID().toString())
+        .subject(String.valueOf(id))
+        .claim(USER_NAME, username)
+        .claim(ROLE, role)
+        .claim(TYPE, "refresh")
+        .issuedAt(new Date())
+        .expiration(new Date(System.currentTimeMillis() + refreshExpirationTime))
+        .signWith(key)
+        .compact();
   }
 
-  /**
-   * 토큰에서 user name 추출
-   *
-   * @param token
-   * @return username
-   */
+  public Long getId(String token) {
+    return Long.parseLong(parseClaims(token).getSubject());
+  }
+
   public String getUsername(String token) {
     return parseClaims(token).get(USER_NAME, String.class);
   }
 
-  /**
-   * 토큰에서 user role 추출
-   *
-   * @param token
-   * @return
-   */
   public String getRole(String token) {
     return parseClaims(token).get(ROLE, String.class);
   }
 
-  private List<SimpleGrantedAuthority> getAuthorities(String token) {
-    final String role = getRole(token);
-    return List.of(new SimpleGrantedAuthority(role));
+  public String getJti(String token) {
+    return parseClaims(token).getId();
   }
 
-  /**
-   * 토큰 만료 시간 확인
-   *
-   * @param token
-   * @return
-   */
+  public String getTokenType(String token) {
+    return parseClaims(token).get(TYPE, String.class);
+  }
+
+  public long getRemainingExpiration(String token) {
+    Date expiration = parseClaims(token).getExpiration();
+    return Math.max(0, expiration.getTime() - System.currentTimeMillis());
+  }
+
   public Boolean isExpired(String token) {
     return parseClaims(token).getExpiration().before(new Date());
   }
 
-  /**
-   * 토큰 내부 정보 (payload) 추출
-   *
-   * @param token jwt token
-   * @return parse 중 발생한 에러
-   */
+  private List<SimpleGrantedAuthority> getAuthorities(String token) {
+    return List.of(new SimpleGrantedAuthority(getRole(token)));
+  }
+
   private Claims parseClaims(String token) {
     try {
       return Jwts.parser()
-          .verifyWith(key) // 서명 검증
+          .verifyWith(key)
           .build()
           .parseSignedClaims(token)
           .getPayload();
     } catch (ExpiredJwtException e) {
-      throw e; // 만료된 토큰은 호출한 곳에서 처리 (Refresh Token 로직 등)
+      throw e;
     } catch (MalformedJwtException | UnsupportedJwtException | IllegalArgumentException e) {
       throw new RuntimeException("유효하지 않은 토큰입니다.");
     }
   }
 
-  public Authentication getAuthentication(final String token) {
+  public Authentication getAuthentication(String token) {
     Claims claims = parseClaims(token);
     List<SimpleGrantedAuthority> authorities = getAuthorities(token);
-
-    final User principal = new User(claims.getSubject(), "", authorities); // Security User
+    User principal = new User(claims.getSubject(), "", authorities);
     return new UsernamePasswordAuthenticationToken(principal, token, authorities);
   }
 }

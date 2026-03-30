@@ -277,7 +277,7 @@ import {
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import {onMounted} from 'vue'
-import {useSellerApplicationsAdmin} from '@/composables/useSellerApplication'
+import {useSellerApplicationsAdmin} from '@/features/seller/composables/useSellerApplication'
 import {formatPhoneNumber} from '@/utils/phone'
 
 const activeTab = ref('pending')

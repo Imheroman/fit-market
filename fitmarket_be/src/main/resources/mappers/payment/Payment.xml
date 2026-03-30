@@ -55,4 +55,13 @@
       AND deleted_date IS NULL
     LIMIT 1
   </select>
+
+  <select id="findByPaymentKey" resultType="com.ssafy.fitmarket_be.payment.domain.Payment">
+    SELECT order_id, payment_key, provider, method, status, amount, approved_at,
+           failed_code, failed_message, raw_response
+    FROM payments
+    WHERE payment_key = #{paymentKey}
+      AND deleted_date IS NULL
+    LIMIT 1
+  </select>
 </mapper>

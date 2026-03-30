@@ -260,4 +260,145 @@
         LIMIT #{size} OFFSET #{offset}
     </select>
 
+
+    <!-- 상품 소유권 확인 (상품 ID + 판매자 userId) -->
+    <select id="existsByIdAndUserId" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM products
+        WHERE id = #{productId}
+          AND user_id = #{userId}
+          AND deleted_date IS NULL
+    </select>
+
+    <!-- 재고 원자적 차감 (오버셀링 방지) -->
+    <update id="decreaseStock">
+        UPDATE products
+        SET stock = stock - #{quantity}
+        WHERE id = #{productId}
+          AND stock >= #{quantity}
+          AND deleted_date IS NULL
+    </update>
+
+    <!-- 환불/취소 시 재고 복원 -->
+    <update id="increaseStock">
+        UPDATE products
+        SET stock = stock + #{quantity}
+        WHERE id = #{productId}
+          AND deleted_date IS NULL
+    </update>
+
+    <!-- ========== ES 동기화용 쿼리 ========== -->
+
+    <resultMap id="ProductSyncDataResultMap" type="com.ssafy.fitmarket_be.product.sync.ProductSyncData">
+        <constructor>
+            <idArg column="id" javaType="long"/>
+            <arg column="name" javaType="string"/>
+            <arg column="description" javaType="string"/>
+            <arg column="price" javaType="long"/>
+            <arg column="stock" javaType="int"/>
+            <arg column="rating" javaType="double"/>
+            <arg column="review_count" javaType="int"/>
+            <arg column="image_url" javaType="string"/>
+            <arg column="category_id" javaType="long"/>
+            <arg column="category_name" javaType="string"/>
+            <arg column="food_name" javaType="string"/>
+            <arg column="calories" javaType="int"/>
+            <arg column="protein" javaType="int"/>
+            <arg column="carbs" javaType="int"/>
+            <arg column="fat" javaType="int"/>
+            <arg column="seller_id" javaType="long"/>
+            <arg column="created_date" javaType="java.time.LocalDateTime"/>
+            <arg column="modified_date" javaType="java.time.LocalDateTime"/>
+            <arg column="deleted_date" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <!-- ES 동기화용 상품 조회 (삭제 포함 — 삭제 감지용) -->
+    <select id="selectProductForSync" resultMap="ProductSyncDataResultMap">
+        SELECT
+            p.id,
+            p.name,
+            p.description,
+            p.price,
+            p.stock,
+            p.rating,
+            p.review_count,
+            p.image_url,
+            p.product_category_id AS category_id,
+            pc.name AS category_name,
+            f.name AS food_name,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.calories, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS calories,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.protein, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS protein,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.carbs, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS carbs,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.fat, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS fat,
+            p.user_id AS seller_id,
+            p.created_date,
+            p.modified_date,
+            p.deleted_date
+        FROM products p
+        LEFT JOIN product_categories pc ON p.product_category_id = pc.id
+        LEFT JOIN food f ON p.food_id = f.id
+        WHERE p.id = #{id}
+    </select>
+
+    <!-- 배치 보정용: lastSyncTime 이후 변경된 상품 조회 -->
+    <select id="selectModifiedAfter" resultMap="ProductSyncDataResultMap">
+        SELECT
+            p.id,
+            p.name,
+            p.description,
+            p.price,
+            p.stock,
+            p.rating,
+            p.review_count,
+            p.image_url,
+            p.product_category_id AS category_id,
+            pc.name AS category_name,
+            f.name AS food_name,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.calories, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS calories,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.protein, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS protein,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.carbs, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS carbs,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.fat, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS fat,
+            p.user_id AS seller_id,
+            p.created_date,
+            p.modified_date,
+            p.deleted_date
+        FROM products p
+        LEFT JOIN product_categories pc ON p.product_category_id = pc.id
+        LEFT JOIN food f ON p.food_id = f.id
+        WHERE p.modified_date > #{lastSyncTime}
+           OR p.created_date > #{lastSyncTime}
+        ORDER BY p.modified_date ASC
+    </select>
+
+    <!-- 전체 재인덱싱용: 활성 상품 페이지 조회 -->
+    <select id="selectAllActiveForSync" resultMap="ProductSyncDataResultMap">
+        SELECT
+            p.id,
+            p.name,
+            p.description,
+            p.price,
+            p.stock,
+            p.rating,
+            p.review_count,
+            p.image_url,
+            p.product_category_id AS category_id,
+            pc.name AS category_name,
+            f.name AS food_name,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.calories, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS calories,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.protein, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS protein,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.carbs, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS carbs,
+            COALESCE(CAST(ROUND(CAST(NULLIF(f.fat, '') AS DECIMAL(10,2)) * p.weight_g / 100, 0) AS SIGNED), 0) AS fat,
+            p.user_id AS seller_id,
+            p.created_date,
+            p.modified_date,
+            p.deleted_date
+        FROM products p
+        LEFT JOIN product_categories pc ON p.product_category_id = pc.id
+        LEFT JOIN food f ON p.food_id = f.id
+        WHERE p.deleted_date IS NULL
+        ORDER BY p.id ASC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
 </mapper>

@@ -2,7 +2,9 @@ package com.ssafy.fitmarket_be.product.controller;
 
 import com.ssafy.fitmarket_be.global.dto.PageResponse;
 import com.ssafy.fitmarket_be.product.dto.*;
+import com.ssafy.fitmarket_be.product.service.ProductSearchService;
 import com.ssafy.fitmarket_be.product.service.ProductService;
+import com.ssafy.fitmarket_be.ranking.service.ProductRankingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +20,12 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductSearchService productSearchService;
+    private final ProductRankingService rankingService;
 
     /**
      * 상품 목록 조회 (페이징, 필터링).
-     * categoryId와 keyword를 동시에 사용 가능합니다.
+     * keyword가 있으면 ES 검색 (Fallback: MySQL), 없으면 기존 MySQL 조회.
      */
     @GetMapping
     public ResponseEntity<PageResponse<ProductListResponse>> getProducts(
@@ -30,7 +34,12 @@ public class ProductController {
         @RequestParam(required = false) Long categoryId,
         @RequestParam(required = false) String keyword
     ) {
-        PageResponse<ProductListResponse> response = productService.getProducts(page, size, categoryId, keyword);
+        PageResponse<ProductListResponse> response;
+        if (keyword != null && !keyword.isBlank()) {
+            response = productSearchService.search(keyword.trim(), categoryId, page, size);
+        } else {
+            response = productService.getProducts(page, size, categoryId, null);
+        }
         return ResponseEntity.ok(response);
     }
 
@@ -54,10 +63,11 @@ public class ProductController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<ProductUpdateResponse> updateProduct(
+        @AuthenticationPrincipal(expression = "id") Long userId,
         @PathVariable Long id,
         @Valid @RequestBody ProductUpdateRequest request
     ) {
-        ProductUpdateResponse response = productService.updateProduct(id, request);
+        ProductUpdateResponse response = productService.updateProduct(userId, id, request);
         return ResponseEntity.ok(response);
     }
 
@@ -67,6 +77,7 @@ public class ProductController {
     @GetMapping("/{id:[0-9]+}")
     public ResponseEntity<ProductDetailResponse> getProductDetail(@PathVariable Long id) {
         ProductDetailResponse response = productService.getProductDetail(id);
+        rankingService.incrementScore(id, 1.0);
         return ResponseEntity.ok(response);
     }
 
@@ -74,8 +85,11 @@ public class ProductController {
      * 상품 삭제.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        productService.deleteProduct(id);
+    public ResponseEntity<Void> deleteProduct(
+        @AuthenticationPrincipal(expression = "id") Long userId,
+        @PathVariable Long id
+    ) {
+        productService.deleteProduct(userId, id);
         return ResponseEntity.noContent().build();
     }
 

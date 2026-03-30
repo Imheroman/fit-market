@@ -58,7 +58,9 @@ class SellerOrderServiceImpl implements SellerOrderService {
 
     String orderName = resolveOrderName(items);
     long merchandiseAmount = calculateMerchandiseAmount(items);
-    long totalAmount = merchandiseAmount;
+    long shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0L;
+    long discountAmount = order.getDiscountAmount() != null ? order.getDiscountAmount() : 0L;
+    long totalAmount = merchandiseAmount + shippingFee - discountAmount;
 
     return new OrderDetailResponse(
         order.getOrderNumber(),
@@ -68,8 +70,8 @@ class SellerOrderServiceImpl implements SellerOrderService {
         orderName,
         totalAmount,
         merchandiseAmount,
-        0L,
-        0L,
+        shippingFee,
+        discountAmount,
         false,
         false,
         false,
@@ -163,7 +165,9 @@ class SellerOrderServiceImpl implements SellerOrderService {
   private OrderSummaryResponse toSummary(OrderView order, List<OrderProductEntity> products) {
     String orderName = resolveOrderName(products);
     long merchandiseAmount = calculateMerchandiseAmount(products);
-    long totalAmount = merchandiseAmount;
+    long shippingFee = order.getShippingFee() != null ? order.getShippingFee() : 0L;
+    long discountAmount = order.getDiscountAmount() != null ? order.getDiscountAmount() : 0L;
+    long totalAmount = merchandiseAmount + shippingFee - discountAmount;
     return new OrderSummaryResponse(
         order.getOrderNumber(),
         orderName,
@@ -172,8 +176,8 @@ class SellerOrderServiceImpl implements SellerOrderService {
         order.getPaymentStatus(),
         totalAmount,
         merchandiseAmount,
-        0L,
-        0L,
+        shippingFee,
+        discountAmount,
         products.size(),
         order.getOrderDate()
     );

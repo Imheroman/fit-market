@@ -81,8 +81,8 @@ import { Star } from 'lucide-vue-next';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
 import ProductCard from '@/components/ProductCard.vue';
-import { useCart } from '@/composables/useCart';
-import { useBestProducts } from '@/composables/useBestProducts';
+import { useCart } from '@/features/cart/composables/useCart';
+import { useBestProducts } from '@/features/product/composables/useBestProducts';
 import { shouldShowErrorAlert } from '@/utils/httpError';
 
 const { products, isLoading, errorMessage, toggleFavorite, loadProducts, pagination } = useBestProducts();

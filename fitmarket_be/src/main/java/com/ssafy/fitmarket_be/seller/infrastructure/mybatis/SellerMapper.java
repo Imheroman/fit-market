@@ -1,5 +1,6 @@
 package com.ssafy.fitmarket_be.seller.infrastructure.mybatis;
 
+import com.ssafy.fitmarket_be.seller.api.dto.SellerResponse;
 import com.ssafy.fitmarket_be.seller.domain.Seller;
 import com.ssafy.fitmarket_be.seller.domain.SellerStatus;
 import java.util.List;
@@ -15,6 +16,8 @@ public interface SellerMapper {
   Optional<Seller> findActiveById(@Param("id") Long id);
 
   List<Seller> findByStatus(@Param("status") SellerStatus status);
+
+  List<SellerResponse> findByStatusWithUser(@Param("status") SellerStatus status);
 
   int insert(Seller seller);
 

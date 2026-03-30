@@ -19,8 +19,8 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import MyOrdersSection from '@/components/mypage/MyOrdersSection.vue';
-import { useOrderHistory } from '@/composables/useOrderHistory';
-import { deleteOrder } from '@/api/ordersApi';
+import { useOrderHistory } from '@/features/order/composables/useOrderHistory';
+import { deleteOrder } from '@/features/order/api';
 
 const router = useRouter();
 const {

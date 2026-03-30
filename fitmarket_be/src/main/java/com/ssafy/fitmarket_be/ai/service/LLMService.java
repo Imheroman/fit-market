@@ -8,6 +8,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.HashMap;
@@ -32,8 +33,8 @@ public class LLMService {
     @Value("${openai.model:gpt-4o-mini}")
     private String model;
 
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
 
     /**
      * RAG로 추출된 후보 중 가장 유사한 상품을 최종 선택한다.
@@ -58,6 +59,10 @@ public class LLMService {
             String prompt = buildPrompt(productName, foods);
             String response = callOpenAI(prompt);
             Long foodId = parseFoodId(response);
+            if (foodId == null) {
+                log.warn("LLM 응답에서 food_id를 추출할 수 없습니다. 첫 번째 항목을 반환합니다. productName={}", productName);
+                return foods.get(0).getId();
+            }
 
             log.info("매칭 완료 - 상품명 '{}', 매칭된 상품 ID: {}", productName, foodId);
             return foodId;
@@ -137,11 +142,20 @@ public class LLMService {
 
     /**
      * LLM 응답에서 food_id 파싱.
+     * 프롬프트가 {"food_id": 숫자} JSON 응답을 강제하므로 ObjectMapper로 파싱한다.
+     * 파싱 실패 또는 food_id 없으면 null 반환 (호출부에서 fallback 처리).
      */
     private Long parseFoodId(String response) {
-        // JSON에서 food_id 추출 (간단 파싱)
-        // 예: {"food_id": 123}
-        String cleaned = response.replaceAll("[^0-9]", "");
-        return Long.parseLong(cleaned);
+        try {
+            JsonNode node = objectMapper.readTree(response);
+            if (node.has("food_id") && !node.get("food_id").isNull()) {
+                return node.get("food_id").asLong();
+            }
+            log.warn("LLM 응답에 food_id 키가 없습니다. response={}", response);
+            return null;
+        } catch (Exception e) {
+            log.warn("LLM 응답 JSON 파싱 실패. response={}", response);
+            return null;
+        }
     }
 }

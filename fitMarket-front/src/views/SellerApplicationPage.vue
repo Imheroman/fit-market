@@ -254,7 +254,7 @@ import {onMounted, computed, ref} from 'vue'
 import {CheckCircle2, AlertCircle, Loader2} from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
-import {useSellerApplication} from '@/composables/useSellerApplication'
+import {useSellerApplication} from '@/features/seller/composables/useSellerApplication'
 import {useRouter} from 'vue-router'
 
 const router = useRouter()

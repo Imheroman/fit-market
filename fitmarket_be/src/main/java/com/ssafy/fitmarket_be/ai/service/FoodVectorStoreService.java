@@ -4,6 +4,7 @@ import com.ssafy.fitmarket_be.food.domain.Food;
 import com.ssafy.fitmarket_be.food.repository.FoodMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -46,6 +47,9 @@ public class FoodVectorStoreService {
     private final FoodMapper foodMapper;
     private final EmbeddingModel embeddingModel;
 
+    @Value("${app.ai.enabled:true}")
+    private boolean aiEnabled;
+
     // 불변 Food 도메인 객체 캐시 (초기화 단계에서 사용)
     private VectorStore vectorStore;
     private Map<Long, Food> foodCache;  // toUnmodifiableMap()으로 초기화
@@ -56,6 +60,12 @@ public class FoodVectorStoreService {
      */
     @PostConstruct
     public void init() {
+        if (!aiEnabled) {
+            log.info("AI 기능 비활성화 (app.ai.enabled=false) - 벡터 스토어 초기화 스킵");
+            initializeEmpty();
+            return;
+        }
+
         log.info("Food 벡터 스토어 초기화 시작...");
 
         try {

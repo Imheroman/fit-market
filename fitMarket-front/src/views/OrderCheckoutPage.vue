@@ -227,7 +227,8 @@
                             @click="navigateToProduct(item.productId || item.id)"
                         >
                             <img :src="item.image" :alt="item.name"
-                                 class="w-20 h-20 rounded-xl object-cover bg-green-50"/>
+                                 class="w-20 h-20 rounded-xl object-cover bg-green-50"
+                                 @error="onImageError"/>
                             <div class="flex-1">
                                 <p class="font-semibold">{{ item.name }}</p>
                                 <p class="text-sm text-gray-500">{{ item.category }} · {{
@@ -255,18 +256,20 @@ import {useRoute, useRouter} from 'vue-router';
 import {MapPin, ShieldCheck, Gift, Wallet, CheckCircle, AlertTriangle} from 'lucide-vue-next';
 import AppHeader from '@/components/AppHeader.vue';
 import AppFooter from '@/components/AppFooter.vue';
-import {useCart} from '@/composables/useCart';
-import {useAddresses} from '@/composables/useAddresses';
-import {useOrderStatus} from '@/composables/useOrderStatus';
-import {useTossPayments} from '@/composables/useTossPayments';
-import {usePaymentCallbacks} from '@/composables/usePaymentCallbacks';
-import {useProductDetail} from '@/composables/useProductDetail';
+import {useCart} from '@/features/cart/composables/useCart';
+import {useAddresses} from '@/features/address/composables/useAddresses';
+import {useOrderStatus} from '@/features/order/composables/useOrderStatus';
+import {useTossPayments} from '@/features/payment/composables/useTossPayments';
+import {usePaymentCallbacks} from '@/features/payment/composables/usePaymentCallbacks';
+import {useProductDetail} from '@/features/product/composables/useProductDetail';
 import {formatPhoneNumber, sanitizePhoneDigits} from '@/utils/phone';
 import {savePendingOrderRequest} from '@/utils/paymentRequestStorage';
 import {shouldShowErrorAlert} from '@/utils/httpError';
+import {useImageFallback} from '@/composables/useImageFallback';
 
 const router = useRouter();
 const route = useRoute();
+const {onImageError} = useImageFallback();
 const MAX_VISIBLE_ADDRESSES = 3;
 const MIN_QUANTITY = 1;
 const MAX_QUANTITY = 100;

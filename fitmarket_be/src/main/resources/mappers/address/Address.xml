@@ -160,4 +160,15 @@
     ORDER BY ua.created_date DESC
     LIMIT 1
   </select>
+
+  <select id="findFirstActiveAddressId" resultType="long">
+    SELECT ua.address_id
+    FROM user_address ua
+    JOIN address a ON ua.address_id = a.id
+    WHERE ua.user_id = #{userId}
+      AND ua.deleted_date IS NULL
+      AND a.deleted_date IS NULL
+    ORDER BY ua.created_date ASC
+    LIMIT 1
+  </select>
 </mapper>

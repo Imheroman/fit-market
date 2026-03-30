@@ -87,13 +87,7 @@ class SellerServiceImpl implements SellerService {
   @Transactional(readOnly = true)
   public List<SellerResponse> listByStatus(String status) {
     SellerStatus normalized = normalizeStatusOrDefault(status);
-    return sellerMapper.findByStatus(normalized).stream()
-        .map(seller -> {
-          User user = userRepository.findBy(seller.getUserId())
-              .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-          return SellerResponse.from(seller, user.getName(), user.getEmail());
-        })
-        .toList();
+    return sellerMapper.findByStatusWithUser(normalized);
   }
 
   @Override

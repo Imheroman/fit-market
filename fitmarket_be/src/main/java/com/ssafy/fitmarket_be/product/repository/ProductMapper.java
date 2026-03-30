@@ -1,9 +1,11 @@
 package com.ssafy.fitmarket_be.product.repository;
 
 import com.ssafy.fitmarket_be.product.domain.Product;
+import com.ssafy.fitmarket_be.product.sync.ProductSyncData;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -113,4 +115,39 @@ public interface ProductMapper {
      * 신상품 조회 (최신순, 제한 개수).
      */
     List<Product> selectNewProducts(@Param("limit") Integer limit);
+
+    /**
+     * 상품 소유권 확인 (상품 ID + 판매자 userId).
+     */
+    boolean existsByIdAndUserId(@Param("productId") Long productId, @Param("userId") Long userId);
+
+    /**
+     * 재고를 원자적으로 차감한다.
+     * stock >= quantity 조건으로 오버셀링 방지.
+     * @return 업데이트된 행 수 (0이면 재고 부족)
+     */
+    int decreaseStock(@Param("productId") Long productId, @Param("quantity") int quantity);
+
+    /**
+     * 환불/취소 시 재고를 복원한다.
+     * @return 업데이트된 행 수
+     */
+    int increaseStock(@Param("productId") Long productId, @Param("quantity") int quantity);
+
+    // ========== ES 동기화용 쿼리 ==========
+
+    /**
+     * ES 동기화용 상품 조회 (user_id, food_name, created_date, modified_date 포함).
+     */
+    ProductSyncData selectProductForSync(@Param("id") Long id);
+
+    /**
+     * 배치 보정용: lastSyncTime 이후 변경된 상품 조회.
+     */
+    List<ProductSyncData> selectModifiedAfter(@Param("lastSyncTime") LocalDateTime lastSyncTime);
+
+    /**
+     * 전체 재인덱싱용: 활성 상품 페이지 조회.
+     */
+    List<ProductSyncData> selectAllActiveForSync(@Param("size") int size, @Param("offset") int offset);
 }

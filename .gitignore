@@ -531,6 +531,8 @@ docs/_book
 
 # TODO: where does this rule come from?
 test/
+# Allow Spring Boot src/test directories
+!**/src/test/
 
 ### Vuejs ###
 # Recommended template: Node.gitignore
@@ -797,3 +799,19 @@ gradle-app.setting
 # Backend specific
 fitmarket_be/uploads/
 fitmarket_be/src/main/generated/
+fitmarket_be/load-test/
+
+# kimyoungwoong
+
+.claude
+doc
+CLAUDE.md
+
+### Load Test ###
+load-test/
+
+### Mock Data ###
+mock-data/
+
+### Claude Code Worktree ###
+.claire/
