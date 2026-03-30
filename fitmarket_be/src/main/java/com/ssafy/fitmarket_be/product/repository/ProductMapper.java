@@ -1,6 +1,7 @@
 package com.ssafy.fitmarket_be.product.repository;
 
 import com.ssafy.fitmarket_be.product.domain.Product;
+import com.ssafy.fitmarket_be.product.dto.ProductInsertCommand;
 import com.ssafy.fitmarket_be.product.sync.ProductSyncData;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -65,22 +66,7 @@ public interface ProductMapper {
     /**
      * 상품 등록.
      */
-    void insertProduct(
-        @Param("userId") Long userId,
-        @Param("categoryId") Long categoryId,
-        @Param("name") String name,
-        @Param("description") String description,
-        @Param("price") Long price,
-        @Param("weightG") Integer weightG,
-        @Param("stock") Integer stock,
-        @Param("imageUrl") String imageUrl,
-        @Param("foodId") Long foodId
-    );
-
-    /**
-     * 마지막으로 생성된 ID 조회.
-     */
-    Long selectLastInsertId();
+    int insertProduct(ProductInsertCommand command);
 
     /**
      * 상품 수정.

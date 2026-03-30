@@ -1,6 +1,9 @@
 package com.ssafy.fitmarket_be.user.service;
 
 import com.ssafy.fitmarket_be.entity.User;
+import com.ssafy.fitmarket_be.global.exception.BusinessException;
+import com.ssafy.fitmarket_be.global.exception.DuplicateEntityException;
+import com.ssafy.fitmarket_be.global.exception.EntityNotFoundException;
 import com.ssafy.fitmarket_be.user.dto.UserDetailResponseDto;
 import com.ssafy.fitmarket_be.user.dto.UserPasswordUpdateRequestDto;
 import com.ssafy.fitmarket_be.user.dto.UserSignupRequestDto;
@@ -10,6 +13,7 @@ import com.ssafy.fitmarket_be.user.repository.UserRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,14 +29,14 @@ public class UserService {
 
   public UserDetailResponseDto findById(Long id) {
     User user = this.userRepository.findBy(id)
-        .orElseThrow(() -> new RuntimeException("존재하지 않는 유저입니다."));
+        .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 유저입니다."));
 
     return this.userMapper.toDto(user);
   }
 
   public UserDetailResponseDto findByEmail(String email) {
     User user = this.userRepository.findByEmail(email)
-        .orElseThrow(() -> new RuntimeException("존재하지 않는 유저입니다."));
+        .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 유저입니다."));
 
     return this.userMapper.toDto(user);
   }
@@ -42,7 +46,7 @@ public class UserService {
     Optional<User> existUser = this.userRepository.findByEmail(request.getEmail());
 
     if (existUser.isPresent()) {
-      throw new IllegalArgumentException("이미 존재하는 회원입니다.");
+      throw new DuplicateEntityException("이미 존재하는 회원입니다.");
     }
 
     String pw = this.passwordEncoder.encode(request.getPassword());
@@ -50,7 +54,7 @@ public class UserService {
 
     int idx = userRepository.save(user);
     if (idx <= 0) {
-      throw new RuntimeException("회원가입 실패 이메일: ".concat(request.getEmail()));
+      throw new BusinessException("회원가입에 실패했습니다. 잠시 후 다시 시도해 주세요.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -60,7 +64,7 @@ public class UserService {
 
     if (result <= 0) {
       log.error("회원 탈퇴 처리 실패. userId={}", id);
-      throw new RuntimeException("회원 탈퇴 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+      throw new BusinessException("회원 탈퇴 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -70,7 +74,7 @@ public class UserService {
 
     if (result <= 0) {
       log.error("이름 변경 실패. userId={}", id);
-      throw new RuntimeException("이름 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      throw new EntityNotFoundException("사용자를 찾을 수 없습니다.");
     }
 
     return new UserUpdateResponseDto(name);
@@ -82,7 +86,7 @@ public class UserService {
 
     if (result <= 0) {
       log.error("전화번호 변경 실패. userId={}", id);
-      throw new RuntimeException("전화번호 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      throw new EntityNotFoundException("사용자를 찾을 수 없습니다.");
     }
 
     return new UserUpdateResponseDto(phone);
@@ -114,7 +118,7 @@ public class UserService {
 
     if (result <= 0) {
       log.error("비밀번호 변경 실패. userId={}", id);
-      throw new RuntimeException("비밀번호 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      throw new EntityNotFoundException("사용자를 찾을 수 없습니다.");
     }
 
     return new UserUpdateResponseDto("");

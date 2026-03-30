@@ -118,7 +118,10 @@
     </select>
 
     <!-- 상품 등록 -->
-    <insert id="insertProduct">
+    <insert id="insertProduct"
+            useGeneratedKeys="true"
+            keyProperty="id"
+            parameterType="com.ssafy.fitmarket_be.product.dto.ProductInsertCommand">
         INSERT INTO products (
             user_id,
             product_category_id,
@@ -153,11 +156,6 @@
         WHERE id = #{productId}
           AND deleted_date IS NULL
     </update>
-
-    <!-- 마지막 삽입 ID 조회 -->
-    <select id="selectLastInsertId" resultType="Long">
-        SELECT LAST_INSERT_ID()
-    </select>
 
     <!-- 상품 수정 -->
     <update id="updateProduct">

@@ -2,6 +2,7 @@ package com.ssafy.fitmarket_be.order.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ssafy.fitmarket_be.global.exception.BusinessException;
 import com.ssafy.fitmarket_be.address.repository.AddressRepository;
 import com.ssafy.fitmarket_be.cart.repository.ShoppingCartRepository;
 import com.ssafy.fitmarket_be.entity.Address;
@@ -46,6 +47,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -361,7 +363,7 @@ public class OrderService {
 
     int updatedOrder = orderRepository.updatePaymentStatus(order.getId(), PaymentStatus.REFUNDED);
     if (updatedOrder <= 0) {
-      throw new RuntimeException("주문 결제 상태를 변경하지 못했어요.");
+      throw new BusinessException("주문 결제 상태를 변경하지 못했어요.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
     int updatedPayment = paymentRepository.updateStatusByOrderId(order.getId(), PaymentStatus.REFUNDED);
     if (updatedPayment == 0) {
@@ -437,7 +439,7 @@ public class OrderService {
     }
 
     LocalDateTime approvedAt = paymentRepository.findApprovedAtByOrderId(order.getId())
-        .orElseThrow(() -> new RuntimeException("결제 승인 시점을 확인하지 못했어요. 잠시 후 다시 시도해 주세요."));
+        .orElseThrow(() -> new BusinessException("결제 승인 시점을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.", HttpStatus.INTERNAL_SERVER_ERROR));
     LocalDateTime refundDeadline = approvedAt.plusDays(REFUND_AVAILABLE_DAYS);
     if (refundDeadline.isBefore(LocalDateTime.now())) {
       return new RefundEligibility(false, "결제 후 3일이 지나 환불할 수 없어요.");
